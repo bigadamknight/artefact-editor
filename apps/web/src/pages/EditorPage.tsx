@@ -3,6 +3,7 @@ import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
 import { useSelection } from "../hooks/useSelection.js";
 import { Inspector } from "../components/Inspector.js";
 import { PreviewFrame } from "../components/PreviewFrame.js";
+import { Timeline } from "../components/Timeline.js";
 import { TopBar } from "../components/TopBar.js";
 
 export default function EditorPage() {
@@ -101,8 +102,19 @@ export default function EditorPage() {
             })}
           </div>
         </aside>
-        <main className="min-w-0 flex-1 bg-muted">
-          <PreviewFrame entry={state.entry} bumpKey={state.bumpKey} />
+        <main className="flex min-w-0 flex-1 flex-col bg-muted">
+          <div className="min-h-0 flex-1">
+            <PreviewFrame entry={state.entry} bumpKey={state.bumpKey} />
+          </div>
+          <div className="h-64 shrink-0 border-t border-border">
+            <Timeline
+              blocks={state.blocks}
+              selectedBlockId={selectedBlockId}
+              pendingValues={state.pendingValues}
+              onSelectBlock={setSelectedBlockId}
+              onSetProperty={(id, key, value) => setProperty(id, key, value)}
+            />
+          </div>
         </main>
         <aside className="w-80 overflow-auto border-l border-border">
           <Inspector
