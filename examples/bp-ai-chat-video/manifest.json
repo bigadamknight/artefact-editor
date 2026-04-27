@@ -5,6 +5,188 @@
   "name": "Why Platinum, not raw AI? (video)",
   "blocks": [
     {
+      "id": "blk_s1_l1",
+      "kind": "text",
+      "label": "S1: Hook line 1",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_l1]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_l2",
+      "kind": "text",
+      "label": "S1: Hook line 2",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_l2]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_l3",
+      "kind": "text",
+      "label": "S1: Hook line 3",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_l3]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_l4",
+      "kind": "text",
+      "label": "S1: Hook line 4",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_l4]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_l5",
+      "kind": "text",
+      "label": "S1: Hook line 5 (emph)",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_l5]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_a",
+      "kind": "text",
+      "label": "S2: Concession line 1a",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_a]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_b",
+      "kind": "text",
+      "label": "S2: Concession line 1b",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_b]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_lead",
+      "kind": "text",
+      "label": "S2: Mini lead",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_lead]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_warn",
+      "kind": "text",
+      "label": "S2: Mini warn word",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_warn]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_post",
+      "kind": "text",
+      "label": "S2: Mini post-warn",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_post]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_tail",
+      "kind": "text",
+      "label": "S2: Mini tail",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_tail]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s3_header",
+      "kind": "text",
+      "label": "S3: Why header",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s3_header]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s3_body_a",
+      "kind": "text",
+      "label": "S3: Why body line 1",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s3_body_a]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s3_body_b",
+      "kind": "text",
+      "label": "S3: Why body line 2 (light)",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s3_body_b]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s3_verdict_q",
+      "kind": "text",
+      "label": "S3: Verdict question",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s3_verdict_q]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s3_verdict_no",
+      "kind": "text",
+      "label": "S3: Verdict answer",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s3_verdict_no]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_kicker",
+      "kind": "text",
+      "label": "S4: Approach kicker",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_kicker]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_1",
+      "kind": "text",
+      "label": "S4: Body chunk 1",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_1]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_em1",
+      "kind": "text",
+      "label": "S4: Body emphasis 1",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_em1]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_2",
+      "kind": "text",
+      "label": "S4: Body chunk 2",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_2]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_em2",
+      "kind": "text",
+      "label": "S4: Body emphasis 2",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_em2]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_3",
+      "kind": "text",
+      "label": "S4: Body chunk 3",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_3]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_em3",
+      "kind": "text",
+      "label": "S4: Body emphasis 3",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_em3]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_body_4",
+      "kind": "text",
+      "label": "S4: Body chunk 4",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_body_4]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_safe_a",
+      "kind": "text",
+      "label": "S4: Safe (accent)",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_safe_a]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s4_safe_b",
+      "kind": "text",
+      "label": "S4: Safe tail",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s4_safe_b]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
       "id": "blk_s5_line1",
       "kind": "text",
       "label": "S5: Tagline line 1",
@@ -26,11 +208,35 @@
       "properties": [{ "key": "text", "type": "string" }]
     },
     {
+      "id": "blk_s6_url_main",
+      "kind": "text",
+      "label": "S6: URL main",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_url_main]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s6_url_dot",
+      "kind": "text",
+      "label": "S6: URL TLD",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_url_dot]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
       "id": "blk_s6_path",
       "kind": "text",
       "label": "S6: Article URL path",
       "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_path]" },
       "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s6_brand",
+      "kind": "image",
+      "label": "S6: Brand logo",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_brand]" },
+      "properties": [
+        { "key": "src", "type": "string" },
+        { "key": "alt", "type": "string" }
+      ]
     },
     {
       "id": "blk_t1",
