@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
+import { useElementStyles } from "../hooks/useElementStyles.js";
 import { useSelection } from "../hooks/useSelection.js";
 import { useTransport } from "../hooks/useTransport.js";
 import { Inspector } from "../components/Inspector.js";
@@ -12,6 +13,7 @@ export default function EditorPage() {
   const { state, setProperty, save } = useDoc();
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
+  const stylesByBlock = useElementStyles();
   const setIframeRef = useCallback(
     (el: HTMLIFrameElement | null) => {
       transport.registerIframe(el);
@@ -60,7 +62,17 @@ export default function EditorPage() {
     if (!selectedBlock) return {};
     const out: Record<string, string | number> = {};
     for (const desc of selectedBlock.descriptors) {
+      // Skip synthetic style.* descriptors; their initial values come from the
+      // live computed-style channel, not from the manifest. Only pending edits
+      // appear in `out` for these keys (added below).
+      if (desc.key.startsWith("style.")) continue;
       out[desc.key] = getEffectiveValue(selectedBlock, state.pendingValues, desc.key);
+    }
+    const pending = state.pendingValues.get(selectedBlock.id);
+    if (pending) {
+      for (const [k, v] of Object.entries(pending)) {
+        if (k.startsWith("style.")) out[k] = v;
+      }
     }
     return out;
   }, [selectedBlock, state.pendingValues]);
@@ -158,6 +170,7 @@ export default function EditorPage() {
           <Inspector
             block={selectedBlock}
             values={valuesForSelected}
+            styles={selectedBlock ? stylesByBlock[selectedBlock.id] : undefined}
             onChange={(key, value) => {
               if (selectedBlock) setProperty(selectedBlock.id, key, value);
             }}

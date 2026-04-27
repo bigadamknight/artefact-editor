@@ -36,6 +36,23 @@ function applyEdits(source: string, edits: PendingEdit[]): string {
   return out;
 }
 
+function upsertStyleProp(style: string, prop: string, value: string): string {
+  const parts = style.split(";").map((s) => s.trim()).filter(Boolean);
+  let found = false;
+  const out = parts.map((p) => {
+    const idx = p.indexOf(":");
+    if (idx < 0) return p;
+    const k = p.slice(0, idx).trim().toLowerCase();
+    if (k === prop.toLowerCase()) {
+      found = true;
+      return `${prop}: ${value}`;
+    }
+    return p;
+  });
+  if (!found) out.push(`${prop}: ${value}`);
+  return out.join("; ");
+}
+
 function planSelectorEdit(
   source: string,
   block: Block,
@@ -47,6 +64,31 @@ function planSelectorEdit(
   }
   const el = findOneMatching(source, block.source.selector);
   const loc = getElementSourceLocation(el);
+
+  if (key.startsWith("style.")) {
+    const prop = key.slice("style.".length);
+    if (!loc.startTag) {
+      throw new Error(`block ${block.id}: missing start tag location`);
+    }
+    const tagSource = source.slice(loc.startTag.startOffset, loc.startTag.endOffset);
+    const styleAttrRe = /\sstyle\s*=\s*("([^"]*)"|'([^']*)')/i;
+    const m = styleAttrRe.exec(tagSource);
+    if (m) {
+      const existing = m[2] ?? m[3] ?? "";
+      const newStyle = upsertStyleProp(existing, prop, newValue);
+      const matchStart = loc.startTag.startOffset + m.index;
+      const matchEnd = matchStart + m[0].length;
+      return { start: matchStart, end: matchEnd, replacement: ` style="${escapeAttr(newStyle)}"` };
+    }
+    const closeIdx = tagSource.lastIndexOf(">");
+    if (closeIdx < 0) throw new Error(`Cannot find tag close for block ${block.id}`);
+    const insertAt = loc.startTag.startOffset + (tagSource[closeIdx - 1] === "/" ? closeIdx - 1 : closeIdx);
+    return {
+      start: insertAt,
+      end: insertAt,
+      replacement: ` style="${escapeAttr(`${prop}: ${newValue}`)}"`,
+    };
+  }
 
   if (block.kind === "text" && key === "text") {
     if (!loc.startTag || !loc.endTag) {

@@ -7,10 +7,27 @@ import { AssetPicker } from "./AssetPicker.js";
 interface InspectorProps {
   block: Block | null;
   values: Record<string, string | number>;
+  styles?: Record<string, string>;
   onChange: (key: string, value: string | number) => void;
 }
 
-export function Inspector({ block, values, onChange }: InspectorProps) {
+const STYLE_FIELDS: Array<{ key: string; label: string; type: "color" | "text" }> = [
+  { key: "color", label: "Color", type: "color" },
+  { key: "font-size", label: "Font size", type: "text" },
+  { key: "font-weight", label: "Font weight", type: "text" },
+  { key: "text-align", label: "Text align", type: "text" },
+  { key: "letter-spacing", label: "Letter spacing", type: "text" },
+  { key: "line-height", label: "Line height", type: "text" },
+];
+
+function rgbToHex(rgb: string): string {
+  const m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(rgb);
+  if (!m) return rgb;
+  const hex = (n: number) => n.toString(16).padStart(2, "0");
+  return "#" + hex(+m[1]!) + hex(+m[2]!) + hex(+m[3]!);
+}
+
+export function Inspector({ block, values, styles, onChange }: InspectorProps) {
   if (!block) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
@@ -18,6 +35,8 @@ export function Inspector({ block, values, onChange }: InspectorProps) {
       </div>
     );
   }
+
+  const showStyles = block.kind === "text" && styles;
 
   return (
     <div className="space-y-5 p-4">
@@ -30,15 +49,58 @@ export function Inspector({ block, values, onChange }: InspectorProps) {
       </header>
 
       <div className="space-y-4">
-        {block.descriptors.map((desc) => (
-          <DescriptorField
-            key={desc.key}
-            descriptor={desc}
-            value={values[desc.key] ?? ""}
-            onChange={(v) => onChange(desc.key, v)}
-          />
-        ))}
+        {block.descriptors
+          .filter((desc) => !desc.key.startsWith("style."))
+          .map((desc) => (
+            <DescriptorField
+              key={desc.key}
+              descriptor={desc}
+              value={values[desc.key] ?? ""}
+              onChange={(v) => onChange(desc.key, v)}
+            />
+          ))}
       </div>
+
+      {showStyles ? (
+        <div className="space-y-3 border-t border-border pt-4">
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Style
+          </div>
+          {STYLE_FIELDS.map((f) => {
+            const overrideKey = `style.${f.key}`;
+            const pending = values[overrideKey];
+            const liveRaw = styles![f.key] ?? "";
+            const live = f.type === "color" ? rgbToHex(liveRaw) : liveRaw;
+            const current = pending !== undefined ? String(pending) : live;
+            return (
+              <div key={f.key} className="space-y-1.5">
+                <Label htmlFor={overrideKey}>{f.label}</Label>
+                {f.type === "color" ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={/^#[0-9a-fA-F]{6,8}$/.test(current) ? current : "#000000"}
+                      onChange={(e) => onChange(overrideKey, e.target.value)}
+                      className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
+                    />
+                    <Input
+                      id={overrideKey}
+                      value={current}
+                      onChange={(e) => onChange(overrideKey, e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    id={overrideKey}
+                    value={current}
+                    onChange={(e) => onChange(overrideKey, e.target.value)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

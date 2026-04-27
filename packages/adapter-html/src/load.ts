@@ -4,6 +4,7 @@ import {
   type ProjectFiles,
   type Manifest,
   type ManifestBlock,
+  type PropertyDescriptor,
 } from "@artefact-editor/core";
 import { findOneMatching } from "./selector.js";
 import { findScriptVar } from "./scriptVar.js";
@@ -142,12 +143,31 @@ export async function loadProject(files: ProjectFiles): Promise<{
     } else {
       source = { tag: "astVar", file: mb.source.file, varName: mb.source.astVar };
     }
+    const descriptors: PropertyDescriptor[] = [...mb.properties];
+    if (mb.kind === "text" && "selector" in mb.source) {
+      // Synthetic style.* descriptors so the editor can show a Style section.
+      // Live values are read from the iframe; pending edits flow through normal
+      // setProperty commands and the adapter upserts them into the element's
+      // inline style attribute on save.
+      const STYLE_PROPS = [
+        "color",
+        "font-size",
+        "font-weight",
+        "font-family",
+        "text-align",
+        "letter-spacing",
+        "line-height",
+      ];
+      for (const p of STYLE_PROPS) {
+        descriptors.push({ key: `style.${p}`, type: "string" });
+      }
+    }
     blocks.push({
       id: mb.id,
       kind: mb.kind,
       label: mb.label,
       source,
-      descriptors: mb.properties,
+      descriptors,
       values,
     });
   }

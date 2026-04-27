@@ -26,10 +26,26 @@ export const previewBridgeScript = `
   document.head.appendChild(aeStyle);
 
   var selectedEl = null;
+  var STYLE_KEYS = ['color', 'font-size', 'font-weight', 'font-family', 'text-align', 'letter-spacing', 'line-height'];
+  function postSelectedStyles() {
+    if (!selectedEl) return;
+    var cs = window.getComputedStyle(selectedEl);
+    var styles = {};
+    for (var i = 0; i < STYLE_KEYS.length; i++) {
+      var k = STYLE_KEYS[i];
+      styles[k] = cs.getPropertyValue(k);
+    }
+    window.parent.postMessage({
+      type: 'ae:styles',
+      blockId: selectedEl.getAttribute('data-edit-id'),
+      styles: styles
+    }, '*');
+  }
   function setSelected(id) {
     if (selectedEl) selectedEl.classList.remove('ae-selected');
     selectedEl = id ? document.querySelector('[data-edit-id="' + id + '"]') : null;
     if (selectedEl) selectedEl.classList.add('ae-selected');
+    postSelectedStyles();
   }
 
   function findEditId(el) {
