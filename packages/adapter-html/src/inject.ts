@@ -17,6 +17,21 @@
  */
 export const previewBridgeScript = `
 (function () {
+  // Inject editor-only styles for hover + selected affordances.
+  var aeStyle = document.createElement('style');
+  aeStyle.textContent =
+    '[data-edit-id]{outline:1px dashed transparent;outline-offset:2px;transition:outline-color .12s;}' +
+    '[data-edit-id]:hover{outline-color:rgba(56,189,248,.7);}' +
+    '[data-edit-id].ae-selected{outline:2px solid #38bdf8;outline-offset:2px;}';
+  document.head.appendChild(aeStyle);
+
+  var selectedEl = null;
+  function setSelected(id) {
+    if (selectedEl) selectedEl.classList.remove('ae-selected');
+    selectedEl = id ? document.querySelector('[data-edit-id="' + id + '"]') : null;
+    if (selectedEl) selectedEl.classList.add('ae-selected');
+  }
+
   function findEditId(el) {
     while (el && el !== document.documentElement) {
       if (el.getAttribute && el.getAttribute('data-edit-id')) {
@@ -31,6 +46,7 @@ export const previewBridgeScript = `
     if (id) {
       e.preventDefault();
       e.stopPropagation();
+      setSelected(id);
       window.parent.postMessage({ type: 'ae:select', blockId: id }, '*');
     }
   }, true);
@@ -137,7 +153,12 @@ export const previewBridgeScript = `
 
   window.addEventListener('message', function (e) {
     var data = e.data;
-    if (!data || data.type !== 'ae:transport') return;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'ae:set-selected') {
+      setSelected(typeof data.blockId === 'string' ? data.blockId : null);
+      return;
+    }
+    if (data.type !== 'ae:transport') return;
     var tl = getTimeline();
     if (!tl) return;
     if (data.action === 'play' && typeof tl.play === 'function') tl.play();

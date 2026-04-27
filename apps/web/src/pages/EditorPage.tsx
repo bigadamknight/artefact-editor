@@ -31,6 +31,15 @@ export default function EditorPage() {
   }, [selectedBlockId, state.blocks, setSelectedBlockId]);
 
   useEffect(() => {
+    if (!transport.state.ready) return;
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe[title="preview"]');
+    iframe?.contentWindow?.postMessage(
+      { type: "ae:set-selected", blockId: selectedBlockId },
+      "*",
+    );
+  }, [selectedBlockId, transport.state.ready, state.bumpKey]);
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
