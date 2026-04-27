@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Command } from "@artefact-editor/core";
 
 interface ProjectResponse {
@@ -45,6 +45,9 @@ export function useDoc(): UseDocApi {
     saving: false,
     bumpKey: 0,
   });
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const fetchProject = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
@@ -99,21 +102,15 @@ export function useDoc(): UseDocApi {
   );
 
   const save = useCallback(async () => {
-    let commands: Command[] = [];
-    setState((s) => {
-      commands = [];
-      for (const [blockId, values] of s.pendingValues) {
-        for (const [key, value] of Object.entries(values)) {
-          commands.push({ type: "setProperty", blockId, key, value });
-        }
+    const cur = stateRef.current;
+    const commands: Command[] = [];
+    for (const [blockId, values] of cur.pendingValues) {
+      for (const [key, value] of Object.entries(values)) {
+        commands.push({ type: "setProperty", blockId, key, value });
       }
-      return { ...s, saving: true };
-    });
-
-    if (commands.length === 0) {
-      setState((s) => ({ ...s, saving: false }));
-      return;
     }
+    if (commands.length === 0) return;
+    setState((s) => ({ ...s, saving: true }));
 
     try {
       const res = await fetch("/api/save", {
