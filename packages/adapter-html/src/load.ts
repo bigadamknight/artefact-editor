@@ -157,6 +157,23 @@ export async function loadProject(files: ProjectFiles): Promise<{
         "text-align",
         "letter-spacing",
         "line-height",
+        "top",
+        "left",
+        "right",
+        "bottom",
+        "width",
+        "height",
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left",
+        "padding-top",
+        "padding-right",
+        "padding-bottom",
+        "padding-left",
+        "transform",
+        "opacity",
+        "z-index",
       ];
       for (const p of STYLE_PROPS) {
         descriptors.push({ key: `style.${p}`, type: "string" });

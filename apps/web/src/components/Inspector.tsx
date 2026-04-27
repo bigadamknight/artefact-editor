@@ -11,13 +11,59 @@ interface InspectorProps {
   onChange: (key: string, value: string | number) => void;
 }
 
-const STYLE_FIELDS: Array<{ key: string; label: string; type: "color" | "text" }> = [
-  { key: "color", label: "Color", type: "color" },
-  { key: "font-size", label: "Font size", type: "text" },
-  { key: "font-weight", label: "Font weight", type: "text" },
-  { key: "text-align", label: "Text align", type: "text" },
-  { key: "letter-spacing", label: "Letter spacing", type: "text" },
-  { key: "line-height", label: "Line height", type: "text" },
+type StyleField = { key: string; label: string; type: "color" | "text" };
+type StyleGroup = { title: string; fields: StyleField[] };
+
+const STYLE_GROUPS: StyleGroup[] = [
+  {
+    title: "Typography",
+    fields: [
+      { key: "color", label: "Color", type: "color" },
+      { key: "font-size", label: "Font size", type: "text" },
+      { key: "font-weight", label: "Font weight", type: "text" },
+      { key: "font-family", label: "Font family", type: "text" },
+      { key: "text-align", label: "Text align", type: "text" },
+      { key: "letter-spacing", label: "Letter spacing", type: "text" },
+      { key: "line-height", label: "Line height", type: "text" },
+    ],
+  },
+  {
+    title: "Position",
+    fields: [
+      { key: "top", label: "Top", type: "text" },
+      { key: "left", label: "Left", type: "text" },
+      { key: "right", label: "Right", type: "text" },
+      { key: "bottom", label: "Bottom", type: "text" },
+      { key: "z-index", label: "Z-index", type: "text" },
+    ],
+  },
+  {
+    title: "Size",
+    fields: [
+      { key: "width", label: "Width", type: "text" },
+      { key: "height", label: "Height", type: "text" },
+    ],
+  },
+  {
+    title: "Spacing",
+    fields: [
+      { key: "margin-top", label: "Margin top", type: "text" },
+      { key: "margin-right", label: "Margin right", type: "text" },
+      { key: "margin-bottom", label: "Margin bottom", type: "text" },
+      { key: "margin-left", label: "Margin left", type: "text" },
+      { key: "padding-top", label: "Padding top", type: "text" },
+      { key: "padding-right", label: "Padding right", type: "text" },
+      { key: "padding-bottom", label: "Padding bottom", type: "text" },
+      { key: "padding-left", label: "Padding left", type: "text" },
+    ],
+  },
+  {
+    title: "Transform & effects",
+    fields: [
+      { key: "transform", label: "Transform", type: "text" },
+      { key: "opacity", label: "Opacity", type: "text" },
+    ],
+  },
 ];
 
 function rgbToHex(rgb: string): string {
@@ -61,46 +107,54 @@ export function Inspector({ block, values, styles, onChange }: InspectorProps) {
           ))}
       </div>
 
-      {showStyles ? (
-        <div className="space-y-3 border-t border-border pt-4">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Style
-          </div>
-          {STYLE_FIELDS.map((f) => {
-            const overrideKey = `style.${f.key}`;
-            const pending = values[overrideKey];
-            const liveRaw = styles![f.key] ?? "";
-            const live = f.type === "color" ? rgbToHex(liveRaw) : liveRaw;
-            const current = pending !== undefined ? String(pending) : live;
-            return (
-              <div key={f.key} className="space-y-1.5">
-                <Label htmlFor={overrideKey}>{f.label}</Label>
-                {f.type === "color" ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={/^#[0-9a-fA-F]{6,8}$/.test(current) ? current : "#000000"}
-                      onChange={(e) => onChange(overrideKey, e.target.value)}
-                      className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
-                    />
-                    <Input
-                      id={overrideKey}
-                      value={current}
-                      onChange={(e) => onChange(overrideKey, e.target.value)}
-                    />
-                  </div>
-                ) : (
-                  <Input
-                    id={overrideKey}
-                    value={current}
-                    onChange={(e) => onChange(overrideKey, e.target.value)}
-                  />
-                )}
+      {showStyles
+        ? STYLE_GROUPS.map((group) => (
+            <details
+              key={group.title}
+              open={group.title === "Typography"}
+              className="space-y-3 border-t border-border pt-4"
+            >
+              <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.title}
+              </summary>
+              <div className="space-y-3 pt-2">
+                {group.fields.map((f) => {
+                  const overrideKey = `style.${f.key}`;
+                  const pending = values[overrideKey];
+                  const liveRaw = styles![f.key] ?? "";
+                  const live = f.type === "color" ? rgbToHex(liveRaw) : liveRaw;
+                  const current = pending !== undefined ? String(pending) : live;
+                  return (
+                    <div key={f.key} className="space-y-1.5">
+                      <Label htmlFor={overrideKey}>{f.label}</Label>
+                      {f.type === "color" ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={/^#[0-9a-fA-F]{6,8}$/.test(current) ? current : "#000000"}
+                            onChange={(e) => onChange(overrideKey, e.target.value)}
+                            className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
+                          />
+                          <Input
+                            id={overrideKey}
+                            value={current}
+                            onChange={(e) => onChange(overrideKey, e.target.value)}
+                          />
+                        </div>
+                      ) : (
+                        <Input
+                          id={overrideKey}
+                          value={current}
+                          onChange={(e) => onChange(overrideKey, e.target.value)}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      ) : null}
+            </details>
+          ))
+        : null}
     </div>
   );
 }
