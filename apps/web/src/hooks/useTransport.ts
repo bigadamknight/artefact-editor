@@ -38,6 +38,9 @@ export function useTransport(): UseTransportApi {
     ready: false,
   });
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const pendingSeekRef = useRef<number | null>(null);
 
   const post = useCallback((msg: unknown) => {
     iframeRef.current?.contentWindow?.postMessage(msg, "*");
@@ -64,10 +67,14 @@ export function useTransport(): UseTransportApi {
   );
 
   const registerIframe = useCallback((iframe: HTMLIFrameElement | null) => {
-    iframeRef.current = iframe;
     if (!iframe) {
-      setState((s) => ({ ...s, ready: false, playing: false, time: 0 }));
+      // Iframe is being torn down (typically a save-triggered reload).
+      // Stash the current time so we can restore it once the new iframe is ready.
+      const t = stateRef.current.time;
+      pendingSeekRef.current = t > 0 ? t : null;
+      setState((s) => ({ ...s, ready: false, playing: false }));
     }
+    iframeRef.current = iframe;
   }, []);
 
   useEffect(() => {
@@ -76,7 +83,21 @@ export function useTransport(): UseTransportApi {
       if (!data || typeof data !== "object" || !("type" in data)) return;
       if (data.type === "ae:ready") {
         const d = (data as IncomingReady).duration;
-        setState((s) => ({ ...s, ready: true, duration: d, time: 0, playing: false }));
+        const restore = pendingSeekRef.current;
+        pendingSeekRef.current = null;
+        setState((s) => ({
+          ...s,
+          ready: true,
+          duration: d,
+          time: restore ?? 0,
+          playing: false,
+        }));
+        if (restore != null) {
+          iframeRef.current?.contentWindow?.postMessage(
+            { type: "ae:transport", action: "seek", time: restore },
+            "*",
+          );
+        }
       } else if (data.type === "ae:tick") {
         const t = data as IncomingTick;
         setState((s) => ({ ...s, time: t.time, duration: t.duration, playing: t.playing }));
