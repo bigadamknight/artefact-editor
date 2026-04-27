@@ -54,6 +54,39 @@ export const previewBridgeScript = `
     }, '*');
   }
 
+  var audioStates = {};
+  function syncAudio(t, playing) {
+    var audios = document.querySelectorAll('audio[data-start]');
+    for (var i = 0; i < audios.length; i++) {
+      var a = audios[i];
+      var key = a.id || ('idx_' + i);
+      var start = parseFloat(a.getAttribute('data-start') || '0');
+      var duration = parseFloat(a.getAttribute('data-duration') || '99999');
+      var baseVolume = parseFloat(a.getAttribute('data-volume') || '1');
+      var inRange = t >= start && t < start + duration;
+      var prev = audioStates[key] || { wasActive: false };
+
+      if (playing && inRange) {
+        if (!prev.wasActive) {
+          a.currentTime = Math.max(0, t - start);
+          a.volume = baseVolume;
+          a.play().catch(function () {});
+          audioStates[key] = { wasActive: true };
+        } else {
+          var expected = t - start;
+          if (Math.abs(a.currentTime - expected) > 0.2) {
+            a.currentTime = Math.max(0, expected);
+          }
+        }
+      } else {
+        if (prev.wasActive || !a.paused) {
+          a.pause();
+        }
+        audioStates[key] = { wasActive: false };
+      }
+    }
+  }
+
   function startTickLoop() {
     var lastTime = -1;
     var lastPlaying = null;
@@ -62,6 +95,7 @@ export const previewBridgeScript = `
       if (tl && typeof tl.time === 'function') {
         var t = tl.time();
         var playing = typeof tl.paused === 'function' ? !tl.paused() : false;
+        syncAudio(t, playing);
         if (Math.abs(t - lastTime) > 0.01 || playing !== lastPlaying) {
           window.parent.postMessage({
             type: 'ae:tick',
