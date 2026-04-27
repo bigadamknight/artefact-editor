@@ -1,0 +1,29 @@
+{
+  "name": "@artefact-editor/adapter-html",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./inject": {
+      "types": "./dist/inject.d.ts",
+      "import": "./dist/inject.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@artefact-editor/core": "0.1.0",
+    "parse5": "^7.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

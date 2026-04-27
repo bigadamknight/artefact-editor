@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "artefact": "html-app",
+  "entry": "index.html",
+  "name": "Hero Landing",
+  "blocks": [
+    {
+      "id": "blk_hero_title",
+      "kind": "text",
+      "label": "Hero headline",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_hero_subtitle",
+      "kind": "text",
+      "label": "Hero subtitle",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_subtitle]" },
+      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+    },
+    {
+      "id": "blk_cta_label",
+      "kind": "text",
+      "label": "CTA label",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_cta_label]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_hero_image",
+      "kind": "image",
+      "label": "Hero image",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_image]" },
+      "properties": [
+        { "key": "src", "type": "asset", "mime": ["image/*"] },
+        { "key": "alt", "type": "string" }
+      ]
+    },
+    {
+      "id": "blk_brand_primary",
+      "kind": "color",
+      "label": "Brand primary",
+      "source": { "file": "styles.css", "cssVar": "--brand-primary" },
+      "properties": [{ "key": "value", "type": "color" }]
+    }
+  ]
+}

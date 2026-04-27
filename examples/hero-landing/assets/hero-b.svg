@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 320" role="img" aria-label="Hero illustration B">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="420" height="320" rx="24" fill="url(#g2)"/>
+  <polygon points="80,240 210,80 340,240" fill="white" fill-opacity="0.22"/>
+  <circle cx="210" cy="150" r="32" fill="white" fill-opacity="0.45"/>
+</svg>

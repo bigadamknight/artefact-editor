@@ -1,0 +1,28 @@
+{
+  "name": "artefact-editor",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Direct-manipulation editor for AI-generated artefacts. Adapter-based; HTML web apps in MVP.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:core": "yarn workspace @artefact-editor/core build",
+    "build:adapter-html": "yarn workspace @artefact-editor/adapter-html build",
+    "build:packages": "yarn build:core && yarn build:adapter-html",
+    "typecheck": "yarn workspaces run typecheck",
+    "dev:server": "yarn workspace @artefact-editor/server dev",
+    "dev:web": "yarn workspace @artefact-editor/web dev",
+    "dev": "yarn build:packages && concurrently -n server,web -c blue,magenta \"yarn dev:server\" \"yarn dev:web\"",
+    "start": "yarn workspace @artefact-editor/server start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "typescript": "^5.6.3"
+  },
+  "packageManager": "yarn@1.22.22"
+}
