@@ -26,6 +26,14 @@ export default function EditorPage() {
     [state.blocks, selectedBlockId],
   );
 
+  // Web-app artefacts have no audio or timing blocks. We use this to swap the
+  // editor chrome: video mode shows transport+timeline; web-app mode hides
+  // them and gives the preview the full pane at native size.
+  const isWebApp = useMemo(
+    () => !state.blocks.some((b) => b.kind === "audio" || b.kind === "timing"),
+    [state.blocks],
+  );
+
   useEffect(() => {
     if (!selectedBlockId && state.blocks.length > 0) {
       setSelectedBlockId(state.blocks[0]!.id);
@@ -142,29 +150,32 @@ export default function EditorPage() {
               ref={setIframeRef}
               entry={state.entry}
               bumpKey={state.bumpKey}
+              fit={isWebApp ? "fill" : "scaled"}
             />
           </div>
-          <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
-            <TransportBar
-              time={transport.state.time}
-              duration={transport.state.duration}
-              playing={transport.state.playing}
-              ready={transport.state.ready}
-              onToggle={transport.toggle}
-              onSeek={transport.seek}
-            />
-            <div className="min-h-0 flex-1">
-              <Timeline
-                blocks={state.blocks}
-                selectedBlockId={selectedBlockId}
-                pendingValues={state.pendingValues}
-                playheadTime={transport.state.ready ? transport.state.time : undefined}
-                onSelectBlock={setSelectedBlockId}
-                onSetProperty={(id, key, value) => setProperty(id, key, value)}
+          {isWebApp ? null : (
+            <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
+              <TransportBar
+                time={transport.state.time}
+                duration={transport.state.duration}
+                playing={transport.state.playing}
+                ready={transport.state.ready}
+                onToggle={transport.toggle}
                 onSeek={transport.seek}
               />
+              <div className="min-h-0 flex-1">
+                <Timeline
+                  blocks={state.blocks}
+                  selectedBlockId={selectedBlockId}
+                  pendingValues={state.pendingValues}
+                  playheadTime={transport.state.ready ? transport.state.time : undefined}
+                  onSelectBlock={setSelectedBlockId}
+                  onSetProperty={(id, key, value) => setProperty(id, key, value)}
+                  onSeek={transport.seek}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </main>
         <aside className="w-80 overflow-auto border-l border-border">
           <Inspector

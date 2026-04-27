@@ -3,13 +3,21 @@ import { forwardRef, useEffect, useRef, useState } from "react";
 interface PreviewFrameProps {
   entry: string;
   bumpKey: number;
+  /**
+   * "scaled" — fit a fixed-size composition (eg. 1080×1080 video frame) into
+   * the container with uniform CSS scale. Default for video artefacts.
+   *
+   * "fill" — render the iframe at the container's full size, no scaling. Right
+   * for responsive web apps where the page handles its own layout.
+   */
+  fit?: "scaled" | "fill";
 }
 
 const DEFAULT_W = 1080;
 const DEFAULT_H = 1080;
 
 export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
-  function PreviewFrame({ entry, bumpKey }, ref) {
+  function PreviewFrame({ entry, bumpKey, fit = "scaled" }, ref) {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const [natural, setNatural] = useState<{ w: number; h: number }>({ w: DEFAULT_W, h: DEFAULT_H });
     const [container, setContainer] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -44,6 +52,20 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
     const scaledH = natural.h * scale;
 
     const src = `/preview/${entry}?v=${bumpKey}`;
+
+    if (fit === "fill") {
+      return (
+        <div ref={wrapperRef} className="relative h-full w-full overflow-hidden bg-white">
+          <iframe
+            ref={ref}
+            key={bumpKey}
+            title="preview"
+            src={src}
+            className="h-full w-full border-0 bg-white"
+          />
+        </div>
+      );
+    }
 
     return (
       <div ref={wrapperRef} className="relative h-full w-full overflow-hidden">
