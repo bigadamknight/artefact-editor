@@ -6,6 +6,7 @@ import {
   type ManifestBlock,
 } from "@artefact-editor/core";
 import { findOneMatching } from "./selector.js";
+import { findScriptVar } from "./scriptVar.js";
 
 const TEXT_NODE = "#text";
 
@@ -42,6 +43,61 @@ function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function readSelectorBlock(
+  block: ManifestBlock,
+  contents: string,
+): Record<string, string> {
+  if (!("selector" in block.source)) throw new Error("not a selector block");
+  const el = findOneMatching(contents, block.source.selector);
+  const values: Record<string, string> = {};
+  for (const prop of block.properties) {
+    if (block.kind === "text" && prop.key === "text") {
+      values[prop.key] = getInnerText(el);
+    } else {
+      // Any other property is read as an HTML attribute by name.
+      // Works for src, alt, data-start, data-duration, data-volume, etc.
+      values[prop.key] = getAttr(el, prop.key);
+    }
+  }
+  return values;
+}
+
+function readCssVarBlock(
+  block: ManifestBlock,
+  contents: string,
+): Record<string, string> {
+  if (!("cssVar" in block.source)) throw new Error("not a cssVar block");
+  const value = findCssVar(contents, block.source.cssVar);
+  const values: Record<string, string> = {};
+  for (const prop of block.properties) {
+    if (prop.key !== "value") {
+      throw new Error(
+        `cssVar block ${block.id} only supports a 'value' property, got '${prop.key}'`,
+      );
+    }
+    values[prop.key] = value;
+  }
+  return values;
+}
+
+function readAstVarBlock(
+  block: ManifestBlock,
+  contents: string,
+): Record<string, string> {
+  if (!("astVar" in block.source)) throw new Error("not an astVar block");
+  const found = findScriptVar(contents, block.source.astVar);
+  const values: Record<string, string> = {};
+  for (const prop of block.properties) {
+    if (prop.key !== "value") {
+      throw new Error(
+        `astVar block ${block.id} only supports a 'value' property, got '${prop.key}'`,
+      );
+    }
+    values[prop.key] = found;
+  }
+  return values;
+}
+
 async function readBlockValues(
   block: ManifestBlock,
   fileCache: Map<string, string>,
@@ -53,40 +109,10 @@ async function readBlockValues(
     fileCache.set(block.source.file, contents);
   }
 
-  const values: Record<string, string> = {};
-
-  if ("selector" in block.source) {
-    const el = findOneMatching(contents, block.source.selector);
-    for (const prop of block.properties) {
-      if (block.kind === "text" && prop.key === "text") {
-        values[prop.key] = getInnerText(el);
-      } else if (block.kind === "image" && prop.key === "src") {
-        values[prop.key] = getAttr(el, "src");
-      } else if (block.kind === "image" && prop.key === "alt") {
-        values[prop.key] = getAttr(el, "alt");
-      } else if (prop.type === "string") {
-        values[prop.key] = getAttr(el, prop.key);
-      } else {
-        throw new Error(
-          `Unsupported property '${prop.key}' (${prop.type}) on selector block ${block.id}`,
-        );
-      }
-    }
-  } else {
-    // CSS variable source — only color/string for v1
-    const value = findCssVar(contents, block.source.cssVar);
-    for (const prop of block.properties) {
-      if (prop.key === "value") {
-        values[prop.key] = value;
-      } else {
-        throw new Error(
-          `cssVar block ${block.id} only supports a 'value' property, got '${prop.key}'`,
-        );
-      }
-    }
-  }
-
-  return values;
+  if ("selector" in block.source) return readSelectorBlock(block, contents);
+  if ("cssVar" in block.source) return readCssVarBlock(block, contents);
+  if ("astVar" in block.source) return readAstVarBlock(block, contents);
+  throw new Error(`Unknown source for block ${block.id}`);
 }
 
 export async function loadProject(files: ProjectFiles): Promise<{
@@ -108,14 +134,19 @@ export async function loadProject(files: ProjectFiles): Promise<{
       throw new Error(`block ${mb.id} references missing file: ${mb.source.file}`);
     }
     const values = await readBlockValues(mb, fileCache, files);
+    let source: Block["source"];
+    if ("selector" in mb.source) {
+      source = { tag: "selector", file: mb.source.file, selector: mb.source.selector };
+    } else if ("cssVar" in mb.source) {
+      source = { tag: "cssVar", file: mb.source.file, cssVar: mb.source.cssVar };
+    } else {
+      source = { tag: "astVar", file: mb.source.file, varName: mb.source.astVar };
+    }
     blocks.push({
       id: mb.id,
       kind: mb.kind,
       label: mb.label,
-      source:
-        "selector" in mb.source
-          ? { tag: "selector", file: mb.source.file, selector: mb.source.selector }
-          : { tag: "cssVar", file: mb.source.file, cssVar: mb.source.cssVar },
+      source,
       descriptors: mb.properties,
       values,
     });

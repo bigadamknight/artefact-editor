@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1080px; height: 1080px; overflow: hidden;
+        background: #0B0B0F;
+        font-family: "Inter", system-ui, sans-serif;
+        color: #FAFAF7;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root { position: relative; width: 1080px; height: 1080px; overflow: hidden; }
+
+      .scene {
+        position: absolute; inset: 0;
+        width: 1080px; height: 1080px;
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: flex-start;
+        padding: 96px;
+      }
+      #s2, #s3, #s4, #s5, #s6 { opacity: 0; }
+
+      /* ========== S1 — Hook (white canvas, black type — poster callback) ========== */
+      #s1 {
+        background: #FAFAF7;
+        color: #121216;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 100px 80px;
+      }
+      #s1 .hook {
+        font-weight: 800;
+        font-size: 148px;
+        letter-spacing: -0.05em;
+        line-height: 0.92;
+        color: #121216;
+      }
+      #s1 .hook .line { display: block; }
+      #s1 .hook .emph { color: #EF4444; }
+
+      /* ========== S2 — Concession (dark) ========== */
+      #s2 .c-line { font-weight: 700; font-size: 88px; letter-spacing: -0.035em; line-height: 1.05; max-width: 900px; }
+      #s2 .c-line.mini { margin-top: 32px; font-size: 52px; font-weight: 600; color: #C7CBD4; max-width: 880px; }
+      #s2 .c-line .warn { color: #F87171; }
+
+      /* ========== S3 — Why (dark) ========== */
+      #s3 .why-header {
+        font-weight: 600; font-size: 26px; letter-spacing: 0.22em;
+        text-transform: uppercase; color: #2DD4BF; margin-bottom: 44px;
+      }
+      #s3 .why-body {
+        font-weight: 600; font-size: 60px; line-height: 1.18; letter-spacing: -0.015em;
+        color: #FAFAF7; max-width: 900px;
+      }
+      #s3 .why-body .light { color: #C7CBD4; }
+      #s3 .verdict {
+        margin-top: 48px;
+        display: flex; align-items: baseline; gap: 22px;
+      }
+      #s3 .verdict .q {
+        font-weight: 700; font-size: 68px; letter-spacing: -0.02em; color: #FAFAF7;
+      }
+      #s3 .verdict .no {
+        font-weight: 800; font-size: 128px; letter-spacing: -0.05em; color: #F87171; line-height: 0.95;
+      }
+
+      /* ========== S4 — Correct approach (dark) ========== */
+      #s4 .approach-kicker {
+        font-weight: 600; font-size: 26px; letter-spacing: 0.22em;
+        text-transform: uppercase; color: #2DD4BF; margin-bottom: 40px;
+      }
+      #s4 .approach-body {
+        font-weight: 600; font-size: 50px; line-height: 1.22; letter-spacing: -0.015em;
+        color: #FAFAF7; max-width: 900px;
+      }
+      #s4 .approach-body em { color: #2DD4BF; font-style: normal; font-weight: 700; }
+      #s4 .safe {
+        margin-top: 44px;
+        font-weight: 700; font-size: 58px; letter-spacing: -0.02em; color: #FAFAF7;
+        line-height: 1.12; max-width: 900px;
+      }
+      #s4 .safe .accent { color: #2DD4BF; }
+
+      /* ========== S5 — Tagline (dark, centered hero) ========== */
+      #s5 { justify-content: center; align-items: center; text-align: center; }
+      #s5 .tag-line {
+        font-weight: 800; font-size: 112px; letter-spacing: -0.045em; line-height: 1.02;
+      }
+      #s5 .tag-line.b { margin-top: 24px; color: #2DD4BF; }
+      #s5 .tag-rule {
+        margin-top: 48px; width: 200px; height: 4px; background: #FAFAF7;
+        transform-origin: center;
+      }
+
+      /* ========== S6 — CTA (white) ========== */
+      #s6 {
+        background: #FAFAF7;
+        color: #121216;
+        justify-content: center; align-items: center;
+        text-align: center;
+      }
+      #s6 .cta-kicker {
+        font-weight: 600; font-size: 26px; letter-spacing: 0.22em;
+        text-transform: uppercase; color: #4B5563; margin-bottom: 32px;
+      }
+      #s6 .cta-url {
+        font-weight: 800; font-size: 140px; letter-spacing: -0.045em; line-height: 1;
+        color: #121216;
+      }
+      #s6 .cta-url .dot { color: #2DD4BF; }
+      #s6 .cta-path {
+        margin-top: 18px;
+        font-weight: 500; font-size: 28px; letter-spacing: -0.005em;
+        color: #4B5563;
+      }
+      #s6 .cta-brand {
+        margin-top: 64px;
+        height: 36px;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="42"
+      data-width="1080"
+      data-height="1080"
+    >
+      <!-- S1: Hook -->
+      <div id="s1" class="scene">
+        <div class="hook">
+          <span class="line">Please</span>
+          <span class="line">don&rsquo;t drop</span>
+          <span class="line">your survey</span>
+          <span class="line">data into</span>
+          <span class="line"><span class="emph">an AI chat.</span></span>
+        </div>
+      </div>
+
+      <!-- S2: Concession -->
+      <div id="s2" class="scene">
+        <div class="c-line">You can.<br/>It will answer.</div>
+        <div class="c-line mini">It will probably be <span class="warn">wrong</span> &mdash;<br/>in ways you may not notice.</div>
+      </div>
+
+      <!-- S3: Why -->
+      <div id="s3" class="scene">
+        <div class="why-header">Here&rsquo;s why</div>
+        <div class="why-body">
+          Models read your data as text.<br/>
+          <span class="light">They predict what the numbers would probably look like.</span>
+        </div>
+        <div class="verdict">
+          <span class="q">Good enough?</span>
+          <span class="no">No.</span>
+        </div>
+      </div>
+
+      <!-- S4: Correct approach -->
+      <div id="s4" class="scene">
+        <div class="approach-kicker">The correct approach</div>
+        <div class="approach-body">
+          Combine the power of <em>agents</em> with the integrity of <em>tabulation engines</em> and <em>insight tools</em> &mdash; built on decades of real-world testing.
+        </div>
+        <div class="safe"><span class="accent">Safe, secure,</span> and under your control.</div>
+      </div>
+
+      <!-- S5: Tagline -->
+      <div id="s5" class="scene">
+        <div class="tag-line" data-edit-id="blk_s5_line1">Speak English.</div>
+        <div class="tag-line b" data-edit-id="blk_s5_line2">Get results you can trust.</div>
+        <div class="tag-rule"></div>
+      </div>
+
+      <!-- S6: CTA -->
+      <div id="s6" class="scene">
+        <div class="cta-kicker" data-edit-id="blk_s6_kicker">Read the full article</div>
+        <div class="cta-url">bayesprice<span class="dot">.com</span></div>
+        <div class="cta-path" data-edit-id="blk_s6_path">/article/why-platinum-not-raw-ai</div>
+        <img class="cta-brand" src="bayespricelogo.svg" alt="Bayes Price" />
+      </div>
+
+      <audio
+        id="narration"
+        data-start="0"
+        data-duration="38.1"
+        data-track-index="0"
+        src="narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <audio
+        id="music"
+        data-start="0"
+        data-duration="42"
+        data-track-index="1"
+        src="music.wav"
+        data-volume="0.15"
+      ></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const T1 = 4.0;
+      const T2 = 9.6;
+      const T3 = 19.1;
+      const T4 = 31.7;
+      const T5 = 35.1;
+
+      // S1 — Hook entrance (pre-hide so lines don't flash visible before stagger fires)
+      tl.set("#s1 .hook .line", { y: 60, opacity: 0 }, 0);
+      tl.to("#s1 .hook .line", { y: 0, opacity: 1, duration: 0.55, ease: "expo.out", stagger: 0.13 }, 0.15);
+
+      // S1 -> S2 transition (color dip to black, then blur-in to dark scene)
+      tl.to("#s1", { opacity: 0, duration: 0.25, ease: "power2.in" }, T1);
+      tl.fromTo("#s2",
+        { filter: "blur(14px)", scale: 0.97, opacity: 0 },
+        { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.55, ease: "power2.inOut" },
+        T1 + 0.15);
+
+      // S2 — Concession entrance
+      tl.from("#s2 .c-line:not(.mini)", { y: 40, opacity: 0, duration: 0.6, ease: "power3.out" }, T1 + 0.4);
+      tl.from("#s2 .c-line.mini", { y: 30, opacity: 0, duration: 0.55, ease: "power2.out" }, 6.0);
+
+      // S2 -> S3 blur crossfade
+      tl.to("#s2", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.5, ease: "power2.inOut" }, T2);
+      tl.fromTo("#s3",
+        { filter: "blur(10px)", scale: 0.97, opacity: 0 },
+        { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.5, ease: "power2.inOut" },
+        T2 + 0.1);
+
+      // S3 — Why entrance
+      tl.from("#s3 .why-header", { y: 16, opacity: 0, duration: 0.4, ease: "power2.out" }, T2 + 0.3);
+      tl.from("#s3 .why-body", { y: 24, opacity: 0, duration: 0.7, ease: "power3.out" }, T2 + 0.55);
+      tl.from("#s3 .verdict .q", { y: 20, opacity: 0, duration: 0.5, ease: "expo.out" }, 17.5);
+      tl.from("#s3 .verdict .no", { scale: 1.2, opacity: 0, duration: 0.55, ease: "expo.out" }, 18.55);
+
+      // S3 -> S4 blur crossfade
+      tl.to("#s3", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.5, ease: "power2.inOut" }, T3);
+      tl.fromTo("#s4",
+        { filter: "blur(10px)", scale: 0.97, opacity: 0 },
+        { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.5, ease: "power2.inOut" },
+        T3 + 0.1);
+
+      // S4 — Correct approach entrance
+      tl.from("#s4 .approach-kicker", { y: 16, opacity: 0, duration: 0.4, ease: "power2.out" }, T3 + 0.3);
+      tl.from("#s4 .approach-body", { y: 28, opacity: 0, duration: 0.8, ease: "power3.out" }, T3 + 0.55);
+      tl.from("#s4 .safe", { y: 24, opacity: 0, duration: 0.6, ease: "expo.out" }, 28.9);
+
+      // S4 -> S5 blur crossfade
+      tl.to("#s4", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.5, ease: "power2.inOut" }, T4);
+      tl.fromTo("#s5",
+        { filter: "blur(10px)", scale: 0.97, opacity: 0 },
+        { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.5, ease: "power2.inOut" },
+        T4 + 0.1);
+
+      // S5 — Tagline entrance
+      tl.from("#s5 .tag-line:nth-of-type(1)", { y: 40, opacity: 0, duration: 0.55, ease: "expo.out" }, T4 + 0.35);
+      tl.from("#s5 .tag-line.b", { y: 40, opacity: 0, duration: 0.6, ease: "power3.out" }, T4 + 0.75);
+      tl.from("#s5 .tag-rule", { scaleX: 0, duration: 0.5, ease: "power3.out" }, T4 + 1.25);
+
+      // S5 -> S6 dip to white
+      tl.to("#s5", { opacity: 0, duration: 0.3, ease: "power2.in" }, T5);
+      tl.fromTo("#s6",
+        { opacity: 0, scale: 0.98 },
+        { opacity: 1, scale: 1, duration: 0.55, ease: "power2.inOut" },
+        T5 + 0.15);
+
+      // S6 — CTA entrance
+      tl.from("#s6 .cta-kicker", { y: 14, opacity: 0, duration: 0.4, ease: "power2.out" }, T5 + 0.45);
+      tl.from("#s6 .cta-url", { y: 40, scale: 1.05, opacity: 0, duration: 0.7, ease: "expo.out" }, T5 + 0.7);
+      tl.from("#s6 .cta-path", { y: 16, opacity: 0, duration: 0.4, ease: "power2.out" }, T5 + 1.2);
+      tl.from("#s6 .cta-brand", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, T5 + 1.45);
+
+      // Duck music toward end
+      tl.to("#music", { volume: 0, duration: 1.5, ease: "power1.in" }, 40);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

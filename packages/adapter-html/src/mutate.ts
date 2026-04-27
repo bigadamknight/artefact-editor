@@ -4,6 +4,7 @@ import {
   findOneMatching,
   getElementSourceLocation,
 } from "./selector.js";
+import { locateScriptVarValue } from "./scriptVar.js";
 
 interface PendingEdit {
   start: number;
@@ -107,6 +108,20 @@ function planCssVarEdit(source: string, block: Block, newValue: string): Pending
   };
 }
 
+function planAstVarEdit(source: string, block: Block, newValue: string): PendingEdit {
+  if (block.source.tag !== "astVar") {
+    throw new Error("planAstVarEdit called on non-astVar block");
+  }
+  const trimmed = String(newValue).trim();
+  if (!/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+    throw new Error(
+      `Script variable ${block.source.varName} must be a numeric literal, got: ${newValue}`,
+    );
+  }
+  const loc = locateScriptVarValue(source, block.source.varName);
+  return { start: loc.start, end: loc.end, replacement: trimmed };
+}
+
 export async function applyCommands(
   files: ProjectFiles,
   blocks: Block[],
@@ -129,8 +144,10 @@ export async function applyCommands(
     let edit: PendingEdit;
     if (block.source.tag === "selector") {
       edit = planSelectorEdit(source, block, cmd.key, String(cmd.value));
-    } else {
+    } else if (block.source.tag === "cssVar") {
       edit = planCssVarEdit(source, block, String(cmd.value));
+    } else {
+      edit = planAstVarEdit(source, block, String(cmd.value));
     }
     edits.push(edit);
   }

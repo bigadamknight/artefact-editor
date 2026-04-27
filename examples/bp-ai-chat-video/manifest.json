@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "artefact": "hyperframes",
+  "entry": "index.html",
+  "name": "Why Platinum, not raw AI? (video)",
+  "blocks": [
+    {
+      "id": "blk_s5_line1",
+      "kind": "text",
+      "label": "S5: Tagline line 1",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s5_line1]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s5_line2",
+      "kind": "text",
+      "label": "S5: Tagline line 2",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s5_line2]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s6_kicker",
+      "kind": "text",
+      "label": "S6: CTA kicker",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_kicker]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s6_path",
+      "kind": "text",
+      "label": "S6: Article URL path",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s6_path]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_t1",
+      "kind": "timing",
+      "label": "T1 — S1 hook out",
+      "source": { "file": "index.html", "astVar": "T1" },
+      "properties": [{ "key": "value", "type": "number", "min": 0, "step": 0.1 }]
+    },
+    {
+      "id": "blk_t2",
+      "kind": "timing",
+      "label": "T2 — S2 concession out",
+      "source": { "file": "index.html", "astVar": "T2" },
+      "properties": [{ "key": "value", "type": "number", "min": 0, "step": 0.1 }]
+    },
+    {
+      "id": "blk_t3",
+      "kind": "timing",
+      "label": "T3 — S3 why out",
+      "source": { "file": "index.html", "astVar": "T3" },
+      "properties": [{ "key": "value", "type": "number", "min": 0, "step": 0.1 }]
+    },
+    {
+      "id": "blk_t4",
+      "kind": "timing",
+      "label": "T4 — S4 approach out",
+      "source": { "file": "index.html", "astVar": "T4" },
+      "properties": [{ "key": "value", "type": "number", "min": 0, "step": 0.1 }]
+    },
+    {
+      "id": "blk_t5",
+      "kind": "timing",
+      "label": "T5 — S5 tagline out",
+      "source": { "file": "index.html", "astVar": "T5" },
+      "properties": [{ "key": "value", "type": "number", "min": 0, "step": 0.1 }]
+    },
+    {
+      "id": "blk_narration",
+      "kind": "audio",
+      "label": "Narration",
+      "source": { "file": "index.html", "selector": "#narration" },
+      "properties": [
+        { "key": "data-start", "type": "number", "min": 0, "step": 0.1 },
+        { "key": "data-duration", "type": "number", "min": 0, "step": 0.1 },
+        { "key": "data-volume", "type": "number", "min": 0, "max": 1, "step": 0.05 }
+      ]
+    },
+    {
+      "id": "blk_music",
+      "kind": "audio",
+      "label": "Music",
+      "source": { "file": "index.html", "selector": "#music" },
+      "properties": [
+        { "key": "data-start", "type": "number", "min": 0, "step": 0.1 },
+        { "key": "data-duration", "type": "number", "min": 0, "step": 0.1 },
+        { "key": "data-volume", "type": "number", "min": 0, "max": 1, "step": 0.05 }
+      ]
+    }
+  ]
+}

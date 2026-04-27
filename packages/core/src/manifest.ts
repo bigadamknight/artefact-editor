@@ -3,6 +3,7 @@ import { z } from "zod";
 const sourceSchema = z.union([
   z.object({ file: z.string(), selector: z.string() }),
   z.object({ file: z.string(), cssVar: z.string() }),
+  z.object({ file: z.string(), astVar: z.string() }),
 ]);
 
 const descriptorSchema = z.discriminatedUnion("type", [
@@ -21,7 +22,7 @@ const descriptorSchema = z.discriminatedUnion("type", [
 
 const blockSchema = z.object({
   id: z.string().regex(/^blk_[a-z0-9_]+$/, "Block ID must match blk_<snake_case>"),
-  kind: z.enum(["text", "image", "color"]),
+  kind: z.enum(["text", "image", "color", "audio", "timing"]),
   label: z.string(),
   source: sourceSchema,
   properties: z.array(descriptorSchema).min(1),
@@ -29,7 +30,7 @@ const blockSchema = z.object({
 
 export const manifestSchema = z.object({
   version: z.literal(1),
-  artefact: z.literal("html-app"),
+  artefact: z.enum(["html-app", "hyperframes"]),
   entry: z.string(),
   name: z.string().optional(),
   blocks: z.array(blockSchema),

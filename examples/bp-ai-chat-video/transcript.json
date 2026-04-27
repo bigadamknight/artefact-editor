@@ -1,0 +1,452 @@
+[
+  {
+    "text": "Please",
+    "start": 0.07,
+    "end": 0.4
+  },
+  {
+    "text": "do",
+    "start": 0.46,
+    "end": 0.57
+  },
+  {
+    "text": "not",
+    "start": 0.57,
+    "end": 0.77
+  },
+  {
+    "text": "drop",
+    "start": 0.78,
+    "end": 1.03
+  },
+  {
+    "text": "your",
+    "start": 1.17,
+    "end": 1.34
+  },
+  {
+    "text": "survey",
+    "start": 1.35,
+    "end": 1.75
+  },
+  {
+    "text": "data",
+    "start": 1.77,
+    "end": 2.07
+  },
+  {
+    "text": "into",
+    "start": 2.17,
+    "end": 2.54
+  },
+  {
+    "text": "an",
+    "start": 2.71,
+    "end": 2.95
+  },
+  {
+    "text": "AI",
+    "start": 3.05,
+    "end": 3.26
+  },
+  {
+    "text": "chat.",
+    "start": 3.32,
+    "end": 4
+  },
+  {
+    "text": "You",
+    "start": 4.07,
+    "end": 4.33
+  },
+  {
+    "text": "can.",
+    "start": 4.33,
+    "end": 5
+  },
+  {
+    "text": "It",
+    "start": 5.07,
+    "end": 5.17
+  },
+  {
+    "text": "will",
+    "start": 5.17,
+    "end": 5.51
+  },
+  {
+    "text": "answer.",
+    "start": 5.51,
+    "end": 6.28
+  },
+  {
+    "text": "It",
+    "start": 6.35,
+    "end": 6.38
+  },
+  {
+    "text": "will",
+    "start": 6.38,
+    "end": 6.59
+  },
+  {
+    "text": "probably",
+    "start": 6.59,
+    "end": 7.01
+  },
+  {
+    "text": "be",
+    "start": 7.01,
+    "end": 7.1
+  },
+  {
+    "text": "wrong",
+    "start": 7.11,
+    "end": 7.31
+  },
+  {
+    "text": "in",
+    "start": 7.45,
+    "end": 7.63
+  },
+  {
+    "text": "ways",
+    "start": 7.63,
+    "end": 8.1
+  },
+  {
+    "text": "you",
+    "start": 8.1,
+    "end": 8.34
+  },
+  {
+    "text": "may",
+    "start": 8.45,
+    "end": 8.8
+  },
+  {
+    "text": "not",
+    "start": 8.8,
+    "end": 9.15
+  },
+  {
+    "text": "notice.",
+    "start": 9.15,
+    "end": 10.05
+  },
+  {
+    "text": "Here's",
+    "start": 10.31,
+    "end": 10.7
+  },
+  {
+    "text": "why.",
+    "start": 10.7,
+    "end": 11.2
+  },
+  {
+    "text": "Models",
+    "start": 11.27,
+    "end": 11.77
+  },
+  {
+    "text": "read",
+    "start": 11.77,
+    "end": 12.15
+  },
+  {
+    "text": "your",
+    "start": 12.15,
+    "end": 12.53
+  },
+  {
+    "text": "data",
+    "start": 12.53,
+    "end": 12.91
+  },
+  {
+    "text": "as",
+    "start": 12.91,
+    "end": 13.1
+  },
+  {
+    "text": "text.",
+    "start": 13.1,
+    "end": 13.75
+  },
+  {
+    "text": "They",
+    "start": 13.87,
+    "end": 14.02
+  },
+  {
+    "text": "predict",
+    "start": 14.02,
+    "end": 14.41
+  },
+  {
+    "text": "what",
+    "start": 14.41,
+    "end": 14.59
+  },
+  {
+    "text": "the",
+    "start": 14.63,
+    "end": 14.79
+  },
+  {
+    "text": "numerical",
+    "start": 14.79,
+    "end": 15.29
+  },
+  {
+    "text": "answers",
+    "start": 15.29,
+    "end": 15.7
+  },
+  {
+    "text": "would",
+    "start": 15.74,
+    "end": 15.87
+  },
+  {
+    "text": "probably",
+    "start": 15.97,
+    "end": 16.35
+  },
+  {
+    "text": "look",
+    "start": 16.51,
+    "end": 16.75
+  },
+  {
+    "text": "like.",
+    "start": 16.85,
+    "end": 17.57
+  },
+  {
+    "text": "Good",
+    "start": 17.67,
+    "end": 17.92
+  },
+  {
+    "text": "enough?",
+    "start": 17.92,
+    "end": 18.63
+  },
+  {
+    "text": "No.",
+    "start": 18.71,
+    "end": 19.64
+  },
+  {
+    "text": "The",
+    "start": 19.71,
+    "end": 19.94
+  },
+  {
+    "text": "correct",
+    "start": 19.94,
+    "end": 20.63
+  },
+  {
+    "text": "approach.",
+    "start": 20.63,
+    "end": 21.44
+  },
+  {
+    "text": "Combine",
+    "start": 21.51,
+    "end": 21.96
+  },
+  {
+    "text": "the",
+    "start": 21.96,
+    "end": 22.17
+  },
+  {
+    "text": "power",
+    "start": 22.18,
+    "end": 22.47
+  },
+  {
+    "text": "of",
+    "start": 22.55,
+    "end": 22.69
+  },
+  {
+    "text": "agents",
+    "start": 22.69,
+    "end": 23.15
+  },
+  {
+    "text": "with",
+    "start": 23.16,
+    "end": 23.34
+  },
+  {
+    "text": "the",
+    "start": 23.38,
+    "end": 23.51
+  },
+  {
+    "text": "integrity",
+    "start": 23.61,
+    "end": 23.99
+  },
+  {
+    "text": "of",
+    "start": 23.99,
+    "end": 24.15
+  },
+  {
+    "text": "tabulation",
+    "start": 24.15,
+    "end": 24.7
+  },
+  {
+    "text": "engines",
+    "start": 24.76,
+    "end": 25.21
+  },
+  {
+    "text": "and",
+    "start": 25.51,
+    "end": 25.66
+  },
+  {
+    "text": "insight",
+    "start": 25.66,
+    "end": 26.19
+  },
+  {
+    "text": "tools",
+    "start": 26.19,
+    "end": 26.47
+  },
+  {
+    "text": "built",
+    "start": 26.61,
+    "end": 26.93
+  },
+  {
+    "text": "on",
+    "start": 26.93,
+    "end": 27.08
+  },
+  {
+    "text": "decades",
+    "start": 27.08,
+    "end": 27.5
+  },
+  {
+    "text": "of",
+    "start": 27.61,
+    "end": 27.73
+  },
+  {
+    "text": "real-world",
+    "start": 27.76,
+    "end": 28.5
+  },
+  {
+    "text": "testing.",
+    "start": 28.5,
+    "end": 29.08
+  },
+  {
+    "text": "Safe,",
+    "start": 29.15,
+    "end": 29.6
+  },
+  {
+    "text": "secure,",
+    "start": 29.6,
+    "end": 30.29
+  },
+  {
+    "text": "and",
+    "start": 30.29,
+    "end": 30.55
+  },
+  {
+    "text": "under",
+    "start": 30.55,
+    "end": 30.98
+  },
+  {
+    "text": "your",
+    "start": 30.98,
+    "end": 31.33
+  },
+  {
+    "text": "control.",
+    "start": 31.33,
+    "end": 32.24
+  },
+  {
+    "text": "Speak",
+    "start": 32.31,
+    "end": 32.79
+  },
+  {
+    "text": "English.",
+    "start": 32.79,
+    "end": 33.56
+  },
+  {
+    "text": "Get",
+    "start": 33.63,
+    "end": 33.77
+  },
+  {
+    "text": "results",
+    "start": 33.77,
+    "end": 34.25
+  },
+  {
+    "text": "you",
+    "start": 34.25,
+    "end": 34.46
+  },
+  {
+    "text": "can",
+    "start": 34.46,
+    "end": 34.59
+  },
+  {
+    "text": "trust.",
+    "start": 34.73,
+    "end": 35.24
+  },
+  {
+    "text": "Read",
+    "start": 35.31,
+    "end": 35.49
+  },
+  {
+    "text": "the",
+    "start": 35.49,
+    "end": 35.63
+  },
+  {
+    "text": "full",
+    "start": 35.7,
+    "end": 35.93
+  },
+  {
+    "text": "article",
+    "start": 35.93,
+    "end": 36.27
+  },
+  {
+    "text": "at",
+    "start": 36.41,
+    "end": 36.49
+  },
+  {
+    "text": "baseprice.com.",
+    "start": 36.49,
+    "end": 37.68
+  }
+]

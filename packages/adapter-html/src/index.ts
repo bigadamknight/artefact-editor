@@ -15,3 +15,4 @@ export const htmlAdapter: Adapter = {
 
 export { previewBridgeScript } from "./inject.js";
 export { loadProject } from "./load.js";
+export { findScriptVar, locateScriptVarValue } from "./scriptVar.js";
