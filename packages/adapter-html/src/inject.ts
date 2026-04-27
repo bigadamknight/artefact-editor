@@ -46,11 +46,23 @@ export const previewBridgeScript = `
     return keys.length ? tls[keys[0]] : null;
   }
 
+  function getNaturalSize() {
+    var root = document.querySelector('[data-composition-id], #root');
+    var w = root && root.getAttribute('data-width');
+    var h = root && root.getAttribute('data-height');
+    var width = w ? parseFloat(w) : (root ? root.scrollWidth : document.documentElement.scrollWidth);
+    var height = h ? parseFloat(h) : (root ? root.scrollHeight : document.documentElement.scrollHeight);
+    return { width: width || null, height: height || null };
+  }
+
   function postReady() {
     var tl = getTimeline();
+    var size = getNaturalSize();
     window.parent.postMessage({
       type: 'ae:ready',
-      duration: tl && typeof tl.duration === 'function' ? tl.duration() : null
+      duration: tl && typeof tl.duration === 'function' ? tl.duration() : null,
+      width: size.width,
+      height: size.height
     }, '*');
   }
 
