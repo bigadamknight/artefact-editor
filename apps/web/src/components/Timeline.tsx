@@ -5,8 +5,10 @@ interface TimelineProps {
   blocks: Block[];
   selectedBlockId: string | null;
   pendingValues: Map<string, Record<string, string | number>>;
+  playheadTime?: number;
   onSelectBlock: (id: string) => void;
   onSetProperty: (blockId: string, key: string, value: number) => void;
+  onSeek?: (time: number) => void;
 }
 
 interface AudioClip {
@@ -44,8 +46,10 @@ export function Timeline({
   blocks,
   selectedBlockId,
   pendingValues,
+  playheadTime,
   onSelectBlock,
   onSetProperty,
+  onSeek,
 }: TimelineProps) {
   const [pxPerSec, setPxPerSec] = useState(50);
 
@@ -141,8 +145,65 @@ export function Timeline({
               onSetProperty(blockId, "value", Math.max(0, round1(value)))
             }
           />
+          {typeof playheadTime === "number" ? (
+            <Playhead
+              time={playheadTime}
+              pxPerSec={pxPerSec}
+              totalRows={audioClips.length + (timingMarkers.length > 0 ? 1 : 0)}
+              onSeek={onSeek}
+              compositionDuration={compositionDuration}
+            />
+          ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface PlayheadProps {
+  time: number;
+  pxPerSec: number;
+  totalRows: number;
+  compositionDuration: number;
+  onSeek?: (time: number) => void;
+}
+
+function Playhead({ time, pxPerSec, totalRows, compositionDuration, onSeek }: PlayheadProps) {
+  const left = TRACK_HEADER_W + Math.max(0, time) * pxPerSec;
+  const height = totalRows * LANE_HEIGHT + RULER_HEIGHT;
+  const dragRef = useRef<{ startX: number; startTime: number } | null>(null);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!onSeek) return;
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startTime: time };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!onSeek || !dragRef.current) return;
+    const deltaSec = (e.clientX - dragRef.current.startX) / pxPerSec;
+    const next = Math.max(0, Math.min(compositionDuration, dragRef.current.startTime + deltaSec));
+    onSeek(next);
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    dragRef.current = null;
+  };
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      className="absolute top-0 z-20"
+      style={{
+        left: left - 6,
+        width: 12,
+        height,
+        cursor: onSeek ? "ew-resize" : "default",
+        touchAction: "none",
+      }}
+    >
+      <div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 bg-red-500" />
+      <div className="absolute left-1/2 top-0 h-2 w-3 -translate-x-1/2 rounded-sm bg-red-500" />
     </div>
   );
 }

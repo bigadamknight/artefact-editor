@@ -1,38 +1,51 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
 import { useSelection } from "../hooks/useSelection.js";
+import { useTransport } from "../hooks/useTransport.js";
 import { Inspector } from "../components/Inspector.js";
 import { PreviewFrame } from "../components/PreviewFrame.js";
 import { Timeline } from "../components/Timeline.js";
 import { TopBar } from "../components/TopBar.js";
+import { TransportBar } from "../components/TransportBar.js";
 
 export default function EditorPage() {
   const { state, setProperty, save } = useDoc();
   const { selectedBlockId, setSelectedBlockId } = useSelection();
+  const transport = useTransport();
+  const setIframeRef = useCallback(
+    (el: HTMLIFrameElement | null) => {
+      transport.registerIframe(el);
+    },
+    [transport.registerIframe],
+  );
 
   const selectedBlock = useMemo(
     () => state.blocks.find((b) => b.id === selectedBlockId) ?? null,
     [state.blocks, selectedBlockId],
   );
 
-  // Auto-select first block once data lands.
   useEffect(() => {
     if (!selectedBlockId && state.blocks.length > 0) {
       setSelectedBlockId(state.blocks[0]!.id);
     }
   }, [selectedBlockId, state.blocks, setSelectedBlockId]);
 
-  // Cmd/Ctrl-S to save.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         if (state.isDirty && !state.saving) void save();
+      } else if (e.code === "Space" && transport.state.ready) {
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag !== "INPUT" && tag !== "TEXTAREA") {
+          e.preventDefault();
+          transport.toggle();
+        }
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.isDirty, state.saving, save]);
+  }, [state.isDirty, state.saving, save, transport]);
 
   const valuesForSelected = useMemo(() => {
     if (!selectedBlock) return {};
@@ -104,16 +117,32 @@ export default function EditorPage() {
         </aside>
         <main className="flex min-w-0 flex-1 flex-col bg-muted">
           <div className="min-h-0 flex-1">
-            <PreviewFrame entry={state.entry} bumpKey={state.bumpKey} />
-          </div>
-          <div className="h-64 shrink-0 border-t border-border">
-            <Timeline
-              blocks={state.blocks}
-              selectedBlockId={selectedBlockId}
-              pendingValues={state.pendingValues}
-              onSelectBlock={setSelectedBlockId}
-              onSetProperty={(id, key, value) => setProperty(id, key, value)}
+            <PreviewFrame
+              ref={setIframeRef}
+              entry={state.entry}
+              bumpKey={state.bumpKey}
             />
+          </div>
+          <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
+            <TransportBar
+              time={transport.state.time}
+              duration={transport.state.duration}
+              playing={transport.state.playing}
+              ready={transport.state.ready}
+              onToggle={transport.toggle}
+              onSeek={transport.seek}
+            />
+            <div className="min-h-0 flex-1">
+              <Timeline
+                blocks={state.blocks}
+                selectedBlockId={selectedBlockId}
+                pendingValues={state.pendingValues}
+                playheadTime={transport.state.ready ? transport.state.time : undefined}
+                onSelectBlock={setSelectedBlockId}
+                onSetProperty={(id, key, value) => setProperty(id, key, value)}
+                onSeek={transport.seek}
+              />
+            </div>
           </div>
         </main>
         <aside className="w-80 overflow-auto border-l border-border">
