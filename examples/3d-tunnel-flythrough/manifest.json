@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "artefact": "hyperframes",
+  "entry": "index.html",
+  "name": "3D Tunnel Fly-through (gojiberry-style)",
+  "blocks": [
+    {
+      "id": "blk_lede",
+      "kind": "text",
+      "label": "Lede line",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_lede]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_slam",
+      "kind": "text",
+      "label": "Slam line",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_slam]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    }
+  ]
+}
