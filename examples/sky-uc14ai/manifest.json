@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "artefact": "html-app",
+  "entry": "index.html",
+  "name": "Sky uc14ai (Platinum)",
+  "blocks": [
+    {
+      "id": "blk_hero_logo",
+      "kind": "image",
+      "label": "Hero logo",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_logo]" },
+      "properties": [
+        { "key": "src", "type": "asset", "mime": ["image/*"] },
+        { "key": "alt", "type": "string" }
+      ]
+    },
+    {
+      "id": "blk_hero_title",
+      "kind": "text",
+      "label": "Hero title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_hero_subtitle",
+      "kind": "text",
+      "label": "Hero subtitle",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_subtitle]" },
+      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+    },
+    {
+      "id": "blk_pain_1_title",
+      "kind": "text",
+      "label": "Pain card 1 title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_1_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pain_2_title",
+      "kind": "text",
+      "label": "Pain card 2 title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_2_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pain_3_title",
+      "kind": "text",
+      "label": "Pain card 3 title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_3_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pain_4_title",
+      "kind": "text",
+      "label": "Pain card 4 title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_4_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pillar_collect",
+      "kind": "text",
+      "label": "Pillar: Collect",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_collect]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pillar_analyse",
+      "kind": "text",
+      "label": "Pillar: Analyse",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_analyse]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_pillar_act",
+      "kind": "text",
+      "label": "Pillar: Act",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_act]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_brand_orange",
+      "kind": "color",
+      "label": "Brand: Sky orange",
+      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-orange" },
+      "properties": [{ "key": "value", "type": "color" }]
+    },
+    {
+      "id": "blk_brand_pink",
+      "kind": "color",
+      "label": "Brand: Sky pink",
+      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-pink" },
+      "properties": [{ "key": "value", "type": "color" }]
+    },
+    {
+      "id": "blk_brand_blue",
+      "kind": "color",
+      "label": "Brand: Sky blue",
+      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-blue" },
+      "properties": [{ "key": "value", "type": "color" }]
+    }
+  ]
+}
