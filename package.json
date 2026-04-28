@@ -2,7 +2,7 @@
   "name": "artefact-editor",
   "private": true,
   "version": "0.1.0",
-  "description": "Direct-manipulation editor for AI-generated artefacts. Adapter-based; HTML web apps in MVP.",
+  "description": "Direct-manipulation editor for AI-generated artefacts — HTML web apps, hyperframes videos, PIL marketing graphics.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,12 +13,15 @@
   "scripts": {
     "build:core": "yarn workspace @artefact-editor/core build",
     "build:adapter-html": "yarn workspace @artefact-editor/adapter-html build",
-    "build:packages": "yarn build:core && yarn build:adapter-html",
+    "build:adapter-image-template": "yarn workspace @artefact-editor/adapter-image-template build",
+    "build:packages": "yarn build:core && yarn build:adapter-html && yarn build:adapter-image-template",
+    "build:web": "yarn workspace @artefact-editor/web build",
+    "build": "yarn build:packages && yarn build:web",
     "typecheck": "yarn workspaces run typecheck",
-    "dev:server": "yarn workspace @artefact-editor/server dev",
+    "dev:cli": "yarn workspace @artefact-editor/cli dev",
     "dev:web": "yarn workspace @artefact-editor/web dev",
-    "dev": "yarn build:packages && concurrently -n server,web -c blue,magenta \"yarn dev:server\" \"yarn dev:web\"",
-    "start": "yarn workspace @artefact-editor/server start"
+    "dev": "yarn build:packages && concurrently -n cli,web -c blue,magenta \"yarn dev:cli\" \"yarn dev:web\"",
+    "start": "yarn workspace @artefact-editor/cli start"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

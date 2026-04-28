@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { spawn } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
-import { extname, resolve } from "node:path";
+import { extname, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/core";
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
 import { imageTemplateAdapter } from "@artefact-editor/adapter-image-template";
@@ -152,7 +153,7 @@ ${className}(data).save(${JSON.stringify(out)})
 print("rendered", ${JSON.stringify(out)})
 `;
 
-  return new Promise((resolveRes) => {
+  return new Promise<Response>((resolveRes) => {
     const child = spawn("python3", ["-c", py], { cwd: projectRoot });
     let stdout = "";
     let stderr = "";
@@ -221,7 +222,56 @@ app.get("/preview/*", async (c) => {
   return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": mime });
 });
 
+// Serve the built web bundle from /. When running via `yarn dev` this is
+// skipped — Vite owns localhost:5173 and proxies /api + /preview here. When
+// running standalone (`artefact-editor <dir>`), the user hits this server
+// directly and we hand them the editor SPA.
+const here = dirname(fileURLToPath(import.meta.url));
+const webDist = resolve(here, "..", "..", "web", "dist");
+let webDistExists = false;
+try {
+  const s = await stat(webDist);
+  webDistExists = s.isDirectory();
+} catch {
+  webDistExists = false;
+}
+
+if (webDistExists) {
+  app.get("/*", async (c) => {
+    const url = new URL(c.req.url);
+    let rel = url.pathname.replace(/^\//, "");
+    if (!rel) rel = "index.html";
+    const abs = resolve(webDist, rel);
+    // Prevent escaping webDist via crafted paths.
+    if (!abs.startsWith(resolve(webDist))) return c.text("Forbidden", 403);
+    let buf: Buffer;
+    try {
+      buf = await readFile(abs);
+    } catch {
+      // SPA fallback — unknown route → index.html, the React router takes over.
+      buf = await readFile(resolve(webDist, "index.html"));
+      return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": "text/html; charset=utf-8" });
+    }
+    const ext = extname(abs).toLowerCase();
+    const mime = MIME[ext] ?? "application/octet-stream";
+    return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": mime });
+  });
+} else {
+  app.get("/", (c) =>
+    c.text(
+      "artefact-editor: web bundle not found at " + webDist +
+      "\nRun `yarn build` from the repo root, or use `yarn dev` for HMR (Vite at :5173).",
+      503,
+    ),
+  );
+}
+
 const port = Number(process.env.PORT ?? 7411);
 serve({ fetch: app.fetch, port }, ({ port: p }) => {
-  console.log(`[artefact-editor] server listening on http://localhost:${p}`);
+  const url = `http://localhost:${p}`;
+  if (webDistExists) {
+    console.log(`[artefact-editor] editor: ${url}`);
+  } else {
+    console.log(`[artefact-editor] api: ${url}  (web bundle not built — see ${url}/ for help)`);
+  }
 });
