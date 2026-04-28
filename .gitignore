@@ -7,3 +7,4 @@ coverage
 .env
 .env.local
 examples/*/output.png
+examples/*/output.png.layout.json

@@ -37,6 +37,15 @@ export default function EditorPage() {
   const previewFit = isImageTemplate ? "image" : isWebApp ? "fill" : "scaled";
   const showTimeline = !isImageTemplate && !isWebApp;
 
+  const specKeyToBlockId = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!isImageTemplate) return map;
+    for (const b of state.blocks) {
+      if (b.source.tag === "specKey") map[b.source.specKey] = b.id;
+    }
+    return map;
+  }, [isImageTemplate, state.blocks]);
+
   useEffect(() => {
     if (!selectedBlockId && state.blocks.length > 0) {
       setSelectedBlockId(state.blocks[0]!.id);
@@ -158,6 +167,9 @@ export default function EditorPage() {
               bumpKey={state.bumpKey}
               fit={previewFit}
               stale={state.previewStale}
+              specKeyToBlockId={specKeyToBlockId}
+              selectedBlockId={selectedBlockId}
+              onSelectBlock={setSelectedBlockId}
             />
           </div>
           {!showTimeline ? null : (

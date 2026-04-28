@@ -1,6 +1,6 @@
 {
   "background_style": "dark",
-  "brand_primary": "#0EA5E9",
+  "brand_primary": "#b5cdd9",
   "subtitle": "Edit AI-generated artefacts without round-tripping the agent.",
   "tag": "NEW",
   "title": "Edit AI artefacts. No regen loops."
