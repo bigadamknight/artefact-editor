@@ -1,4 +1,4 @@
-import { Save } from "lucide-react";
+import { ImageIcon, Save } from "lucide-react";
 import { Button } from "./ui/button.js";
 
 interface TopBarProps {
@@ -6,9 +6,20 @@ interface TopBarProps {
   isDirty: boolean;
   saving: boolean;
   onSave: () => void;
+  showRender?: boolean;
+  rendering?: boolean;
+  onRender?: () => void;
 }
 
-export function TopBar({ name, isDirty, saving, onSave }: TopBarProps) {
+export function TopBar({
+  name,
+  isDirty,
+  saving,
+  onSave,
+  showRender,
+  rendering,
+  onRender,
+}: TopBarProps) {
   return (
     <div className="flex h-12 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-3">
@@ -21,10 +32,18 @@ export function TopBar({ name, isDirty, saving, onSave }: TopBarProps) {
           </span>
         ) : null}
       </div>
-      <Button onClick={onSave} disabled={!isDirty || saving} size="sm">
-        <Save className="h-3.5 w-3.5" />
-        {saving ? "Saving…" : "Save"}
-      </Button>
+      <div className="flex items-center gap-2">
+        {showRender ? (
+          <Button onClick={onRender} disabled={rendering || isDirty} size="sm" variant="secondary">
+            <ImageIcon className="h-3.5 w-3.5" />
+            {rendering ? "Rendering…" : "Render"}
+          </Button>
+        ) : null}
+        <Button onClick={onSave} disabled={!isDirty || saving} size="sm">
+          <Save className="h-3.5 w-3.5" />
+          {saving ? "Saving…" : "Save"}
+        </Button>
+      </div>
     </div>
   );
 }

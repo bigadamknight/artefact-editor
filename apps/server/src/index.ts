@@ -1,10 +1,12 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { spawn } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import { extname, resolve } from "node:path";
-import { Doc, type Block, type Command } from "@artefact-editor/core";
+import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/core";
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
+import { imageTemplateAdapter } from "@artefact-editor/adapter-image-template";
 import { FsProjectFiles } from "./projectFiles.js";
 
 const projectArg = process.argv[2];
@@ -17,22 +19,43 @@ console.log(`[artefact-editor] project: ${projectRoot}`);
 
 const files = new FsProjectFiles(projectRoot);
 
+interface ManifestMeta {
+  name?: string;
+  artefact: "html-app" | "hyperframes" | "image-template";
+  template?: string;
+  specFile?: string;
+}
+
 let cachedBlocks: Block[] = [];
 let cachedEntry = "index.html";
 let cachedManifestName: string | undefined;
+let cachedAdapter: Adapter = htmlAdapter;
+let cachedManifest: ManifestMeta | null = null;
+
+function pickAdapter(artefact: ManifestMeta["artefact"]): Adapter {
+  if (artefact === "image-template") return imageTemplateAdapter;
+  return htmlAdapter;
+}
 
 async function reloadProject(): Promise<void> {
-  const { blocks, entryFile } = await htmlAdapter.load(files);
-  cachedBlocks = blocks;
-  cachedEntry = entryFile;
+  // Read manifest to discover artefact type before loading via adapter.
+  let manifest: ManifestMeta | null = null;
   try {
     const raw = await files.read("manifest.json");
-    const m = JSON.parse(raw) as { name?: string };
-    cachedManifestName = m.name;
+    manifest = JSON.parse(raw) as ManifestMeta;
   } catch {
-    cachedManifestName = undefined;
+    manifest = null;
   }
-  console.log(`[artefact-editor] loaded ${blocks.length} blocks; entry=${entryFile}`);
+  cachedManifest = manifest;
+  cachedManifestName = manifest?.name;
+  cachedAdapter = manifest ? pickAdapter(manifest.artefact) : htmlAdapter;
+
+  const { blocks, entryFile } = await cachedAdapter.load(files);
+  cachedBlocks = blocks;
+  cachedEntry = entryFile;
+  console.log(
+    `[artefact-editor] loaded ${blocks.length} blocks; entry=${entryFile}; artefact=${manifest?.artefact ?? "html-app"}`,
+  );
 }
 
 await reloadProject();
@@ -46,6 +69,7 @@ app.get("/api/project", (c) => {
     root: projectRoot,
     entry: cachedEntry,
     blocks: cachedBlocks,
+    artefact: cachedManifest?.artefact ?? "html-app",
   });
 });
 
@@ -77,9 +101,58 @@ app.post("/api/save", async (c) => {
     return c.json({ ok: true, changed: 0 });
   }
 
-  await htmlAdapter.apply(files, cachedBlocks, settledCommands);
+  await cachedAdapter.apply(files, cachedBlocks, settledCommands);
   await reloadProject();
   return c.json({ ok: true, changed: settledCommands.length });
+});
+
+app.post("/api/render", async (c) => {
+  if (!cachedManifest || cachedManifest.artefact !== "image-template") {
+    return c.json({ ok: false, error: "render only available for image-template artefacts" }, 400);
+  }
+  const template = cachedManifest.template;
+  if (!template) {
+    return c.json({ ok: false, error: "manifest.template is required for render" }, 400);
+  }
+  const specFile = cachedManifest.specFile ?? "spec.json";
+  const out = cachedEntry; // typically output.png
+
+  const lastDot = template.lastIndexOf(".");
+  if (lastDot < 0) return c.json({ ok: false, error: `template must be 'module.Class', got: ${template}` }, 400);
+  const modulePath = template.slice(0, lastDot);
+  const className = template.slice(lastDot + 1);
+
+  const py = `
+import os, sys, json
+sys.path.insert(0, os.path.expanduser("~/.claude/skills"))
+sys.path.insert(0, os.path.expanduser("~/.claude/skills/image-template"))
+from templates.${modulePath} import ${className}
+from templates.base import TemplateData
+spec = json.load(open(${JSON.stringify(specFile)}))
+# Filter to fields the dataclass accepts so manifests can carry extra metadata.
+import dataclasses
+allowed = {f.name for f in dataclasses.fields(TemplateData)}
+data = TemplateData(**{k: v for k, v in spec.items() if k in allowed})
+${className}(data).save(${JSON.stringify(out)})
+print("rendered", ${JSON.stringify(out)})
+`;
+
+  return new Promise((resolveRes) => {
+    const child = spawn("python3", ["-c", py], { cwd: projectRoot });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d.toString()));
+    child.stderr.on("data", (d) => (stderr += d.toString()));
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolveRes(c.json({ ok: true, stdout: stdout.trim() }));
+      } else {
+        resolveRes(
+          c.json({ ok: false, error: stderr.trim() || `python exited ${code}`, stdout: stdout.trim() }, 500),
+        );
+      }
+    });
+  });
 });
 
 app.get("/api/assets", async (c) => {
@@ -122,7 +195,7 @@ app.get("/preview/*", async (c) => {
   const ext = extname(abs).toLowerCase();
   const mime = MIME[ext] ?? "application/octet-stream";
   const buf = await readFile(abs);
-  if (ext === ".html") {
+  if (ext === ".html" && cachedManifest?.artefact !== "image-template") {
     const html = buf.toString("utf8");
     const injected = html.replace(
       /<\/body>/i,

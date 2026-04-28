@@ -4,6 +4,7 @@ const sourceSchema = z.union([
   z.object({ file: z.string(), selector: z.string() }),
   z.object({ file: z.string(), cssVar: z.string() }),
   z.object({ file: z.string(), astVar: z.string() }),
+  z.object({ file: z.string(), specKey: z.string() }),
 ]);
 
 const descriptorSchema = z.discriminatedUnion("type", [
@@ -30,9 +31,16 @@ const blockSchema = z.object({
 
 export const manifestSchema = z.object({
   version: z.literal(1),
-  artefact: z.enum(["html-app", "hyperframes"]),
+  artefact: z.enum(["html-app", "hyperframes", "image-template"]),
   entry: z.string(),
   name: z.string().optional(),
+  /**
+   * For image-template artefacts: Python module + class to invoke for the
+   * render. Format: "<module_path>.<ClassName>" (e.g. "og_image.OGImage").
+   */
+  template: z.string().optional(),
+  /** For image-template artefacts: path to the spec.json with the kwargs. */
+  specFile: z.string().optional(),
   blocks: z.array(blockSchema),
 });
 

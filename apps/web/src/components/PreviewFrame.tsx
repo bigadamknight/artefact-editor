@@ -9,8 +9,11 @@ interface PreviewFrameProps {
    *
    * "fill" — render the iframe at the container's full size, no scaling. Right
    * for responsive web apps where the page handles its own layout.
+   *
+   * "image" — render an <img> instead of an iframe. The entry is a static
+   * raster (typically a PNG produced by a render step).
    */
-  fit?: "scaled" | "fill";
+  fit?: "scaled" | "fill" | "image";
 }
 
 const DEFAULT_W = 1080;
@@ -52,6 +55,19 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
     const scaledH = natural.h * scale;
 
     const src = `/preview/${entry}?v=${bumpKey}`;
+
+    if (fit === "image") {
+      return (
+        <div ref={wrapperRef} className="relative flex h-full w-full items-center justify-center overflow-hidden bg-neutral-100 p-6">
+          <img
+            key={bumpKey}
+            src={src}
+            alt="Rendered preview"
+            className="max-h-full max-w-full rounded-md object-contain shadow-lg"
+          />
+        </div>
+      );
+    }
 
     if (fit === "fill") {
       return (

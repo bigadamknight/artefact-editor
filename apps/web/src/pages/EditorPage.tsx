@@ -10,7 +10,7 @@ import { TopBar } from "../components/TopBar.js";
 import { TransportBar } from "../components/TransportBar.js";
 
 export default function EditorPage() {
-  const { state, setProperty, save } = useDoc();
+  const { state, setProperty, save, render } = useDoc();
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
   const stylesByBlock = useElementStyles();
@@ -26,13 +26,16 @@ export default function EditorPage() {
     [state.blocks, selectedBlockId],
   );
 
+  const isImageTemplate = state.artefact === "image-template";
   // Web-app artefacts have no audio or timing blocks. We use this to swap the
   // editor chrome: video mode shows transport+timeline; web-app mode hides
   // them and gives the preview the full pane at native size.
   const isWebApp = useMemo(
-    () => !state.blocks.some((b) => b.kind === "audio" || b.kind === "timing"),
-    [state.blocks],
+    () => !isImageTemplate && !state.blocks.some((b) => b.kind === "audio" || b.kind === "timing"),
+    [isImageTemplate, state.blocks],
   );
+  const previewFit = isImageTemplate ? "image" : isWebApp ? "fill" : "scaled";
+  const showTimeline = !isImageTemplate && !isWebApp;
 
   useEffect(() => {
     if (!selectedBlockId && state.blocks.length > 0) {
@@ -110,6 +113,9 @@ export default function EditorPage() {
         isDirty={state.isDirty}
         saving={state.saving}
         onSave={() => void save()}
+        showRender={isImageTemplate}
+        rendering={state.rendering}
+        onRender={() => void render()}
       />
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-72 flex-col border-r border-border">
@@ -150,10 +156,10 @@ export default function EditorPage() {
               ref={setIframeRef}
               entry={state.entry}
               bumpKey={state.bumpKey}
-              fit={isWebApp ? "fill" : "scaled"}
+              fit={previewFit}
             />
           </div>
-          {isWebApp ? null : (
+          {!showTimeline ? null : (
             <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
               <TransportBar
                 time={transport.state.time}

@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "artefact": "image-template",
+  "entry": "output.png",
+  "name": "OG card — artefact-editor announce",
+  "template": "og_image.OGImageTemplate",
+  "specFile": "spec.json",
+  "blocks": [
+    {
+      "id": "blk_title",
+      "kind": "text",
+      "label": "Title",
+      "source": { "file": "spec.json", "specKey": "title" },
+      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+    },
+    {
+      "id": "blk_subtitle",
+      "kind": "text",
+      "label": "Subtitle",
+      "source": { "file": "spec.json", "specKey": "subtitle" },
+      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+    },
+    {
+      "id": "blk_tag",
+      "kind": "text",
+      "label": "Tag",
+      "source": { "file": "spec.json", "specKey": "tag" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_brand",
+      "kind": "color",
+      "label": "Brand color",
+      "source": { "file": "spec.json", "specKey": "brand_primary" },
+      "properties": [{ "key": "value", "type": "color" }]
+    },
+    {
+      "id": "blk_bg",
+      "kind": "text",
+      "label": "Background style",
+      "source": { "file": "spec.json", "specKey": "background_style" },
+      "properties": [{ "key": "text", "type": "string" }]
+    }
+  ]
+}

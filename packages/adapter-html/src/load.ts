@@ -140,8 +140,12 @@ export async function loadProject(files: ProjectFiles): Promise<{
       source = { tag: "selector", file: mb.source.file, selector: mb.source.selector };
     } else if ("cssVar" in mb.source) {
       source = { tag: "cssVar", file: mb.source.file, cssVar: mb.source.cssVar };
-    } else {
+    } else if ("astVar" in mb.source) {
       source = { tag: "astVar", file: mb.source.file, varName: mb.source.astVar };
+    } else {
+      throw new Error(
+        `block ${mb.id}: html adapter doesn't handle source ${JSON.stringify(mb.source)}`,
+      );
     }
     const descriptors: PropertyDescriptor[] = [...mb.properties];
     if (mb.kind === "text" && "selector" in mb.source) {

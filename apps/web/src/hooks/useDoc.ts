@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Command } from "@artefact-editor/core";
 
+type ArtefactKind = "html-app" | "hyperframes" | "image-template";
+
 interface ProjectResponse {
   name: string;
   root: string;
   entry: string;
   blocks: Block[];
+  artefact?: ArtefactKind;
 }
 
 interface SaveResponse {
@@ -20,9 +23,11 @@ export interface DocState {
   name: string;
   entry: string;
   blocks: Block[];
+  artefact: ArtefactKind;
   pendingValues: Map<string, Record<string, string | number>>;
   isDirty: boolean;
   saving: boolean;
+  rendering: boolean;
   bumpKey: number; // increments after save → use as iframe key to force reload
 }
 
@@ -30,6 +35,7 @@ export interface UseDocApi {
   state: DocState;
   setProperty: (blockId: string, key: string, value: string | number) => void;
   save: () => Promise<void>;
+  render: () => Promise<void>;
   reload: () => Promise<void>;
 }
 
@@ -40,9 +46,11 @@ export function useDoc(): UseDocApi {
     name: "",
     entry: "index.html",
     blocks: [],
+    artefact: "html-app",
     pendingValues: new Map(),
     isDirty: false,
     saving: false,
+    rendering: false,
     bumpKey: 0,
   });
 
@@ -61,6 +69,7 @@ export function useDoc(): UseDocApi {
         name: data.name,
         entry: data.entry,
         blocks: data.blocks,
+        artefact: data.artefact ?? "html-app",
         pendingValues: new Map(),
         isDirty: false,
         bumpKey: s.bumpKey + 1,
@@ -133,7 +142,24 @@ export function useDoc(): UseDocApi {
     setState((s) => ({ ...s, saving: false }));
   }, [fetchProject]);
 
-  return { state, setProperty, save, reload: fetchProject };
+  const render = useCallback(async () => {
+    setState((s) => ({ ...s, rendering: true }));
+    try {
+      const res = await fetch("/api/render", { method: "POST" });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) throw new Error(data.error ?? "Render failed");
+      // Bump bumpKey so the <img> reloads from disk.
+      setState((s) => ({ ...s, rendering: false, bumpKey: s.bumpKey + 1 }));
+    } catch (err) {
+      setState((s) => ({
+        ...s,
+        rendering: false,
+        error: err instanceof Error ? err.message : String(err),
+      }));
+    }
+  }, []);
+
+  return { state, setProperty, save, render, reload: fetchProject };
 }
 
 export function getEffectiveValue(

@@ -7,7 +7,8 @@ export type BlockKind = "text" | "image" | "color" | "audio" | "timing";
 export type SourceRef =
   | { tag: "selector"; file: string; selector: string }
   | { tag: "cssVar"; file: string; cssVar: string }
-  | { tag: "astVar"; file: string; varName: string };
+  | { tag: "astVar"; file: string; varName: string }
+  | { tag: "specKey"; file: string; specKey: string };
 
 export interface Block {
   id: BlockId;
