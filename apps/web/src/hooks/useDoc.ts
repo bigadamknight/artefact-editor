@@ -9,6 +9,7 @@ interface ProjectResponse {
   entry: string;
   blocks: Block[];
   artefact?: ArtefactKind;
+  previewStale?: boolean;
 }
 
 interface SaveResponse {
@@ -28,6 +29,11 @@ export interface DocState {
   isDirty: boolean;
   saving: boolean;
   rendering: boolean;
+  /**
+   * For image-template artefacts: spec was saved more recently than the entry
+   * was rendered. The preview <img> is showing stale output.
+   */
+  previewStale: boolean;
   bumpKey: number; // increments after save → use as iframe key to force reload
 }
 
@@ -51,6 +57,7 @@ export function useDoc(): UseDocApi {
     isDirty: false,
     saving: false,
     rendering: false,
+    previewStale: false,
     bumpKey: 0,
   });
 
@@ -70,6 +77,7 @@ export function useDoc(): UseDocApi {
         entry: data.entry,
         blocks: data.blocks,
         artefact: data.artefact ?? "html-app",
+        previewStale: data.previewStale ?? false,
         pendingValues: new Map(),
         isDirty: false,
         bumpKey: s.bumpKey + 1,
@@ -121,6 +129,7 @@ export function useDoc(): UseDocApi {
     if (commands.length === 0) return;
     setState((s) => ({ ...s, saving: true }));
 
+    const wasImageTemplate = stateRef.current.artefact === "image-template";
     try {
       const res = await fetch("/api/save", {
         method: "POST",
@@ -139,7 +148,9 @@ export function useDoc(): UseDocApi {
     }
 
     await fetchProject();
-    setState((s) => ({ ...s, saving: false }));
+    // For image-template artefacts the rendered output.png is now stale
+    // relative to the just-saved spec. Flag it so the UI can prompt for render.
+    setState((s) => ({ ...s, saving: false, previewStale: wasImageTemplate }));
   }, [fetchProject]);
 
   const render = useCallback(async () => {
@@ -148,8 +159,8 @@ export function useDoc(): UseDocApi {
       const res = await fetch("/api/render", { method: "POST" });
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) throw new Error(data.error ?? "Render failed");
-      // Bump bumpKey so the <img> reloads from disk.
-      setState((s) => ({ ...s, rendering: false, bumpKey: s.bumpKey + 1 }));
+      // Bump bumpKey so the <img> reloads from disk; clear stale flag.
+      setState((s) => ({ ...s, rendering: false, previewStale: false, bumpKey: s.bumpKey + 1 }));
     } catch (err) {
       setState((s) => ({
         ...s,

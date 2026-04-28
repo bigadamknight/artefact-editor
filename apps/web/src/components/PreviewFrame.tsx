@@ -14,13 +14,15 @@ interface PreviewFrameProps {
    * raster (typically a PNG produced by a render step).
    */
   fit?: "scaled" | "fill" | "image";
+  /** image mode only: signal that the rendered file is older than the spec. */
+  stale?: boolean;
 }
 
 const DEFAULT_W = 1080;
 const DEFAULT_H = 1080;
 
 export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
-  function PreviewFrame({ entry, bumpKey, fit = "scaled" }, ref) {
+  function PreviewFrame({ entry, bumpKey, fit = "scaled", stale = false }, ref) {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const [natural, setNatural] = useState<{ w: number; h: number }>({ w: DEFAULT_W, h: DEFAULT_H });
     const [container, setContainer] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -63,8 +65,18 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
             key={bumpKey}
             src={src}
             alt="Rendered preview"
-            className="max-h-full max-w-full rounded-md object-contain shadow-lg"
+            className={[
+              "max-h-full max-w-full rounded-md object-contain shadow-lg transition-opacity",
+              stale ? "opacity-50" : "",
+            ].join(" ")}
           />
+          {stale ? (
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-4">
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 shadow-sm">
+                Preview is out of date — click <span className="font-bold">Render</span> to update.
+              </div>
+            </div>
+          ) : null}
         </div>
       );
     }

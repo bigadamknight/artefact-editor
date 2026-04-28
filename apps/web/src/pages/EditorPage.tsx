@@ -157,6 +157,7 @@ export default function EditorPage() {
               entry={state.entry}
               bumpKey={state.bumpKey}
               fit={previewFit}
+              stale={state.previewStale}
             />
           </div>
           {!showTimeline ? null : (

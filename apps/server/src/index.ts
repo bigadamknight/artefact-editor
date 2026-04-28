@@ -63,13 +63,28 @@ await reloadProject();
 const app = new Hono();
 app.use("*", cors());
 
-app.get("/api/project", (c) => {
+app.get("/api/project", async (c) => {
+  let previewStale = false;
+  if (cachedManifest?.artefact === "image-template") {
+    const specFile = cachedManifest.specFile ?? "spec.json";
+    try {
+      const [specStat, outStat] = await Promise.all([
+        stat(resolve(projectRoot, specFile)),
+        stat(resolve(projectRoot, cachedEntry)),
+      ]);
+      previewStale = specStat.mtimeMs > outStat.mtimeMs;
+    } catch {
+      // If output.png doesn't exist yet, the preview is definitely stale.
+      previewStale = true;
+    }
+  }
   return c.json({
     name: cachedManifestName ?? "Project",
     root: projectRoot,
     entry: cachedEntry,
     blocks: cachedBlocks,
     artefact: cachedManifest?.artefact ?? "html-app",
+    previewStale,
   });
 });
 
