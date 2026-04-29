@@ -23,8 +23,12 @@ export default function App() {
   }, []);
 
   if (hash.route === "editor" && hash.projectId) {
+    // Keying by projectId ensures fresh state (selection, transport, doc)
+    // when navigating between projects via the home picker — otherwise the
+    // inspector shows a stale selection that no longer maps to any block.
     return (
       <EditorPage
+        key={hash.projectId}
         projectId={hash.projectId}
         onBack={() => {
           window.location.hash = "#/";

@@ -126,9 +126,10 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
         isDirty={state.isDirty}
         saving={state.saving}
         onSave={() => void save()}
-        showRender={isImageTemplate}
+        showRender={isImageTemplate || isVideo}
         rendering={state.rendering}
         onRender={() => void render()}
+        renderKind={isVideo ? "video" : "image"}
         onBack={onBack}
       />
       <div className="flex min-h-0 flex-1">
@@ -164,7 +165,20 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
             })}
           </div>
         </aside>
-        <main className="flex min-w-0 flex-1 flex-col bg-muted">
+        <main className="relative flex min-w-0 flex-1 flex-col bg-muted">
+          {state.rendering ? (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-primary" />
+              <div className="text-sm font-medium">
+                {isVideo ? "Rendering MP4…" : "Rendering…"}
+              </div>
+              <div className="max-w-md text-center text-xs text-muted-foreground">
+                {isVideo
+                  ? "Hyperframes is rendering frames at draft quality. This usually takes 30–90 seconds — the MP4 will open in a new tab when it's ready."
+                  : "Re-running the template…"}
+              </div>
+            </div>
+          ) : null}
           <div className="min-h-0 flex-1">
             <PreviewFrame
               ref={setIframeRef}
@@ -204,6 +218,7 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
         </main>
         <aside className="w-80 overflow-auto border-l border-border">
           <Inspector
+            projectId={projectId}
             block={selectedBlock}
             values={valuesForSelected}
             styles={selectedBlock ? stylesByBlock[selectedBlock.id] : undefined}

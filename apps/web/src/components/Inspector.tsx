@@ -5,6 +5,7 @@ import { Label } from "./ui/label.js";
 import { AssetPicker } from "./AssetPicker.js";
 
 interface InspectorProps {
+  projectId: string;
   block: Block | null;
   values: Record<string, string | number>;
   styles?: Record<string, string>;
@@ -73,7 +74,7 @@ function rgbToHex(rgb: string): string {
   return "#" + hex(+m[1]!) + hex(+m[2]!) + hex(+m[3]!);
 }
 
-export function Inspector({ block, values, styles, onChange }: InspectorProps) {
+export function Inspector({ projectId, block, values, styles, onChange }: InspectorProps) {
   if (!block) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
@@ -100,6 +101,7 @@ export function Inspector({ block, values, styles, onChange }: InspectorProps) {
           .map((desc) => (
             <DescriptorField
               key={desc.key}
+              projectId={projectId}
               descriptor={desc}
               value={values[desc.key] ?? ""}
               onChange={(v) => onChange(desc.key, v)}
@@ -160,12 +162,13 @@ export function Inspector({ block, values, styles, onChange }: InspectorProps) {
 }
 
 interface DescriptorFieldProps {
+  projectId: string;
   descriptor: PropertyDescriptor;
   value: string | number;
   onChange: (value: string | number) => void;
 }
 
-function DescriptorField({ descriptor, value, onChange }: DescriptorFieldProps) {
+function DescriptorField({ projectId, descriptor, value, onChange }: DescriptorFieldProps) {
   if (descriptor.type === "string") {
     if (descriptor.multiline) {
       return (
@@ -218,7 +221,7 @@ function DescriptorField({ descriptor, value, onChange }: DescriptorFieldProps) 
     return (
       <div className="space-y-1.5">
         <Label>{descriptor.key}</Label>
-        <AssetPicker current={String(value)} onPick={onChange} />
+        <AssetPicker projectId={projectId} current={String(value)} onPick={onChange} />
       </div>
     );
   }

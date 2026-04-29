@@ -1,5 +1,5 @@
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { spawn } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
@@ -207,14 +207,21 @@ app.post("/api/projects/:id/render", async (c) => {
   const p = projects.get(id);
   if (!p) return c.json({ ok: false, error: "not found" }, 404);
 
-  if (!p.manifest || p.manifest.artefact !== "image-template") {
-    return c.json({ ok: false, error: "render only available for image-template artefacts" }, 400);
+  if (p.manifest?.artefact === "image-template") {
+    return renderImageTemplate(c, p);
   }
-  const template = p.manifest.template;
+  if (p.manifest?.artefact === "hyperframes") {
+    return renderHyperframes(c, p);
+  }
+  return c.json({ ok: false, error: "render not supported for this artefact type" }, 400);
+});
+
+async function renderImageTemplate(c: Context, p: ProjectState) {
+  const template = p.manifest!.template;
   if (!template) {
     return c.json({ ok: false, error: "manifest.template is required for render" }, 400);
   }
-  const specFile = p.manifest.specFile ?? "spec.json";
+  const specFile = p.manifest!.specFile ?? "spec.json";
   const out = p.entry;
 
   const lastDot = template.lastIndexOf(".");
@@ -252,7 +259,48 @@ print("rendered", ${JSON.stringify(out)})
       }
     });
   });
-});
+}
+
+async function renderHyperframes(c: Context, p: ProjectState) {
+  // Stable filename inside the project's renders/ dir. Each invocation
+  // overwrites it — the editor's "open rendered MP4" flow can rely on a
+  // predictable URL. For final delivery users still have the timestamped
+  // versions in renders/ from CLI use.
+  const outRel = "renders/editor-render.mp4";
+  const args = [
+    "hyperframes",
+    "render",
+    "--quality", "draft",
+    "--output", outRel,
+  ];
+
+  return new Promise<Response>((resolveRes) => {
+    const child = spawn("npx", args, { cwd: p.root, env: process.env });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d.toString()));
+    child.stderr.on("data", (d) => (stderr += d.toString()));
+    child.on("error", (err) => {
+      resolveRes(c.json({ ok: false, error: `failed to spawn npx: ${err.message}` }, 500));
+    });
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolveRes(c.json({
+          ok: true,
+          output: outRel,
+          previewUrl: `/preview/${p.id}/${outRel}`,
+          stdout: stdout.trim().slice(-2000),
+        }));
+      } else {
+        resolveRes(c.json({
+          ok: false,
+          error: stderr.trim().slice(-2000) || `npx hyperframes render exited ${code}`,
+          stdout: stdout.trim().slice(-2000),
+        }, 500));
+      }
+    });
+  });
+}
 
 app.get("/api/projects/:id/assets", async (c) => {
   const id = c.req.param("id");
@@ -278,6 +326,10 @@ const MIME: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
   ".ico": "image/x-icon",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
 };
 
 app.get("/preview/:id/*", async (c) => {

@@ -157,10 +157,19 @@ export function useDoc(projectId: string): UseDocApi {
     setState((s) => ({ ...s, rendering: true }));
     try {
       const res = await fetch(`/api/projects/${projectId}/render`, { method: "POST" });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        previewUrl?: string;
+      };
       if (!data.ok) throw new Error(data.error ?? "Render failed");
-      // Bump bumpKey so the <img> reloads from disk; clear stale flag.
+      // Bump bumpKey so any <img>/iframe pointing at the entry reloads.
       setState((s) => ({ ...s, rendering: false, previewStale: false, bumpKey: s.bumpKey + 1 }));
+      // Hyperframes returns a previewUrl pointing at the rendered MP4 — open
+      // it in a new tab so the user can play it. Image-template doesn't.
+      if (data.previewUrl) {
+        window.open(data.previewUrl, "_blank", "noopener");
+      }
     } catch (err) {
       setState((s) => ({
         ...s,

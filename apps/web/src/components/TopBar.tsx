@@ -1,4 +1,4 @@
-import { ImageIcon, Save } from "lucide-react";
+import { Film, ImageIcon, Save } from "lucide-react";
 import { Button } from "./ui/button.js";
 
 interface TopBarProps {
@@ -9,6 +9,7 @@ interface TopBarProps {
   showRender?: boolean;
   rendering?: boolean;
   onRender?: () => void;
+  renderKind?: "image" | "video";
   onBack?: () => void;
 }
 
@@ -20,8 +21,11 @@ export function TopBar({
   showRender,
   rendering,
   onRender,
+  renderKind = "image",
   onBack,
 }: TopBarProps) {
+  const RenderIcon = renderKind === "video" ? Film : ImageIcon;
+  const renderLabel = renderKind === "video" ? "Render MP4" : "Render";
   return (
     <div className="flex h-12 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-3">
@@ -47,8 +51,8 @@ export function TopBar({
       <div className="flex items-center gap-2">
         {showRender ? (
           <Button onClick={onRender} disabled={rendering || isDirty} size="sm" variant="secondary">
-            <ImageIcon className="h-3.5 w-3.5" />
-            {rendering ? "Rendering…" : "Render"}
+            <RenderIcon className="h-3.5 w-3.5" />
+            {rendering ? "Rendering…" : renderLabel}
           </Button>
         ) : null}
         <Button onClick={onSave} disabled={!isDirty || saving} size="sm">

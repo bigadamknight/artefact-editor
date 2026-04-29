@@ -2,18 +2,19 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button.js";
 
 interface AssetPickerProps {
+  projectId: string;
   current: string;
   onPick: (path: string) => void;
 }
 
-export function AssetPicker({ current, onPick }: AssetPickerProps) {
+export function AssetPicker({ projectId, current, onPick }: AssetPickerProps) {
   const [assets, setAssets] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch("/api/assets");
+        const res = await fetch(`/api/projects/${projectId}/assets`);
         const data = (await res.json()) as { assets: string[] };
         if (!cancelled) setAssets(data.assets);
       } catch {
@@ -23,7 +24,7 @@ export function AssetPicker({ current, onPick }: AssetPickerProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [projectId]);
 
   return (
     <div className="space-y-2">
@@ -41,7 +42,7 @@ export function AssetPicker({ current, onPick }: AssetPickerProps) {
               ].join(" ")}
               title={a}
             >
-              <img src={`/preview/${a}`} alt="" className="h-full w-full object-cover" />
+              <img src={`/preview/${projectId}/${a}`} alt="" className="h-full w-full object-cover" />
             </button>
           );
         })}
