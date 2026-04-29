@@ -32,15 +32,14 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
   );
 
   const isImageTemplate = state.artefact === "image-template";
-  // Web-app artefacts have no audio or timing blocks. We use this to swap the
-  // editor chrome: video mode shows transport+timeline; web-app mode hides
-  // them and gives the preview the full pane at native size.
-  const isWebApp = useMemo(
-    () => !isImageTemplate && !state.blocks.some((b) => b.kind === "audio" || b.kind === "timing"),
-    [isImageTemplate, state.blocks],
-  );
+  const isVideo = state.artefact === "hyperframes";
+  const isWebApp = state.artefact === "html-app";
+  // hyperframes → scaled iframe + transport + timeline (even if a particular
+  // composition has no audio/timing blocks, it's still a fixed-size video).
+  // html-app → fill the pane, no transport.
+  // image-template → static <img> preview.
   const previewFit = isImageTemplate ? "image" : isWebApp ? "fill" : "scaled";
-  const showTimeline = !isImageTemplate && !isWebApp;
+  const showTimeline = isVideo;
 
   const specKeyToBlockId = useMemo(() => {
     const map: Record<string, string> = {};

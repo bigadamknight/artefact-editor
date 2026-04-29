@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Film, ImageIcon, Layout } from "lucide-react";
 
 interface ProjectSummary {
@@ -25,33 +25,58 @@ function ArtefactIcon({ kind }: { kind: ProjectSummary["artefact"] }) {
   return <Layout className={cls} />;
 }
 
+// Hyperframes videos and HTML web apps don't expose their natural composition
+// size in the project list response, so for thumbnails we assume the common
+// case (1080×1080) and let CSS handle the rest. The iframe gets scaled so its
+// natural width fits the card width; aspect-square card means height matches.
+const THUMB_NATURAL = 1080;
+
 function PreviewThumb({ project }: { project: ProjectSummary }) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      setWidth(entries[0]!.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Image-template projects have a real PNG entry we can show directly.
   if (project.artefact === "image-template") {
     return (
       <img
         src={`/preview/${project.id}/${project.entry}`}
         alt={project.name}
-        className="h-full w-full object-contain bg-neutral-100"
+        className="h-full w-full object-cover bg-neutral-100"
       />
     );
   }
+
   // For HTML-based artefacts (web apps, hyperframes videos), embed the iframe
-  // muted at a tiny scale so the card shows the live thing, not a placeholder.
-  // pointer-events-none keeps it click-through to the card button.
+  // and scale it to fit the card width. pointer-events-none keeps clicks
+  // routed to the surrounding card button. sandbox blocks autoplay so video
+  // thumbnails sit on frame 0 instead of all playing simultaneously.
+  const scale = width > 0 ? width / THUMB_NATURAL : 0;
   return (
-    <div className="relative h-full w-full overflow-hidden bg-white">
-      <iframe
-        src={`/preview/${project.id}/${project.entry}`}
-        title={project.name}
-        className="pointer-events-none border-0"
-        style={{
-          width: 1080,
-          height: 1080,
-          transform: "scale(0.18)",
-          transformOrigin: "top left",
-        }}
-      />
+    <div ref={wrapperRef} className="relative h-full w-full overflow-hidden bg-white">
+      {scale > 0 ? (
+        <iframe
+          src={`/preview/${project.id}/${project.entry}`}
+          title={project.name}
+          sandbox="allow-same-origin allow-scripts"
+          className="pointer-events-none absolute left-0 top-0 border-0"
+          style={{
+            width: THUMB_NATURAL,
+            height: THUMB_NATURAL,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -107,7 +132,7 @@ export default function HomePage({ onOpen }: HomePageProps) {
                 onClick={() => onOpen(p.id)}
                 className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary hover:shadow-md"
               >
-                <div className="aspect-video w-full overflow-hidden border-b border-border">
+                <div className="aspect-square w-full overflow-hidden border-b border-border">
                   <PreviewThumb project={p} />
                 </div>
                 <div className="flex flex-col gap-1 p-4">
