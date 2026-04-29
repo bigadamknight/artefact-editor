@@ -9,8 +9,13 @@ import { Timeline } from "../components/Timeline.js";
 import { TopBar } from "../components/TopBar.js";
 import { TransportBar } from "../components/TransportBar.js";
 
-export default function EditorPage() {
-  const { state, setProperty, save, render } = useDoc();
+interface EditorPageProps {
+  projectId: string;
+  onBack?: () => void;
+}
+
+export default function EditorPage({ projectId, onBack }: EditorPageProps) {
+  const { state, setProperty, save, render } = useDoc(projectId);
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
   const stylesByBlock = useElementStyles();
@@ -125,6 +130,7 @@ export default function EditorPage() {
         showRender={isImageTemplate}
         rendering={state.rendering}
         onRender={() => void render()}
+        onBack={onBack}
       />
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-72 flex-col border-r border-border">
@@ -163,6 +169,7 @@ export default function EditorPage() {
           <div className="min-h-0 flex-1">
             <PreviewFrame
               ref={setIframeRef}
+              projectId={projectId}
               entry={state.entry}
               bumpKey={state.bumpKey}
               fit={previewFit}

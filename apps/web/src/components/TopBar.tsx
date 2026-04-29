@@ -9,6 +9,7 @@ interface TopBarProps {
   showRender?: boolean;
   rendering?: boolean;
   onRender?: () => void;
+  onBack?: () => void;
 }
 
 export function TopBar({
@@ -19,11 +20,22 @@ export function TopBar({
   showRender,
   rendering,
   onRender,
+  onBack,
 }: TopBarProps) {
   return (
     <div className="flex h-12 items-center justify-between border-b border-border bg-background px-4">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold">artefact-editor</span>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm font-semibold hover:underline"
+          >
+            artefact-editor
+          </button>
+        ) : (
+          <span className="text-sm font-semibold">artefact-editor</span>
+        )}
         <span className="text-xs text-muted-foreground">/</span>
         <span className="text-sm">{name}</span>
         {isDirty ? (

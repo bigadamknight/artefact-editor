@@ -15,6 +15,7 @@ interface ImageLayout {
 }
 
 interface PreviewFrameProps {
+  projectId: string;
   entry: string;
   bumpKey: number;
   /**
@@ -46,6 +47,7 @@ const DEFAULT_H = 1080;
 interface ImageModePreviewProps {
   src: string;
   bumpKey: number;
+  projectId: string;
   entry: string;
   stale: boolean;
   specKeyToBlockId: Record<string, string>;
@@ -54,7 +56,7 @@ interface ImageModePreviewProps {
 }
 
 function ImageModePreview({
-  src, bumpKey, entry, stale, specKeyToBlockId, selectedBlockId, onSelectBlock,
+  src, bumpKey, projectId, entry, stale, specKeyToBlockId, selectedBlockId, onSelectBlock,
 }: ImageModePreviewProps) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [layout, setLayout] = useState<ImageLayout | null>(null);
@@ -65,7 +67,7 @@ function ImageModePreview({
   // bumpKey changes — every save/render bumps it.
   useEffect(() => {
     let cancelled = false;
-    fetch(`/preview/${entry}.layout.json?v=${bumpKey}`)
+    fetch(`/preview/${projectId}/${entry}.layout.json?v=${bumpKey}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -75,7 +77,7 @@ function ImageModePreview({
         if (!cancelled) setLayout(null);
       });
     return () => { cancelled = true; };
-  }, [entry, bumpKey]);
+  }, [projectId, entry, bumpKey]);
 
   // Track the <img>'s rendered rect inside its parent so we can place hit
   // zones on top. object-fit: contain leaves letterboxing we have to account
@@ -164,7 +166,7 @@ function ImageModePreview({
 
 export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
   function PreviewFrame(
-    { entry, bumpKey, fit = "scaled", stale = false, specKeyToBlockId, selectedBlockId, onSelectBlock },
+    { projectId, entry, bumpKey, fit = "scaled", stale = false, specKeyToBlockId, selectedBlockId, onSelectBlock },
     ref,
   ) {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -200,13 +202,14 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
     const scaledW = natural.w * scale;
     const scaledH = natural.h * scale;
 
-    const src = `/preview/${entry}?v=${bumpKey}`;
+    const src = `/preview/${projectId}/${entry}?v=${bumpKey}`;
 
     if (fit === "image") {
       return (
         <ImageModePreview
           src={src}
           bumpKey={bumpKey}
+          projectId={projectId}
           entry={entry}
           stale={stale}
           specKeyToBlockId={specKeyToBlockId ?? {}}

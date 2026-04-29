@@ -45,7 +45,7 @@ export interface UseDocApi {
   reload: () => Promise<void>;
 }
 
-export function useDoc(): UseDocApi {
+export function useDoc(projectId: string): UseDocApi {
   const [state, setState] = useState<DocState>({
     loading: true,
     error: null,
@@ -67,7 +67,7 @@ export function useDoc(): UseDocApi {
   const fetchProject = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const res = await fetch("/api/project");
+      const res = await fetch(`/api/projects/${projectId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as ProjectResponse;
       setState((s) => ({
@@ -89,7 +89,7 @@ export function useDoc(): UseDocApi {
         error: err instanceof Error ? err.message : String(err),
       }));
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     void fetchProject();
@@ -131,7 +131,7 @@ export function useDoc(): UseDocApi {
 
     const wasImageTemplate = stateRef.current.artefact === "image-template";
     try {
-      const res = await fetch("/api/save", {
+      const res = await fetch(`/api/projects/${projectId}/save`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ commands }),
@@ -151,12 +151,12 @@ export function useDoc(): UseDocApi {
     // For image-template artefacts the rendered output.png is now stale
     // relative to the just-saved spec. Flag it so the UI can prompt for render.
     setState((s) => ({ ...s, saving: false, previewStale: wasImageTemplate }));
-  }, [fetchProject]);
+  }, [fetchProject, projectId]);
 
   const render = useCallback(async () => {
     setState((s) => ({ ...s, rendering: true }));
     try {
-      const res = await fetch("/api/render", { method: "POST" });
+      const res = await fetch(`/api/projects/${projectId}/render`, { method: "POST" });
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (!data.ok) throw new Error(data.error ?? "Render failed");
       // Bump bumpKey so the <img> reloads from disk; clear stale flag.
@@ -168,7 +168,7 @@ export function useDoc(): UseDocApi {
         error: err instanceof Error ? err.message : String(err),
       }));
     }
-  }, []);
+  }, [projectId]);
 
   return { state, setProperty, save, render, reload: fetchProject };
 }
