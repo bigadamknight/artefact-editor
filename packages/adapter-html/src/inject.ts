@@ -163,13 +163,33 @@ export const previewBridgeScript = `
     requestAnimationFrame(tick);
   }
 
+  // Some compositions start at a literal blank frame (eg. a fly-through where
+  // the camera is far back at t=0). Seeking to a representative frame on
+  // initial load avoids the "looks broken" first impression. Authors can pin
+  // an exact frame with a data-poster-time attribute on the root; otherwise
+  // we use duration / 2 as a reasonable default.
+  function pickPosterTime(tl) {
+    var root = document.querySelector('[data-composition-id], #root');
+    var attr = root && root.getAttribute('data-poster-time');
+    if (attr != null && attr !== '') {
+      var v = parseFloat(attr);
+      if (!isNaN(v)) return v;
+    }
+    var d = typeof tl.duration === 'function' ? tl.duration() : 0;
+    return d > 0 ? d / 2 : 0;
+  }
+
   // Wait briefly for the page's own script to create the timeline.
   var waited = 0;
   var waitInterval = setInterval(function () {
     if (getTimeline() || waited > 2000) {
       clearInterval(waitInterval);
+      var tl = getTimeline();
+      if (tl && typeof tl.seek === 'function') {
+        try { tl.seek(pickPosterTime(tl)); tl.pause && tl.pause(); } catch (_) {}
+      }
       postReady();
-      if (getTimeline()) startTickLoop();
+      if (tl) startTickLoop();
     }
     waited += 50;
   }, 50);

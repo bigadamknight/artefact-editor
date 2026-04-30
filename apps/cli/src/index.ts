@@ -302,6 +302,53 @@ async function renderHyperframes(c: Context, p: ProjectState) {
   });
 }
 
+// Stream a zip archive of the project (manifest + source + assets, minus
+// build artefacts). Mirrors img.ly's `.cesdk` self-contained format — a
+// shareable single file you can drop into another machine's
+// artefact-editor and pick up where you left off.
+app.get("/api/projects/:id/archive", async (c) => {
+  const id = c.req.param("id");
+  const p = projects.get(id);
+  if (!p) return c.text("Not found", 404);
+
+  // Excludes: editor outputs, transient build state, version-control noise.
+  // node_modules in case someone has run yarn inside an example dir.
+  const excludes = [
+    "node_modules/*",
+    "renders/editor-render.mp4",
+    "renders/*.tmp.*",
+    ".thumbnails/*",         // hyperframes-cli scratch
+    ".hyperframes-cache/*",  // ditto
+    ".DS_Store",
+    "*.log",
+    ".vite/*",
+    "dist/*",
+    ".git/*",
+  ];
+  const args = ["-r", "-q", "-", "."];
+  for (const x of excludes) args.push("-x", x);
+
+  const child = spawn("zip", args, { cwd: p.root });
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      child.stdout.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+      child.stderr.on("data", (chunk: Buffer) => console.error("[zip]", chunk.toString()));
+      child.on("close", () => controller.close());
+      child.on("error", (err) => controller.error(err));
+    },
+    cancel() {
+      child.kill();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "application/zip",
+      "content-disposition": `attachment; filename="${id}.artefact"`,
+    },
+  });
+});
+
 app.get("/api/projects/:id/assets", async (c) => {
   const id = c.req.param("id");
   const p = projects.get(id);

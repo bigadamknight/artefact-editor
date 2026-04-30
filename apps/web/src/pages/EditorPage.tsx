@@ -130,6 +130,10 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
         rendering={state.rendering}
         onRender={() => void render()}
         renderKind={isVideo ? "video" : "image"}
+        onDownload={() => {
+          // Browser handles the download via content-disposition header.
+          window.location.assign(`/api/projects/${projectId}/archive`);
+        }}
         onBack={onBack}
       />
       <div className="flex min-h-0 flex-1">

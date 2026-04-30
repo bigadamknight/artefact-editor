@@ -1,4 +1,4 @@
-import { Film, ImageIcon, Save } from "lucide-react";
+import { Download, Film, ImageIcon, Save } from "lucide-react";
 import { Button } from "./ui/button.js";
 
 interface TopBarProps {
@@ -10,6 +10,7 @@ interface TopBarProps {
   rendering?: boolean;
   onRender?: () => void;
   renderKind?: "image" | "video";
+  onDownload?: () => void;
   onBack?: () => void;
 }
 
@@ -22,6 +23,7 @@ export function TopBar({
   rendering,
   onRender,
   renderKind = "image",
+  onDownload,
   onBack,
 }: TopBarProps) {
   const RenderIcon = renderKind === "video" ? Film : ImageIcon;
@@ -49,6 +51,11 @@ export function TopBar({
         ) : null}
       </div>
       <div className="flex items-center gap-2">
+        {onDownload ? (
+          <Button onClick={onDownload} size="sm" variant="ghost" title="Download .artefact archive">
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+        ) : null}
         {showRender ? (
           <Button onClick={onRender} disabled={rendering || isDirty} size="sm" variant="secondary">
             <RenderIcon className="h-3.5 w-3.5" />
