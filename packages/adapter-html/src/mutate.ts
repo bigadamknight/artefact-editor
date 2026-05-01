@@ -12,6 +12,20 @@ interface PendingEdit {
   replacement: string;
 }
 
+interface TextSwap {
+  oldText: string;
+  newText: string;
+}
+
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
@@ -58,6 +72,7 @@ function planSelectorEdit(
   block: Block,
   key: string,
   newValue: string,
+  textSwaps: TextSwap[],
 ): PendingEdit {
   if (block.source.tag !== "selector") {
     throw new Error("planSelectorEdit called on non-selector block");
@@ -95,6 +110,14 @@ function planSelectorEdit(
       throw new Error(
         `text block ${block.id}: element must have separate start and end tags (no self-closing)`,
       );
+    }
+    const oldRaw = source.slice(loc.startTag.endOffset, loc.endTag.startOffset);
+    const oldText = decodeHtmlEntities(oldRaw).trim();
+    const newText = newValue.trim();
+    // Only mirror non-trivial text swaps into bundled JS so we don't accidentally
+    // rewrite punctuation or single common words across a bundle.
+    if (oldText.length >= 4 && oldText !== newText) {
+      textSwaps.push({ oldText, newText });
     }
     return {
       start: loc.startTag.endOffset,
@@ -171,6 +194,7 @@ export async function applyCommands(
 ): Promise<void> {
   const blocksById = new Map(blocks.map((b) => [b.id, b]));
   const editsByFile = new Map<string, PendingEdit[]>();
+  const textSwaps: TextSwap[] = [];
 
   for (const cmd of commands) {
     if (cmd.type !== "setProperty") continue;
@@ -185,7 +209,7 @@ export async function applyCommands(
 
     let edit: PendingEdit;
     if (block.source.tag === "selector") {
-      edit = planSelectorEdit(source, block, cmd.key, String(cmd.value));
+      edit = planSelectorEdit(source, block, cmd.key, String(cmd.value), textSwaps);
     } else if (block.source.tag === "cssVar") {
       edit = planCssVarEdit(source, block, String(cmd.value));
     } else {
@@ -200,6 +224,118 @@ export async function applyCommands(
     const updated = applyEdits(original, edits);
     if (updated !== original) {
       await files.write(file, updated);
+    }
+  }
+
+  if (textSwaps.length > 0) {
+    await mirrorTextSwapsIntoBundles(files, textSwaps, new Set(editsByFile.keys()));
+  }
+}
+
+const BUNDLE_EXTENSIONS = /\.(js|mjs|cjs|css)$/i;
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  ".vite",
+  "dist",
+  "renders",
+  ".thumbnails",
+  ".hyperframes-cache",
+]);
+
+async function listFilesRecursive(
+  files: ProjectFiles,
+  dir: string,
+  acc: string[],
+): Promise<void> {
+  const entries = await files.list(dir);
+  for (const name of entries) {
+    if (name.startsWith(".")) continue;
+    if (SKIP_DIRS.has(name)) continue;
+    const path = dir ? `${dir}/${name}` : name;
+    if (BUNDLE_EXTENSIONS.test(name)) {
+      acc.push(path);
+      continue;
+    }
+    // Probe as directory: list() returns [] for non-dirs, so cheap to recurse.
+    const sub = await files.list(path);
+    if (sub.length > 0) await listFilesRecursive(files, path, acc);
+  }
+}
+
+/**
+ * Built React/Vite apps shipped as static artefacts contain their original
+ * strings hardcoded in JS bundles. Editing the HTML alone has no visible
+ * effect because hydration overwrites the DOM with the bundle's strings.
+ * Mirror text swaps as quoted-string replacements so the rendered page picks
+ * up the new value after iframe reload.
+ */
+async function mirrorTextSwapsIntoBundles(
+  files: ProjectFiles,
+  swaps: TextSwap[],
+  alreadyEdited: Set<string>,
+): Promise<void> {
+  const bundlePaths: string[] = [];
+  await listFilesRecursive(files, "", bundlePaths);
+
+  // Build needle/replacement candidates per swap, in priority order:
+  //   1) quoted in JS string literals (double / single / backtick)
+  //   2) the trimmed text plus its trailing-punctuation-stripped variant,
+  //      as a direct substring replace, but only when the needle is long
+  //      enough and occurs exactly once in the file (safety against
+  //      catastrophic over-replacement in minified bundles).
+  const trailingPunct = /[!?.…,:;]+$/;
+  const candidatesPerSwap = swaps.map((s) => {
+    const out: Array<{ kind: "quoted" | "unique"; old: string; new: string }> = [];
+    const dq = (t: string) => JSON.stringify(t);
+    const sq = (t: string) => `'${t.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+    const bt = (t: string) => `\`${t.replace(/\\/g, "\\\\").replace(/`/g, "\\`")}\``;
+    out.push({ kind: "quoted", old: dq(s.oldText), new: dq(s.newText) });
+    out.push({ kind: "quoted", old: sq(s.oldText), new: sq(s.newText) });
+    out.push({ kind: "quoted", old: bt(s.oldText), new: bt(s.newText) });
+
+    if (s.oldText.length >= 8 && /\s/.test(s.oldText)) {
+      out.push({ kind: "unique", old: s.oldText, new: s.newText });
+      const oldStripped = s.oldText.replace(trailingPunct, "");
+      const newStripped = s.newText.replace(trailingPunct, "");
+      if (oldStripped !== s.oldText && oldStripped.length >= 8) {
+        out.push({ kind: "unique", old: oldStripped, new: newStripped });
+      }
+    }
+    return out;
+  });
+
+  for (const path of bundlePaths) {
+    if (alreadyEdited.has(path)) continue;
+    let source: string;
+    try {
+      source = await files.read(path);
+    } catch {
+      continue;
+    }
+    let updated = source;
+    for (const candidates of candidatesPerSwap) {
+      let matched = false;
+      for (const c of candidates) {
+        if (c.kind === "quoted") {
+          if (updated.includes(c.old)) {
+            updated = updated.split(c.old).join(c.new);
+            matched = true;
+          }
+        } else {
+          // Unique-substring replace — guard against multiple hits.
+          const first = updated.indexOf(c.old);
+          if (first < 0) continue;
+          const second = updated.indexOf(c.old, first + c.old.length);
+          if (second >= 0) continue;
+          updated = updated.slice(0, first) + c.new + updated.slice(first + c.old.length);
+          matched = true;
+        }
+        if (matched) break;
+      }
+    }
+    if (updated !== source) {
+      await files.write(path, updated);
     }
   }
 }
