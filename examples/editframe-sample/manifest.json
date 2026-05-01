@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "artefact": "html-app",
+  "entry": "index.html",
+  "name": "Editframe sample",
+  "blocks": [
+    {
+      "id": "blk_headline",
+      "kind": "text",
+      "label": "Headline",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_headline]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_subtitle",
+      "kind": "text",
+      "label": "Subtitle",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_subtitle]" },
+      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+    }
+  ]
+}
