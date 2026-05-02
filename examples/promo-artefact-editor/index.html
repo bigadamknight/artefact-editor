@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>artefact-editor — edit AI artefacts. Live.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --paper: #f7f1e6;
+        --ink: #1a1410;
+        --ink-soft: #4a3f33;
+        --warm: #d97a3a;
+        --warm-deep: #9d3f1c;
+        --gold: #c79a3a;
+        --shadow: rgba(26, 20, 16, 0.18);
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        background: var(--paper);
+        font-family: "Inter", system-ui, sans-serif;
+        color: var(--ink);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        background: var(--paper);
+        overflow: hidden;
+      }
+      /* Subtle paper texture — radial vignette + noise gradient */
+      .paper-tex {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse at 30% 10%, rgba(217, 122, 58, 0.06), transparent 50%),
+          radial-gradient(ellipse at 80% 90%, rgba(157, 63, 28, 0.05), transparent 55%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Editorial chrome */
+      .chrome {
+        position: absolute;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        z-index: 5;
+      }
+      .chrome-tl { top: 56px; left: 96px; }
+      .chrome-tr { top: 56px; right: 96px; }
+      .chrome-bl { bottom: 56px; left: 96px; }
+      .chrome-br { bottom: 56px; right: 96px; }
+      .hairline-top, .hairline-bottom {
+        position: absolute;
+        left: 96px;
+        right: 96px;
+        height: 1px;
+        background: var(--ink);
+        opacity: 0.4;
+        z-index: 4;
+      }
+      .hairline-top { top: 100px; }
+      .hairline-bottom { bottom: 100px; }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .scene-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 180px 220px;
+        box-sizing: border-box;
+      }
+
+      /* ===== Scene 1: hook ===== */
+      .s1 .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.3em;
+        color: var(--warm);
+        text-transform: uppercase;
+        margin-bottom: 56px;
+      }
+      .s1 .headline {
+        font-family: "Fraunces", serif;
+        font-size: 220px;
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -4px;
+        text-align: center;
+        font-variation-settings: "opsz" 144;
+      }
+      .s1 .headline em {
+        font-style: italic;
+        font-weight: 400;
+        color: var(--warm-deep);
+      }
+
+      /* The artefact card that gets flagged in scene 2 */
+      .artefact-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 30px 60px var(--shadow);
+        padding: 64px 80px;
+        width: 980px;
+      }
+      .artefact-card .ac-meta {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 16px;
+        letter-spacing: 0.16em;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        margin-bottom: 28px;
+      }
+      .artefact-card .ac-title {
+        font-family: "Fraunces", serif;
+        font-size: 96px;
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -2px;
+        margin: 0 0 24px;
+        color: var(--ink);
+      }
+      .artefact-card .ac-body {
+        font-size: 28px;
+        line-height: 1.5;
+        color: var(--ink-soft);
+      }
+      /* highlight ring around an editable region */
+      .edit-ring {
+        position: absolute;
+        border: 2px dashed var(--warm);
+        border-radius: 6px;
+        pointer-events: none;
+        opacity: 0;
+      }
+      .edit-handle {
+        position: absolute;
+        background: var(--warm);
+        color: white;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        letter-spacing: 0.12em;
+        padding: 4px 10px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        opacity: 0;
+      }
+
+      /* Scene 2 — flagged */
+      .s2 .stage {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Scene 3 — old way (re-prompt loop) */
+      .s3 .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--warm);
+        margin-bottom: 40px;
+      }
+      .s3 .loop-stack {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        font-family: "Fraunces", serif;
+        font-size: 130px;
+        font-weight: 800;
+        letter-spacing: -3px;
+        line-height: 0.95;
+      }
+      .s3 .loop-stack .arrow {
+        font-size: 110px;
+        color: var(--warm);
+        font-weight: 400;
+      }
+      .s3 .word {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      .s3 .frustrated {
+        margin-top: 48px;
+        font-size: 32px;
+        color: var(--ink-soft);
+        font-style: italic;
+        font-family: "Fraunces", serif;
+      }
+
+      /* Scene 4 — direct edit */
+      .s4 .megaheadline {
+        font-family: "Fraunces", serif;
+        font-size: 260px;
+        font-weight: 900;
+        line-height: 0.92;
+        letter-spacing: -6px;
+        text-align: center;
+      }
+      .s4 .megaheadline em {
+        font-style: italic;
+        color: var(--warm-deep);
+      }
+      .s4 .underline {
+        position: absolute;
+        height: 12px;
+        background: var(--warm);
+        border-radius: 3px;
+        bottom: -10px;
+        left: 0;
+        transform-origin: left center;
+        transform: scaleX(0);
+      }
+      .s4 .word-edit {
+        position: relative;
+        display: inline-block;
+      }
+
+      /* Scene 5 — three formats */
+      .s5 .group-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--warm);
+        margin-bottom: 64px;
+      }
+      .s5 .formats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+        width: 1480px;
+      }
+      .s5 .fmt {
+        background: white;
+        padding: 56px 48px;
+        border-radius: 10px;
+        box-shadow: 0 20px 40px var(--shadow);
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      .s5 .fmt .badge {
+        display: inline-block;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        padding: 4px 12px;
+        border-radius: 3px;
+        margin-bottom: 24px;
+      }
+      .s5 .fmt .name {
+        font-family: "Fraunces", serif;
+        font-size: 72px;
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+      }
+      .s5 .fmt .desc {
+        font-size: 22px;
+        color: var(--ink-soft);
+        line-height: 1.5;
+      }
+
+      /* Scene 6 — end card */
+      .s6 .end-eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 24px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--warm);
+        margin-bottom: 32px;
+      }
+      .s6 .end-name {
+        font-family: "Fraunces", serif;
+        font-size: 200px;
+        font-weight: 800;
+        letter-spacing: -5px;
+        line-height: 0.95;
+      }
+      .s6 .end-name em {
+        font-style: italic;
+        color: var(--warm-deep);
+      }
+      .s6 .end-tagline {
+        margin-top: 32px;
+        font-size: 36px;
+        color: var(--ink-soft);
+      }
+      .s6 .end-url {
+        margin-top: 60px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--warm-deep);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="master"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="25"
+      data-poster-time="13"
+    >
+      <div class="paper-tex"></div>
+
+      <div class="chrome chrome-tl">artefact-editor</div>
+      <div class="chrome chrome-tr">a tour</div>
+      <div class="chrome chrome-bl">/ promo /</div>
+      <div class="chrome chrome-br">25.0s</div>
+      <div class="hairline-top"></div>
+      <div class="hairline-bottom"></div>
+
+      <!-- ===== Scene 1: AI emits a thing ===== -->
+      <div class="scene s1">
+        <div class="scene-content">
+          <div class="eyebrow s1-eyebrow">A SMALL CONFESSION</div>
+          <div class="headline">
+            <span class="s1-l1">AI emits</span><br />
+            <em class="s1-l2">a thing.</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 2: but the headline's wrong ===== -->
+      <div class="scene s2">
+        <div class="stage">
+          <div class="artefact-card s2-card">
+            <div class="ac-meta">og-card / 1200 × 630</div>
+            <h2 class="ac-title s2-title">Get more done with AI.</h2>
+            <p class="ac-body s2-body">
+              The on-brand subtitle the agent spat out, which is fine but
+              not <em>quite</em> what you wanted.
+            </p>
+          </div>
+          <div class="edit-ring s2-ring"></div>
+          <div class="edit-handle s2-handle">EDIT</div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 3: re-prompt loop ===== -->
+      <div class="scene s3">
+        <div class="scene-content">
+          <div class="label s3-label">THE OLD WAY</div>
+          <div class="loop-stack">
+            <span class="word s3-w1">RE-PROMPT</span>
+            <span class="arrow s3-a1">→</span>
+            <span class="word s3-w2">WAIT</span>
+            <span class="arrow s3-a2">→</span>
+            <span class="word s3-w3">HOPE</span>
+          </div>
+          <div class="frustrated s3-frustrated">
+            …and the rest of the artefact gets rewritten anyway.
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 4: just edit it ===== -->
+      <div class="scene s4">
+        <div class="scene-content">
+          <div class="megaheadline">
+            <span class="s4-l1">Or just</span><br />
+            <span class="word-edit">
+              <em class="s4-l2">edit it.</em>
+              <span class="underline s4-underline"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 5: three formats ===== -->
+      <div class="scene s5">
+        <div class="scene-content">
+          <div class="group-label s5-label">ONE EDITOR. ANY ARTEFACT.</div>
+          <div class="formats">
+            <div class="fmt s5-c1">
+              <div class="badge">HTML APPS</div>
+              <div class="name">Pages.</div>
+              <div class="desc">Built React, plain HTML, Editframe, anything with stable selectors.</div>
+            </div>
+            <div class="fmt s5-c2">
+              <div class="badge">VIDEOS</div>
+              <div class="name">HyperFrames.</div>
+              <div class="desc">Scrub the timeline, edit cue points, retime audio, render MP4.</div>
+            </div>
+            <div class="fmt s5-c3">
+              <div class="badge">GRAPHICS</div>
+              <div class="name">PIL templates.</div>
+              <div class="desc">OG cards, social posts. Click the rendered image to edit.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 6: end card ===== -->
+      <div class="scene s6">
+        <div class="scene-content">
+          <div class="end-eyebrow s6-eyebrow">DROP-IN. OPEN-SOURCE.</div>
+          <div class="end-name">
+            <span class="s6-n1">artefact-</span><em class="s6-n2">editor.</em>
+          </div>
+          <div class="end-tagline s6-tagline">
+            Direct-manipulation editor for AI-generated artefacts.
+          </div>
+          <div class="end-url s6-url">github.com/bigadamknight/artefact-editor</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+      const T1 = 0;     // hook
+      const T2 = 3.0;   // artefact appears, gets flagged
+      const T3 = 7.4;   // re-prompt loop
+      const T4 = 11.6;  // just edit it
+      const T5 = 16.0;  // three formats
+      const T6 = 20.8;  // end card
+      const TEND = 25;
+
+      // Scene 1
+      tl.set(".s1", { opacity: 1 }, T1);
+      tl.from(".s1-eyebrow", { opacity: 0, y: 20, duration: 0.55 }, T1 + 0.1);
+      tl.from(".s1-l1", { opacity: 0, y: 30, duration: 0.7 }, T1 + 0.4);
+      tl.from(".s1-l2", { opacity: 0, y: 30, duration: 0.7 }, T1 + 0.75);
+      tl.to(".s1", { opacity: 0, duration: 0.4, ease: "power2.in" }, T2 - 0.4);
+
+      // Scene 2 — artefact appears, then edit ring + handle
+      tl.set(".s2", { opacity: 1 }, T2);
+      tl.from(".s2-card", { opacity: 0, y: 60, scale: 0.96, duration: 0.7, ease: "power4.out" }, T2 + 0.1);
+      tl.fromTo(
+        ".s2-ring",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.4 },
+        T2 + 1.4
+      );
+      tl.fromTo(
+        ".s2-handle",
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "back.out(2)" },
+        T2 + 1.6
+      );
+      tl.to(".s2", { opacity: 0, duration: 0.4 }, T3 - 0.4);
+
+      // Scene 3 — re-prompt loop
+      tl.set(".s3", { opacity: 1 }, T3);
+      tl.from(".s3-label", { opacity: 0, y: 20, duration: 0.5 }, T3 + 0.1);
+      tl.to(".s3-w1", { opacity: 1, y: 0, duration: 0.4 }, T3 + 0.5);
+      tl.from(".s3-a1", { opacity: 0, x: -20, duration: 0.3 }, T3 + 0.85);
+      tl.to(".s3-w2", { opacity: 1, y: 0, duration: 0.4 }, T3 + 1.1);
+      tl.from(".s3-a2", { opacity: 0, x: -20, duration: 0.3 }, T3 + 1.45);
+      tl.to(".s3-w3", { opacity: 1, y: 0, duration: 0.4 }, T3 + 1.7);
+      tl.from(".s3-frustrated", { opacity: 0, y: 20, duration: 0.5 }, T3 + 2.4);
+      tl.to(".s3", { opacity: 0, duration: 0.4 }, T4 - 0.4);
+
+      // Scene 4 — just edit it
+      tl.set(".s4", { opacity: 1 }, T4);
+      tl.from(".s4-l1", { opacity: 0, y: 40, duration: 0.7 }, T4 + 0.1);
+      tl.from(".s4-l2", { opacity: 0, y: 40, duration: 0.7 }, T4 + 0.5);
+      tl.to(".s4-underline", { scaleX: 1, duration: 0.6, ease: "power2.inOut" }, T4 + 1.0);
+      tl.to(".s4", { opacity: 0, duration: 0.4 }, T5 - 0.4);
+
+      // Scene 5 — three formats
+      tl.set(".s5", { opacity: 1 }, T5);
+      tl.from(".s5-label", { opacity: 0, y: 20, duration: 0.5 }, T5 + 0.1);
+      tl.to(".s5-c1", { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, T5 + 0.4);
+      tl.to(".s5-c2", { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, T5 + 0.6);
+      tl.to(".s5-c3", { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, T5 + 0.8);
+      tl.to(".s5", { opacity: 0, duration: 0.4 }, T6 - 0.4);
+
+      // Scene 6 — end card
+      tl.set(".s6", { opacity: 1 }, T6);
+      tl.from(".s6-eyebrow", { opacity: 0, y: 20, duration: 0.55 }, T6 + 0.1);
+      tl.from(".s6-n1", { opacity: 0, y: 40, duration: 0.7 }, T6 + 0.4);
+      tl.from(".s6-n2", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, T6 + 0.7);
+      tl.from(".s6-tagline", { opacity: 0, y: 20, duration: 0.6 }, T6 + 1.2);
+      tl.from(".s6-url", { opacity: 0, y: 20, duration: 0.5 }, T6 + 1.6);
+      tl.to({}, { duration: TEND - T6 - 2.1 }, T6 + 2.1);
+
+      window.__timelines["master"] = tl;
+
+      // Position the edit-ring around the s2-title once layout settles.
+      function syncRing() {
+        const root = document.getElementById("root");
+        const card = document.querySelector(".s2-card");
+        const title = document.querySelector(".s2-title");
+        const ring = document.querySelector(".s2-ring");
+        const handle = document.querySelector(".s2-handle");
+        if (!card || !title || !ring) return;
+        const cardRect = card.getBoundingClientRect();
+        const rect = title.getBoundingClientRect();
+        const padX = 16;
+        const padY = 12;
+        ring.style.left = rect.left - padX + "px";
+        ring.style.top = rect.top - padY + "px";
+        ring.style.width = rect.width + padX * 2 + "px";
+        ring.style.height = rect.height + padY * 2 + "px";
+        if (handle) {
+          handle.style.left = rect.left - padX + "px";
+          handle.style.top = rect.top - padY - 26 + "px";
+        }
+      }
+      // Run once after layout settles. Elements are at fixed 1920x1080 so
+      // positions don't change at runtime.
+      syncRing();
+
+      tl.play();
+    </script>
+  </body>
+</html>

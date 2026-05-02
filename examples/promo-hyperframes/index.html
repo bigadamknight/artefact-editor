@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperFrames — Write HTML. Render video.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ink: #0a0a0a;
+        --paper: #f4f4f0;
+        --line: #1a1a1a;
+        --accent: #0044ff;
+        --accent-soft: #e6edff;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1920px;
+        height: 1080px;
+        background: var(--paper);
+        font-family: "Inter", system-ui, sans-serif;
+        color: var(--ink);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+
+      /* Background grid (visible faint, brand mark) */
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(10, 10, 10, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(10, 10, 10, 0.04) 1px, transparent 1px);
+        background-size: 80px 80px;
+        z-index: 0;
+      }
+
+      /* Top/bottom rules — Swiss feel */
+      .rule-top,
+      .rule-bottom {
+        position: absolute;
+        left: 80px;
+        right: 80px;
+        height: 1px;
+        background: var(--ink);
+        z-index: 5;
+      }
+      .rule-top {
+        top: 80px;
+      }
+      .rule-bottom {
+        bottom: 80px;
+      }
+      .meta {
+        position: absolute;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        z-index: 5;
+        color: var(--ink);
+      }
+      .meta-tl {
+        top: 50px;
+        left: 80px;
+      }
+      .meta-tr {
+        top: 50px;
+        right: 80px;
+      }
+      .meta-bl {
+        bottom: 50px;
+        left: 80px;
+      }
+      .meta-br {
+        bottom: 50px;
+        right: 80px;
+      }
+
+      /* Scene container */
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .scene-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 160px 200px;
+        box-sizing: border-box;
+      }
+
+      /* ===== Scene 1: title slam ===== */
+      .s1 .kicker {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 40px;
+      }
+      .s1 .headline {
+        font-size: 280px;
+        font-weight: 900;
+        line-height: 0.92;
+        letter-spacing: -8px;
+        text-align: center;
+        color: var(--ink);
+      }
+      .s1 .headline .accent {
+        color: var(--accent);
+      }
+      .s1 .sub {
+        margin-top: 48px;
+        font-size: 36px;
+        font-weight: 400;
+        color: rgba(10, 10, 10, 0.6);
+      }
+
+      /* ===== Scene 2: code reveal ===== */
+      .s2 .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.25em;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 40px;
+      }
+      .s2 .codepane {
+        background: var(--ink);
+        color: #f4f4f0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 32px;
+        line-height: 1.5;
+        padding: 64px 80px;
+        border-radius: 8px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.18);
+        max-width: 1280px;
+        white-space: pre;
+      }
+      .s2 .codepane .tok-tag {
+        color: #76d2ff;
+      }
+      .s2 .codepane .tok-attr {
+        color: #ffb86b;
+      }
+      .s2 .codepane .tok-str {
+        color: #b9f18d;
+      }
+      .s2 .codepane .tok-comment {
+        color: #6c7280;
+        font-style: italic;
+      }
+
+      /* ===== Scene 3: render frames ===== */
+      .s3 .megatitle {
+        font-size: 220px;
+        font-weight: 900;
+        letter-spacing: -6px;
+        line-height: 0.9;
+        text-align: center;
+      }
+      .s3 .megatitle .accent {
+        color: var(--accent);
+      }
+      .s3 .filmstrip {
+        position: absolute;
+        bottom: 220px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+      }
+      .s3 .frame {
+        width: 220px;
+        height: 124px;
+        background: var(--ink);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      }
+      .s3 .frame::after {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        background: linear-gradient(135deg, var(--accent), #00d4ff);
+        border-radius: 2px;
+        opacity: 0.95;
+      }
+      .s3 .frame:nth-child(2)::after {
+        background: linear-gradient(135deg, #ff6b35, #ffd60a);
+      }
+      .s3 .frame:nth-child(3)::after {
+        background: linear-gradient(135deg, #b9f18d, #38bdf8);
+      }
+      .s3 .frame:nth-child(4)::after {
+        background: linear-gradient(135deg, #ff3d77, #ffb86b);
+      }
+      .s3 .frame:nth-child(5)::after {
+        background: linear-gradient(135deg, #1a1a1a, #555);
+      }
+
+      /* ===== Scene 4: feature flex ===== */
+      .s4 {
+        display: grid;
+      }
+      .s4 .grid-features {
+        position: absolute;
+        inset: 200px 240px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 32px;
+      }
+      .s4 .feat {
+        background: var(--ink);
+        color: var(--paper);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 56px 48px;
+        border-radius: 6px;
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      .s4 .feat .num {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        color: var(--accent);
+        letter-spacing: 0.2em;
+      }
+      .s4 .feat .name {
+        font-size: 88px;
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -2px;
+      }
+      .s4 .feat .desc {
+        font-size: 22px;
+        font-weight: 400;
+        color: rgba(244, 244, 240, 0.7);
+        max-width: 360px;
+      }
+
+      /* ===== Scene 5: tagline ===== */
+      .s5 .tag {
+        font-size: 130px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -3px;
+        text-align: center;
+        max-width: 1500px;
+      }
+      .s5 .tag .accent {
+        color: var(--accent);
+      }
+
+      /* ===== Scene 6: end card ===== */
+      .s6 .endcard {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 36px;
+      }
+      .s6 .logomark {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .s6 .logosquare {
+        width: 100px;
+        height: 100px;
+        background: var(--accent);
+        border-radius: 18px;
+        position: relative;
+      }
+      .s6 .logosquare::after {
+        content: "▶";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--paper);
+        font-size: 40px;
+        margin-left: 6px;
+      }
+      .s6 .wordmark {
+        font-size: 120px;
+        font-weight: 900;
+        letter-spacing: -3px;
+        color: var(--ink);
+      }
+      .s6 .url {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 36px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: rgba(10, 10, 10, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="master"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="25"
+      data-poster-time="11"
+    >
+      <div class="grid"></div>
+
+      <!-- Persistent UI chrome -->
+      <div class="rule-top"></div>
+      <div class="rule-bottom"></div>
+      <div class="meta meta-tl">HYPERFRAMES / 0.4</div>
+      <div class="meta meta-tr">HTML → MP4</div>
+      <div class="meta meta-bl">PROMO / 01</div>
+      <div class="meta meta-br">25.0S</div>
+
+      <!-- ===== Scene 1: title slam ===== -->
+      <div class="scene s1">
+        <div class="scene-content">
+          <div class="kicker s1-kicker">A NEW FRAME FOR VIDEO</div>
+          <div class="headline">
+            <span class="s1-w1">WRITE</span>
+            <span class="accent s1-w2">HTML.</span>
+          </div>
+          <div class="sub s1-sub">Then render the video. Yes, really.</div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 2: code reveal ===== -->
+      <div class="scene s2">
+        <div class="scene-content">
+          <div class="label s2-label">A COMPOSITION IS AN HTML FILE</div>
+<pre class="codepane s2-code"><span class="tok-comment">&lt;!-- A scene. Plain HTML. --&gt;</span>
+<span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">"scene"</span> <span class="tok-attr">data-start</span>=<span class="tok-str">"3.0"</span> <span class="tok-attr">data-duration</span>=<span class="tok-str">"4"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;h1&gt;</span>Write HTML.<span class="tok-tag">&lt;/h1&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span>Render video.<span class="tok-tag">&lt;/p&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span></pre>
+        </div>
+      </div>
+
+      <!-- ===== Scene 3: render ===== -->
+      <div class="scene s3">
+        <div class="scene-content">
+          <div class="megatitle">
+            <span class="s3-w1">RENDER</span>
+            <span class="accent s3-w2">VIDEO.</span>
+          </div>
+        </div>
+        <div class="filmstrip">
+          <div class="frame s3-fr"></div>
+          <div class="frame s3-fr"></div>
+          <div class="frame s3-fr"></div>
+          <div class="frame s3-fr"></div>
+          <div class="frame s3-fr"></div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 4: features ===== -->
+      <div class="scene s4">
+        <div class="grid-features">
+          <div class="feat s4-card">
+            <div class="num">01</div>
+            <div>
+              <div class="name">GSAP</div>
+              <div class="desc">Real timelines, real motion.</div>
+            </div>
+          </div>
+          <div class="feat s4-card">
+            <div class="num">02</div>
+            <div>
+              <div class="name">TTS</div>
+              <div class="desc">Voiceovers in one command.</div>
+            </div>
+          </div>
+          <div class="feat s4-card">
+            <div class="num">03</div>
+            <div>
+              <div class="name">Captions</div>
+              <div class="desc">Word-level, synced to audio.</div>
+            </div>
+          </div>
+          <div class="feat s4-card">
+            <div class="num">04</div>
+            <div>
+              <div class="name">Shaders</div>
+              <div class="desc">Glitch, warp, ripple, iris.</div>
+            </div>
+          </div>
+          <div class="feat s4-card">
+            <div class="num">05</div>
+            <div>
+              <div class="name">Renders</div>
+              <div class="desc">Parallel workers. MP4 / WebM / MOV.</div>
+            </div>
+          </div>
+          <div class="feat s4-card">
+            <div class="num">06</div>
+            <div>
+              <div class="name">Agents</div>
+              <div class="desc">Built for AI to author + render.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 5: tagline ===== -->
+      <div class="scene s5">
+        <div class="scene-content">
+          <div class="tag">
+            <span class="s5-l1">HTML is the </span>
+            <span class="accent s5-l2">source of truth</span>
+            <span class="s5-l3"> for video.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Scene 6: end card ===== -->
+      <div class="scene s6">
+        <div class="scene-content">
+          <div class="endcard">
+            <div class="logomark">
+              <div class="logosquare s6-mark"></div>
+              <div class="wordmark s6-wm">hyperframes</div>
+            </div>
+            <div class="url s6-url">hyperframes.heygen.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
+
+      // Scene timing (cumulative seconds)
+      const T1 = 0; // title
+      const T2 = 3.4; // code
+      const T3 = 7.2; // render
+      const T4 = 11.0; // features
+      const T5 = 17.4; // tagline
+      const T6 = 21.6; // end card
+      const TEND = 25.0;
+
+      // Scene 1 — title slam
+      tl.set(".s1", { opacity: 1 }, T1);
+      tl.from(".s1-kicker", { opacity: 0, y: 30, duration: 0.5, ease: "power3.out" }, T1 + 0.1);
+      tl.from(".s1-w1", { yPercent: 110, duration: 0.7 }, T1 + 0.3);
+      tl.from(".s1-w2", { yPercent: 110, duration: 0.7 }, T1 + 0.45);
+      tl.from(".s1-sub", { opacity: 0, y: 20, duration: 0.6, ease: "power3.out" }, T1 + 1.2);
+      tl.to(".s1", { opacity: 0, duration: 0.3, ease: "power2.in" }, T2 - 0.3);
+
+      // Scene 2 — code reveal
+      tl.set(".s2", { opacity: 1 }, T2);
+      tl.from(".s2-label", { opacity: 0, y: 20, duration: 0.5 }, T2 + 0.1);
+      tl.from(".s2-code", { opacity: 0, y: 60, scale: 0.96, duration: 0.7, ease: "power4.out" }, T2 + 0.3);
+      tl.to(".s2", { opacity: 0, duration: 0.3 }, T3 - 0.3);
+
+      // Scene 3 — render video
+      tl.set(".s3", { opacity: 1 }, T3);
+      tl.from(".s3-w1", { yPercent: 110, duration: 0.6 }, T3 + 0.1);
+      tl.from(".s3-w2", { yPercent: 110, duration: 0.6 }, T3 + 0.25);
+      tl.from(".s3-fr", { y: 80, opacity: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" }, T3 + 0.7);
+      tl.to(".s3", { opacity: 0, duration: 0.3 }, T4 - 0.3);
+
+      // Scene 4 — feature grid
+      tl.set(".s4", { opacity: 1 }, T4);
+      tl.to(".s4-card", { opacity: 1, y: 0, duration: 0.55, stagger: 0.09, ease: "power4.out" }, T4 + 0.1);
+      tl.to(".s4", { opacity: 0, duration: 0.3 }, T5 - 0.3);
+
+      // Scene 5 — tagline
+      tl.set(".s5", { opacity: 1 }, T5);
+      tl.from(".s5-l1", { opacity: 0, y: 30, duration: 0.6 }, T5 + 0.1);
+      tl.from(".s5-l2", { opacity: 0, y: 30, duration: 0.6 }, T5 + 0.4);
+      tl.from(".s5-l3", { opacity: 0, y: 30, duration: 0.6 }, T5 + 0.7);
+      tl.to(".s5", { opacity: 0, duration: 0.4 }, T6 - 0.4);
+
+      // Scene 6 — end card
+      tl.set(".s6", { opacity: 1 }, T6);
+      tl.from(".s6-mark", { scale: 0, rotation: -45, duration: 0.7, ease: "back.out(2)" }, T6 + 0.1);
+      tl.from(".s6-wm", { opacity: 0, x: -40, duration: 0.6, ease: "power3.out" }, T6 + 0.4);
+      tl.from(".s6-url", { opacity: 0, y: 20, duration: 0.5 }, T6 + 0.9);
+      tl.to({}, { duration: TEND - T6 - 1.5 }, T6 + 1.5); // hold
+
+      window.__timelines["master"] = tl;
+      tl.play();
+    </script>
+  </body>
+</html>
