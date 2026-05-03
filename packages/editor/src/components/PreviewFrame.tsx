@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import type { ImageLayout } from "../hooks/useImageLayout.js";
+import { previewPath, useEditorConfig } from "../config.js";
 
 interface PreviewFrameProps {
   projectId: string;
@@ -140,6 +141,7 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
     { projectId, entry, bumpKey, fit = "scaled", stale = false, specKeyToBlockId, selectedBlockId, onSelectBlock, layout },
     ref,
   ) {
+    const config = useEditorConfig();
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const [natural, setNatural] = useState<{ w: number; h: number }>({ w: DEFAULT_W, h: DEFAULT_H });
     const [container, setContainer] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -173,7 +175,7 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
     const scaledW = natural.w * scale;
     const scaledH = natural.h * scale;
 
-    const src = `/preview/${projectId}/${entry}?v=${bumpKey}`;
+    const src = previewPath(config, `${projectId}/${entry}?v=${bumpKey}`);
 
     if (fit === "image") {
       return (

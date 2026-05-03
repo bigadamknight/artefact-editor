@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
+import type { ListProjectsResponse, ProjectSummary } from "@artefact-editor/contract";
 
-export interface ProjectSummary {
-  id: string;
-  name: string;
-  artefact: "html-app" | "hyperframes" | "image-template";
-  entry: string;
-}
+export type { ProjectSummary };
 
 interface UseProjectsResult {
   projects: ProjectSummary[] | null;
@@ -20,7 +16,7 @@ export function useProjects(): UseProjectsResult {
     let cancelled = false;
     fetch("/api/projects")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data) => {
+      .then((data: ListProjectsResponse) => {
         if (!cancelled) setProjects(data.projects ?? []);
       })
       .catch((e) => {

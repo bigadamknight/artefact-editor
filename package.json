@@ -12,9 +12,11 @@
   },
   "scripts": {
     "build:core": "yarn workspace @artefact-editor/core build",
+    "build:contract": "yarn workspace @artefact-editor/contract build",
     "build:adapter-html": "yarn workspace @artefact-editor/adapter-html build",
     "build:adapter-image-template": "yarn workspace @artefact-editor/adapter-image-template build",
-    "build:packages": "yarn build:core && yarn build:adapter-html && yarn build:adapter-image-template",
+    "build:editor": "yarn workspace @artefact-editor/editor build",
+    "build:packages": "yarn build:core && yarn build:contract && yarn build:adapter-html && yarn build:adapter-image-template && yarn build:editor",
     "build:web": "yarn workspace @artefact-editor/web build",
     "build": "yarn build:packages && yarn build:web",
     "typecheck": "yarn workspaces run typecheck",

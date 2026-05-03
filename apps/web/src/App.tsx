@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import EditorPage from "./pages/EditorPage.js";
+import { ArtefactEditor } from "@artefact-editor/editor";
 import HomePage from "./pages/HomePage.js";
 import { UpdateBanner } from "./components/UpdateBanner.js";
 
@@ -30,7 +30,7 @@ export default function App() {
     return (
       <>
         <UpdateBanner />
-        <EditorPage
+        <ArtefactEditor
           key={hash.projectId}
           projectId={hash.projectId}
           onBack={() => {
