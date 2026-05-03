@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Showreel — what /video can do</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @property --hue {
+        syntax: "<angle>";
+        inherits: true;
+        initial-value: 0deg;
+      }
+      @property --glow-spin {
+        syntax: "<angle>";
+        inherits: false;
+        initial-value: 0deg;
+      }
+
+      :root {
+        --bg: #08080c;
+        --ink: #f5f5f7;
+        --cyan: #00e5ff;
+        --magenta: #ff2a8d;
+        --amber: #ffb800;
+        --soft: rgba(245, 245, 247, 0.55);
+        --hue: 0deg;
+      }
+      html, body {
+        margin: 0; padding: 0;
+        width: 1920px; height: 1080px;
+        background: var(--bg); color: var(--ink);
+        font-family: "Space Grotesk", system-ui, sans-serif;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 1920px; height: 1080px;
+        background: var(--bg);
+        overflow: hidden;
+        perspective: 1600px;
+        perspective-origin: 50% 50%;
+      }
+      .vignette {
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 100%),
+          radial-gradient(ellipse at 15% 20%, rgba(0,229,255,0.06), transparent 45%),
+          radial-gradient(ellipse at 85% 80%, rgba(255,42,141,0.08), transparent 45%);
+        pointer-events: none;
+        z-index: 50;
+      }
+      .chrome {
+        position: absolute;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--soft);
+        z-index: 40;
+      }
+      .chrome-tl { top: 56px; left: 88px; color: var(--cyan); }
+      .chrome-tr { top: 56px; right: 88px; }
+      .chrome-bl { bottom: 56px; left: 88px; }
+      .chrome-br { bottom: 56px; right: 88px; }
+
+      .scene {
+        position: absolute; inset: 0;
+        opacity: 0;
+        will-change: transform, opacity;
+        transform-style: preserve-3d;
+      }
+      .scene-content {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 120px 200px;
+        box-sizing: border-box;
+      }
+
+      /* ==== Scene 1: title slam ==== */
+      .s1 .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.32em;
+        color: var(--cyan);
+        text-transform: uppercase;
+        margin-bottom: 56px;
+      }
+      .s1 .stack {
+        display: flex; flex-direction: column;
+        align-items: center;
+        line-height: 0.85;
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 0.01em;
+      }
+      .s1 .row1 { font-size: 280px; color: var(--ink); }
+      .s1 .row2 { font-size: 280px; color: var(--magenta); transform: translateX(60px); }
+      .s1 .row3 { font-size: 280px; color: var(--amber); transform: translateX(-60px); }
+
+      /* ==== Scene 2: 3D rotating cube (Jhey-style) ==== */
+      .s2 .label {
+        position: absolute; top: 110px; left: 0; right: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px; letter-spacing: 0.3em;
+        color: var(--cyan); text-transform: uppercase;
+        z-index: 5;
+      }
+      .s2-stage {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 520px; height: 520px;
+        transform: translate(-50%, -50%);
+        transform-style: preserve-3d;
+        --glow-spin: 0deg;
+      }
+      .s2-glow {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 1200px; height: 1200px;
+        transform: translate(-50%, -50%);
+        background: conic-gradient(
+          from var(--glow-spin),
+          rgba(0,229,255,0.0),
+          rgba(0,229,255,0.45),
+          rgba(255,42,141,0.45),
+          rgba(255,184,0,0.45),
+          rgba(0,229,255,0.0)
+        );
+        filter: blur(80px);
+        opacity: 0.55;
+        z-index: 0;
+      }
+      .s2-cube {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 520px; height: 520px;
+        margin-left: -260px;
+        margin-top: -260px;
+        transform-style: preserve-3d;
+        z-index: 2;
+      }
+      .s2-cube .face {
+        position: absolute;
+        width: 520px; height: 520px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 130px;
+        letter-spacing: 0.02em;
+        color: var(--ink);
+        background: linear-gradient(135deg, rgba(8,8,12,0.92), rgba(8,8,12,0.7));
+        border: 2px solid rgba(245,245,247,0.18);
+        box-sizing: border-box;
+        backface-visibility: hidden;
+        box-shadow: inset 0 0 80px rgba(0,229,255,0.15);
+      }
+      .s2-particles {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 1px; height: 1px;
+        transform-style: preserve-3d;
+        pointer-events: none;
+      }
+      .s2-particles .pt {
+        position: absolute;
+        left: 0; top: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        opacity: 0;
+        will-change: transform, opacity, filter;
+        text-shadow: 0 0 12px currentColor;
+      }
+      .s2-particles .pt.dot {
+        font-size: 14px;
+        letter-spacing: 0;
+      }
+      .s2-cube .face.front  { transform: translateZ(260px); color: var(--cyan); border-color: rgba(0,229,255,0.4); }
+      .s2-cube .face.back   { transform: rotateY(180deg) translateZ(260px); color: var(--magenta); border-color: rgba(255,42,141,0.4); }
+      .s2-cube .face.right  { transform: rotateY(90deg)  translateZ(260px); color: var(--amber); border-color: rgba(255,184,0,0.4); }
+      .s2-cube .face.left   { transform: rotateY(-90deg) translateZ(260px); color: var(--cyan); border-color: rgba(0,229,255,0.4); }
+      .s2-cube .face.top    { transform: rotateX(90deg)  translateZ(260px); color: var(--magenta); border-color: rgba(255,42,141,0.4); }
+      .s2-cube .face.bottom { transform: rotateX(-90deg) translateZ(260px); color: var(--amber); border-color: rgba(255,184,0,0.4); }
+
+      /* ==== Scene 3: audio-reactive bars ==== */
+      .s3 .label {
+        position: absolute; top: 110px; left: 0; right: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px; letter-spacing: 0.3em;
+        color: var(--magenta); text-transform: uppercase;
+      }
+      .s3-stage {
+        position: absolute;
+        left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        display: flex; align-items: flex-end; gap: 8px;
+        height: 540px;
+      }
+      .s3 .bar-cell {
+        position: relative;
+        width: 28px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+      }
+      .s3 .bar {
+        --amp: 0;
+        width: 100%; height: 80px;
+        border-radius: 4px;
+        background: linear-gradient(180deg,
+          hsl(calc(320deg - var(--amp) * 80deg) 95% 60%),
+          hsl(calc(195deg - var(--amp) * 30deg) 95% 60%));
+        box-shadow:
+          0 0 calc(var(--amp) * 28px) hsl(calc(320deg - var(--amp) * 80deg) 95% 60% / 0.65);
+        transform-origin: center bottom;
+        position: relative;
+        z-index: 1;
+      }
+      .s3 .peak {
+        position: absolute;
+        left: 0; right: 0;
+        bottom: 80px;
+        height: 3px;
+        background: var(--ink);
+        border-radius: 2px;
+        opacity: 0.85;
+        pointer-events: none;
+        z-index: 2;
+        transform: translateY(0);
+      }
+      .s3-headline {
+        position: absolute; bottom: 180px; left: 0; right: 0;
+        text-align: center;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 130px;
+        line-height: 0.95;
+        letter-spacing: 0.02em;
+        color: var(--ink);
+      }
+      .s3-headline em {
+        font-style: normal;
+        color: var(--magenta);
+      }
+
+      /* ==== Scene 4: glitch / shader-ish + caption demo ==== */
+      .s4 .label {
+        position: absolute; top: 110px; left: 0; right: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px; letter-spacing: 0.3em;
+        color: var(--amber); text-transform: uppercase;
+      }
+      .s4-glitch-stage {
+        position: absolute; left: 50%; top: 38%;
+        transform: translate(-50%, -50%);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 220px;
+        letter-spacing: 0.01em;
+        line-height: 0.95;
+        color: var(--ink);
+      }
+      .s4-glitch-stage .layer {
+        position: absolute; inset: 0;
+        text-align: center;
+      }
+      .s4-glitch-stage .layer.cyan { color: var(--cyan); transform: translate(-6px, 0); mix-blend-mode: screen; }
+      .s4-glitch-stage .layer.magenta { color: var(--magenta); transform: translate(6px, 0); mix-blend-mode: screen; }
+      .s4-glitch-stage .layer.base { position: relative; }
+
+      .s4-caption {
+        position: absolute; bottom: 240px; left: 0; right: 0;
+        text-align: center;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 56px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        color: var(--soft);
+      }
+      .s4-caption .word {
+        display: inline-block;
+        margin: 0 6px;
+      }
+      .s4-caption .word.active {
+        color: var(--cyan);
+      }
+
+      /* ==== Scene 5: CSS effects showcase — @property hue-cycling + isometric grid ==== */
+      .s5 .label {
+        position: absolute; top: 110px; left: 0; right: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px; letter-spacing: 0.3em;
+        color: var(--amber); text-transform: uppercase;
+        z-index: 6;
+      }
+      .s5-floor {
+        position: absolute;
+        left: 50%; top: 75%;
+        width: 2400px; height: 1400px;
+        margin-left: -1200px;
+        margin-top: -700px;
+        transform-style: preserve-3d;
+        transform: rotateX(72deg);
+      }
+      .s5-grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(hsl(var(--hue) 90% 60% / 0.75) 1px, transparent 1px),
+          linear-gradient(90deg, hsl(var(--hue) 90% 60% / 0.75) 1px, transparent 1px);
+        background-size: 80px 80px;
+        mask-image: radial-gradient(ellipse at 50% 50%, black 0%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 0%, transparent 70%);
+      }
+      .s5-mesh {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 1100px; height: 1100px;
+        transform: translate(-50%, -50%);
+        background:
+          radial-gradient(circle at 30% 35%, hsl(var(--hue) 95% 60% / 0.7), transparent 45%),
+          radial-gradient(circle at 70% 30%, hsl(calc(var(--hue) + 80deg) 95% 60% / 0.7), transparent 50%),
+          radial-gradient(circle at 60% 75%, hsl(calc(var(--hue) + 160deg) 95% 60% / 0.65), transparent 55%),
+          radial-gradient(circle at 25% 80%, hsl(calc(var(--hue) + 240deg) 95% 60% / 0.6), transparent 50%);
+        filter: blur(40px);
+        mix-blend-mode: screen;
+        z-index: 2;
+      }
+      .s5-headline {
+        position: absolute;
+        left: 0; right: 0; top: 220px;
+        text-align: center;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 240px;
+        line-height: 0.88;
+        letter-spacing: 0.01em;
+        color: var(--ink);
+        z-index: 5;
+        text-shadow: 0 0 60px hsl(var(--hue) 95% 60% / 0.55);
+      }
+      .s5-sub {
+        position: absolute;
+        bottom: 200px;
+        left: 0; right: 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.32em;
+        color: var(--soft);
+        text-transform: uppercase;
+        z-index: 5;
+      }
+
+      /* ==== Scene 6: end card ==== */
+      .s6 .center {
+        display: flex; flex-direction: column;
+        align-items: center; gap: 36px;
+      }
+      .s6 .badge {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--cyan);
+      }
+      .s6 .title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 280px;
+        letter-spacing: 0.005em;
+        line-height: 0.85;
+        color: var(--ink);
+      }
+      .s6 .title em {
+        font-style: normal;
+        color: var(--magenta);
+      }
+      .s6 .features {
+        display: flex; gap: 28px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 20px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--soft);
+      }
+      .s6 .features span { white-space: nowrap; }
+      .s6 .features .sep { color: var(--magenta); }
+      .s6 .url {
+        margin-top: 20px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        color: var(--cyan);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="master"
+      data-width="1920"
+      data-height="1080"
+      data-start="0"
+      data-duration="36.5"
+      data-poster-time="17"
+    >
+      <div class="vignette"></div>
+
+      <!-- Voiceover (George — Warm, Captivating Storyteller) -->
+      <audio id="vo-1-intro"  src="audio/vo/vo-1-intro.mp3"  data-start="0"     data-duration="4.74" data-volume="0.95"></audio>
+      <audio id="vo-2-3d"     src="audio/vo/vo-2-3d.mp3"     data-start="5.25"  data-duration="6.50" data-volume="0.95"></audio>
+      <audio id="vo-3-audio"  src="audio/vo/vo-3-audio.mp3"  data-start="12.25" data-duration="5.02" data-volume="0.95"></audio>
+      <audio id="vo-4-glitch" src="audio/vo/vo-4-glitch.mp3" data-start="17.75" data-duration="5.15" data-volume="0.95"></audio>
+      <audio id="vo-5-css"    src="audio/vo/vo-5-css.mp3"    data-start="23.5"  data-duration="5.57" data-volume="0.95"></audio>
+      <audio id="vo-6-end"    src="audio/vo/vo-6-end.mp3"    data-start="29.5"  data-duration="6.08" data-volume="0.95"></audio>
+
+      <!-- Background music bed -->
+      <audio id="bgm"         src="audio/vo/music-bed.mp3"   data-start="0"     data-duration="36.5" data-volume="0.18"></audio>
+
+      <div class="chrome chrome-tl">/video — showreel</div>
+      <div class="chrome chrome-tr">v0.2 / draft</div>
+      <div class="chrome chrome-bl">html · gsap · 30s</div>
+      <div class="chrome chrome-br">1920 × 1080</div>
+
+      <!-- Scene 1: title -->
+      <div class="scene s1">
+        <div class="scene-content">
+          <div class="eyebrow s1-eye">SHOWREEL / 2026</div>
+          <div class="stack">
+            <div class="row1 s1-r1">WHAT</div>
+            <div class="row2 s1-r2">/VIDEO</div>
+            <div class="row3 s1-r3">CAN DO.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 2: 3D rotating cube -->
+      <div class="scene s2">
+        <div class="label">01 · 3D — PRESERVE-3D · CONIC GLOW</div>
+        <div class="s2-stage">
+          <div class="s2-glow"></div>
+          <div class="s2-particles" id="s2-particles"></div>
+          <div class="s2-cube">
+            <div class="face front">3D</div>
+            <div class="face back">RENDER</div>
+            <div class="face right">SHADERS</div>
+            <div class="face left">CAPTIONS</div>
+            <div class="face top">TTS</div>
+            <div class="face bottom">TYPE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 3: audio-reactive -->
+      <div class="scene s3">
+        <div class="label">02 · AUDIO-REACTIVE</div>
+        <div class="s3-stage">
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+          <div class="bar-cell"><div class="peak"></div><div class="bar"></div></div>
+        </div>
+        <div class="s3-headline">Beat. Pulse. <em>Glow.</em></div>
+      </div>
+
+      <!-- Scene 4: glitch + captions -->
+      <div class="scene s4">
+        <div class="label">03 · SHADERS · CAPTIONS · GLITCH</div>
+        <div class="s4-glitch-stage">
+          <div class="layer cyan">SUBSTANCE</div>
+          <div class="layer magenta">SUBSTANCE</div>
+          <div class="layer base">SUBSTANCE</div>
+        </div>
+        <div class="s4-caption">
+          <span class="word w0">Captions,</span>
+          <span class="word w1">shaders,</span>
+          <span class="word w2">glitch</span>
+          <span class="word w3">effects,</span>
+          <span class="word w4">word</span>
+          <span class="word w5">by</span>
+          <span class="word w6">word</span>
+          <span class="word w7">synced</span>
+          <span class="word w8">to</span>
+          <span class="word w9">the</span>
+          <span class="word w10">voiceover.</span>
+        </div>
+      </div>
+
+      <!-- Scene 5: CSS effects — @property hue-cycle + isometric grid -->
+      <div class="scene s5">
+        <div class="label">04 · @PROPERTY · CONIC · ISOMETRIC</div>
+        <div class="s5-floor">
+          <div class="s5-grid"></div>
+        </div>
+        <div class="s5-mesh"></div>
+        <div class="s5-headline">CSS<br/>IS<br/>THE STACK.</div>
+        <div class="s5-sub">@property · mix-blend · radial · conic · masks</div>
+      </div>
+
+      <!-- Scene 6: end card -->
+      <div class="scene s6">
+        <div class="scene-content">
+          <div class="center">
+            <div class="badge s6-badge">/VIDEO</div>
+            <div class="title">
+              <span class="s6-t1">html →</span>
+              <em class="s6-t2">video.</em>
+            </div>
+            <div class="features s6-feats">
+              <span>3D</span><span class="sep">·</span>
+              <span>SHADERS</span><span class="sep">·</span>
+              <span>CAPTIONS</span><span class="sep">·</span>
+              <span>TTS</span><span class="sep">·</span>
+              <span>RENDER</span>
+            </div>
+            <div class="url s6-url">/video — one skill, every kind of video</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
+
+      const T1 = 0;      // title slam      (VO 4.74s)
+      const T2 = 5.25;   // 3D cube         (VO 6.50s)
+      const T3 = 12.25;  // audio-reactive  (VO 5.02s)
+      const T4 = 17.75;  // glitch+captions (VO 5.15s)
+      const T5 = 23.5;   // CSS effects     (VO 5.57s)
+      const T6 = 29.5;   // end card        (VO 6.08s)
+      const TEND = 36.5;
+
+      // ==== Scene 1: title slam ====
+      tl.set(".s1", { opacity: 1 }, T1);
+      tl.from(".s1-eye", { opacity: 0, y: 20, duration: 0.5, ease: "power3.out" }, T1 + 0.05);
+      tl.from(".s1-r1", { yPercent: 110, duration: 0.55, ease: "expo.out" }, T1 + 0.25);
+      tl.from(".s1-r2", { yPercent: 110, duration: 0.55, ease: "expo.out" }, T1 + 0.4);
+      tl.from(".s1-r3", { yPercent: 110, duration: 0.55, ease: "expo.out" }, T1 + 0.55);
+      tl.to([".s1-r1", ".s1-r2", ".s1-r3"], { letterSpacing: "0.06em", duration: 1.4, ease: "sine.inOut" }, T1 + 1.4);
+      tl.to(".s1", { opacity: 0, duration: 0.4, ease: "power2.in" }, T2 - 0.4);
+
+      // ==== Scene 2: 3D rotating cube + flying particle field ====
+      tl.set(".s2", { opacity: 1 }, T2);
+      tl.from(".s2 .label", { opacity: 0, y: 20, duration: 0.5 }, T2 + 0.05);
+
+      // Build the particle field. Synchronous DOM build before timeline build —
+      // mulberry32 seeded so positions are deterministic across renders.
+      (function buildParticles() {
+        const seed = function (s) {
+          return function () {
+            s |= 0; s = (s + 0x6D2B79F5) | 0;
+            let t = Math.imul(s ^ (s >>> 15), 1 | s);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        };
+        const rand = seed(20260502);
+        const pick = function (arr) { return arr[Math.floor(rand() * arr.length)]; };
+
+        const labels = [
+          "60FPS", "1920×1080", "MP4", "GSAP", "@PROPERTY",
+          "PRESERVE-3D", "RENDER", "COMPILE", "AUDIO", "MASK",
+          "BLUR", "CONIC", "SHADER", "CSS", "HTML",
+          "WEBM", "DRAFT", "ENCODE", "FRAME", "TIMELINE",
+        ];
+        const dots = ["•", "◆", "▱", "×", "+", "●", "▲", "◇"];
+        const colors = [
+          "var(--cyan)", "var(--magenta)", "var(--amber)",
+          "var(--cyan)", "var(--ink)",
+        ];
+
+        const container = document.getElementById("s2-particles");
+        const PARTICLE_COUNT = 36;
+        const particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          const isDot = rand() < 0.55;
+          const el = document.createElement("div");
+          el.className = "pt" + (isDot ? " dot" : "");
+          el.textContent = isDot ? pick(dots) : pick(labels);
+          el.style.color = pick(colors);
+          // Avoid the centre column where the cube sits — push particles to the
+          // sides so they don't overlap the cube's silhouette.
+          let x = (rand() - 0.5) * 1700;
+          if (Math.abs(x) < 280) x += (x < 0 ? -280 : 280);
+          const y = (rand() - 0.5) * 900;
+          container.appendChild(el);
+          particles.push({ el, x, y, delay: i * 0.18 });
+        }
+        // Stash for the timeline section
+        window.__s2particles = particles;
+      })();
+
+      // Animate each particle: starts far behind (-3500), flies past camera (+1400).
+      const s2Particles = window.__s2particles;
+      const FLY_DUR = 2.2;
+      s2Particles.forEach(function (p) {
+        const startT = T2 + 0.3 + p.delay;
+        gsap.set(p.el, { x: p.x, y: p.y, z: -3500, opacity: 0 });
+        // Fade in as it gets close
+        tl.to(p.el, { opacity: 1, duration: 0.4, ease: "sine.out" }, startT + 0.1);
+        // Fly forward
+        tl.to(p.el, { z: 1400, duration: FLY_DUR, ease: "none" }, startT);
+        // Fade out as it passes the lens (last 0.4s of flight)
+        tl.to(p.el, { opacity: 0, duration: 0.4, ease: "sine.in" }, startT + FLY_DUR - 0.4);
+        // Slight blur as it gets very close — adds depth feel
+        tl.to(p.el, { filter: "blur(4px)", duration: 0.5, ease: "power2.in" }, startT + FLY_DUR - 0.5);
+      });
+      // intro: cube zooms in from far away while rotating
+      gsap.set(".s2-cube", { rotationX: -25, rotationY: -45, scale: 0.3, opacity: 0 });
+      tl.to(".s2-cube", {
+        scale: 1,
+        opacity: 1,
+        duration: 1.0,
+        ease: "power3.out",
+      }, T2 + 0.15);
+      // continuous rotation through the scene
+      tl.to(".s2-cube", {
+        rotationY: "+=360",
+        rotationX: "+=180",
+        duration: T3 - T2 - 0.3,
+        ease: "none",
+      }, T2 + 0.15);
+      // glow opacity pulse + conic spin (driven by timeline, not wall-clock)
+      tl.fromTo(".s2-glow",
+        { opacity: 0 },
+        { opacity: 0.7, duration: 0.8, ease: "sine.out" },
+        T2 + 0.2
+      );
+      tl.fromTo(".s2-stage",
+        { "--glow-spin": "0deg" },
+        { "--glow-spin": "540deg", duration: T3 - T2 - 0.3, ease: "none" },
+        T2 + 0.15
+      );
+      tl.to(".s2", { opacity: 0, duration: 0.4 }, T3 - 0.4);
+
+      // ==== Scene 3: audio-reactive bars (frequency-band model) ====
+      tl.set(".s3", { opacity: 1 }, T3);
+      tl.from(".s3 .label", { opacity: 0, y: 20, duration: 0.5 }, T3 + 0.05);
+      tl.from(".s3 .bar", {
+        scaleY: 0,
+        duration: 0.4,
+        stagger: { from: "center", each: 0.022 },
+        ease: "back.out(1.6)",
+      }, T3 + 0.2);
+
+      const bars = document.querySelectorAll(".s3 .bar");
+      const peaks = document.querySelectorAll(".s3 .peak");
+      const N = bars.length;            // 32
+      const HALF = N / 2;
+      const BASE_H = 80;
+
+      // Frequency bands — each Gaussian over the half-spectrum, peaked at a
+      // specific bar index so kicks live in the centre and hats live at the edges.
+      const bandDefs = [
+        { name: "kick",  centre: 1,         sigma: 2.6, peakH: 460 },  // sub-bass, centre
+        { name: "snare", centre: 6,         sigma: 3.4, peakH: 380 },  // body
+        { name: "mid",   centre: 9,         sigma: 4.0, peakH: 280 },
+        { name: "hat",   centre: HALF - 2,  sigma: 4.5, peakH: 220 },  // treble, edges
+      ];
+      const gauss = function (x, mu, sigma) {
+        const d = (x - mu) / sigma;
+        return Math.exp(-0.5 * d * d);
+      };
+
+      // 8-step beat grid — kicks on 1/5, ghost on 6, snares on 3/7, hats on 8ths.
+      const grid = [
+        { kick: 1.0, snare: 0.0, mid: 0.3, hat: 0.5 },
+        { kick: 0.0, snare: 0.0, mid: 0.0, hat: 0.7 },
+        { kick: 0.0, snare: 1.0, mid: 0.4, hat: 0.5 },
+        { kick: 0.0, snare: 0.0, mid: 0.0, hat: 0.7 },
+        { kick: 1.0, snare: 0.0, mid: 0.3, hat: 0.5 },
+        { kick: 0.55,snare: 0.0, mid: 0.0, hat: 0.7 },
+        { kick: 0.0, snare: 1.0, mid: 0.4, hat: 0.5 },
+        { kick: 0.0, snare: 0.0, mid: 0.0, hat: 0.95 },
+      ];
+
+      // Per-bar amplitude for a given grid step. Mirror left↔right around centre.
+      function amplitudeFor(barIdx, step) {
+        const halfIdx = barIdx < HALF ? (HALF - 1 - barIdx) : (barIdx - HALF);
+        let amp = 0;
+        for (let b = 0; b < bandDefs.length; b++) {
+          const def = bandDefs[b];
+          const energy = step[def.name] || 0;
+          if (energy <= 0) continue;
+          const contribution = energy * def.peakH * gauss(halfIdx, def.centre, def.sigma);
+          if (contribution > amp) amp = contribution;
+        }
+        return amp;
+      }
+
+      // Schedule the beats.
+      const beatStart = T3 + 0.7;
+      const beatGap = 0.42;
+      const numBeats = 8;
+      for (let beat = 0; beat < numBeats; beat++) {
+        const t = beatStart + beat * beatGap;
+        const step = grid[beat % grid.length];
+        for (let i = 0; i < N; i++) {
+          const peakAmp = amplitudeFor(i, step);
+          if (peakAmp <= 4) continue;                         // skip tiny moves
+          const targetH = BASE_H + peakAmp;
+          const ampNorm = peakAmp / 460;                      // 0..~1 for hue/glow
+          const microStagger = ((i + beat) % 4) * 0.008;      // organic 8ms jitter
+
+          // Fast attack
+          tl.to(bars[i], {
+            height: targetH,
+            "--amp": ampNorm,
+            duration: 0.06,
+            ease: "expo.out",
+            overwrite: "auto",
+          }, t + microStagger);
+          // Slow release
+          tl.to(bars[i], {
+            height: BASE_H,
+            "--amp": 0,
+            duration: 0.42,
+            ease: "power2.in",
+          }, t + 0.06 + microStagger);
+
+          // Peak marker — jumps with the bar then drifts down slowly
+          tl.to(peaks[i], {
+            y: -peakAmp,
+            duration: 0.06,
+            ease: "expo.out",
+            overwrite: "auto",
+          }, t + microStagger);
+          tl.to(peaks[i], {
+            y: 0,
+            duration: 0.85,
+            ease: "power1.in",
+          }, t + 0.06 + microStagger);
+        }
+      }
+
+      tl.from(".s3-headline", { opacity: 0, y: 30, duration: 0.5, ease: "power3.out" }, T3 + 0.6);
+      tl.to(".s3", { opacity: 0, duration: 0.4 }, T4 - 0.4);
+
+      // ==== Scene 4: glitch + captions ====
+      tl.set(".s4", { opacity: 1 }, T4);
+      tl.from(".s4 .label", { opacity: 0, y: 20, duration: 0.5 }, T4 + 0.05);
+      tl.from(".s4-glitch-stage", { opacity: 0, scale: 0.9, duration: 0.5, ease: "back.out(2)" }, T4 + 0.2);
+      const glitchT = T4 + 0.6;
+      for (let g = 0; g < 6; g++) {
+        const t = glitchT + g * 0.18;
+        tl.to(".s4-glitch-stage .layer.cyan", { x: -6 + (g % 2 ? -10 : 8), duration: 0.05 }, t);
+        tl.to(".s4-glitch-stage .layer.magenta", { x: 6 + (g % 2 ? 12 : -10), duration: 0.05 }, t);
+        tl.to(".s4-glitch-stage .layer.base", { skewX: g % 2 ? -8 : 8, duration: 0.04 }, t);
+        tl.to(".s4-glitch-stage .layer.base", { skewX: 0, duration: 0.04 }, t + 0.05);
+      }
+      tl.to(".s4-glitch-stage .layer.cyan", { x: -6, duration: 0.2 }, glitchT + 6 * 0.18);
+      tl.to(".s4-glitch-stage .layer.magenta", { x: 6, duration: 0.2 }, glitchT + 6 * 0.18);
+
+      // Captions — word-by-word highlight, real timestamps from
+      // `npx hyperframes transcribe vo-4-glitch.mp3` -> transcript.json.
+      // Audio starts at T4 (data-start="17.75") so highlight time = T4 + word.start.
+      tl.from(".s4-caption", { opacity: 0, y: 20, duration: 0.4 }, T4 + 0.6);
+      const captionWords = [
+        { idx:  0, start: 0.07, end: 0.67 },
+        { idx:  1, start: 0.84, end: 1.54 },
+        { idx:  2, start: 1.54, end: 1.93 },
+        { idx:  3, start: 2.05, end: 2.77 },
+        { idx:  4, start: 2.77, end: 3.04 },
+        { idx:  5, start: 3.04, end: 3.16 },
+        { idx:  6, start: 3.17, end: 3.44 },
+        { idx:  7, start: 3.44, end: 3.83 },
+        { idx:  8, start: 3.90, end: 3.92 },
+        { idx:  9, start: 4.01, end: 4.17 },
+        { idx: 10, start: 4.17, end: 4.82 },
+      ];
+      captionWords.forEach(function (w) {
+        tl.set(".s4-caption .w" + w.idx, { className: "word active w" + w.idx }, T4 + w.start);
+        tl.set(".s4-caption .w" + w.idx, { className: "word w" + w.idx },        T4 + w.end + 0.05);
+      });
+      tl.to(".s4", { opacity: 0, duration: 0.4 }, T5 - 0.4);
+
+      // ==== Scene 5: CSS effects (@property hue cycle + isometric floor) ====
+      tl.set(".s5", { opacity: 1 }, T5);
+      tl.from(".s5 .label", { opacity: 0, y: 20, duration: 0.5 }, T5 + 0.05);
+      // hue cycle — drives both the gradient mesh and the grid floor
+      gsap.set(":root", { "--hue": "0deg" });
+      tl.to(":root", {
+        "--hue": "360deg",
+        duration: T6 - T5 - 0.3,
+        ease: "none",
+      }, T5);
+      // floor pull-in
+      tl.from(".s5-floor", {
+        opacity: 0,
+        y: 200,
+        duration: 0.9,
+        ease: "power3.out",
+      }, T5 + 0.1);
+      tl.from(".s5-floor", {
+        scale: 0.85,
+        duration: 4,
+        ease: "sine.out",
+      }, T5 + 0.1);
+      // mesh pulse
+      tl.from(".s5-mesh", { opacity: 0, scale: 0.6, duration: 1.0, ease: "power3.out" }, T5 + 0.15);
+      tl.to(".s5-mesh", {
+        scale: 1.1,
+        duration: T6 - T5 - 0.6,
+        ease: "sine.inOut",
+      }, T5 + 0.6);
+      // headline
+      tl.from(".s5-headline", { opacity: 0, y: 60, duration: 0.7, ease: "expo.out" }, T5 + 0.4);
+      tl.from(".s5-sub", { opacity: 0, y: 20, duration: 0.5 }, T5 + 0.9);
+      tl.to(".s5", { opacity: 0, duration: 0.4 }, T6 - 0.4);
+
+      // ==== Scene 6: end card ====
+      tl.set(".s6", { opacity: 1 }, T6);
+      tl.from(".s6-badge", { opacity: 0, y: 20, duration: 0.45 }, T6 + 0.05);
+      tl.from(".s6-t1", { opacity: 0, y: 40, duration: 0.6, ease: "power3.out" }, T6 + 0.25);
+      tl.from(".s6-t2", { opacity: 0, y: 40, duration: 0.6, ease: "power3.out" }, T6 + 0.45);
+      tl.from(".s6 .features span", { opacity: 0, y: 14, duration: 0.4, stagger: 0.06, ease: "power3.out" }, T6 + 0.85);
+      tl.from(".s6-url", { opacity: 0, y: 16, duration: 0.5 }, T6 + 1.6);
+      tl.to({}, { duration: TEND - T6 - 2.2 }, T6 + 2.2);
+
+      window.__timelines["master"] = tl;
+      tl.play();
+    </script>
+  </body>
+</html>

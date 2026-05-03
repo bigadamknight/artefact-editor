@@ -1,18 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-
-interface ImageRegion {
-  key: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-interface ImageLayout {
-  width: number;
-  height: number;
-  regions: ImageRegion[];
-}
+import type { ImageLayout } from "../hooks/useImageLayout.js";
 
 interface PreviewFrameProps {
   projectId: string;
@@ -39,6 +26,8 @@ interface PreviewFrameProps {
   specKeyToBlockId?: Record<string, string>;
   selectedBlockId?: string | null;
   onSelectBlock?: (blockId: string) => void;
+  /** image mode only: region layout sidecar. Provided by the page-level hook. */
+  layout?: ImageLayout | null;
 }
 
 const DEFAULT_W = 1080;
@@ -47,37 +36,19 @@ const DEFAULT_H = 1080;
 interface ImageModePreviewProps {
   src: string;
   bumpKey: number;
-  projectId: string;
-  entry: string;
   stale: boolean;
+  layout: ImageLayout | null;
   specKeyToBlockId: Record<string, string>;
   selectedBlockId: string | null;
   onSelectBlock?: (blockId: string) => void;
 }
 
 function ImageModePreview({
-  src, bumpKey, projectId, entry, stale, specKeyToBlockId, selectedBlockId, onSelectBlock,
+  src, bumpKey, stale, layout, specKeyToBlockId, selectedBlockId, onSelectBlock,
 }: ImageModePreviewProps) {
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const [layout, setLayout] = useState<ImageLayout | null>(null);
   const [imgRect, setImgRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [hoverKey, setHoverKey] = useState<string | null>(null);
-
-  // Fetch layout.json (sidecar emitted by the PIL render). Re-fetch whenever
-  // bumpKey changes — every save/render bumps it.
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/preview/${projectId}/${entry}.layout.json?v=${bumpKey}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled) return;
-        setLayout(data && Array.isArray(data.regions) ? (data as ImageLayout) : null);
-      })
-      .catch(() => {
-        if (!cancelled) setLayout(null);
-      });
-    return () => { cancelled = true; };
-  }, [projectId, entry, bumpKey]);
 
   // Track the <img>'s rendered rect inside its parent so we can place hit
   // zones on top. object-fit: contain leaves letterboxing we have to account
@@ -166,7 +137,7 @@ function ImageModePreview({
 
 export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
   function PreviewFrame(
-    { projectId, entry, bumpKey, fit = "scaled", stale = false, specKeyToBlockId, selectedBlockId, onSelectBlock },
+    { projectId, entry, bumpKey, fit = "scaled", stale = false, specKeyToBlockId, selectedBlockId, onSelectBlock, layout },
     ref,
   ) {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -209,9 +180,8 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(
         <ImageModePreview
           src={src}
           bumpKey={bumpKey}
-          projectId={projectId}
-          entry={entry}
           stale={stale}
+          layout={layout ?? null}
           specKeyToBlockId={specKeyToBlockId ?? {}}
           selectedBlockId={selectedBlockId ?? null}
           onSelectBlock={onSelectBlock}

@@ -3,6 +3,8 @@ import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
 import { useElementStyles } from "../hooks/useElementStyles.js";
 import { useSelection } from "../hooks/useSelection.js";
 import { useTransport } from "../hooks/useTransport.js";
+import { useProjectAssets } from "../hooks/useProjectAssets.js";
+import { useImageLayout } from "../hooks/useImageLayout.js";
 import { Inspector } from "../components/Inspector.js";
 import { PreviewFrame } from "../components/PreviewFrame.js";
 import { Timeline } from "../components/Timeline.js";
@@ -34,6 +36,8 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
   const isImageTemplate = state.artefact === "image-template";
   const isVideo = state.artefact === "hyperframes";
   const isWebApp = state.artefact === "html-app";
+  const { assets } = useProjectAssets(projectId);
+  const { layout } = useImageLayout(projectId, state.entry, state.bumpKey, isImageTemplate);
   // hyperframes → scaled iframe + transport + timeline (even if a particular
   // composition has no audio/timing blocks, it's still a fixed-size video).
   // html-app → fill the pane, no transport.
@@ -194,6 +198,7 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
               specKeyToBlockId={specKeyToBlockId}
               selectedBlockId={selectedBlockId}
               onSelectBlock={setSelectedBlockId}
+              layout={layout}
             />
           </div>
           {!showTimeline ? null : (
@@ -226,6 +231,7 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
             block={selectedBlock}
             values={valuesForSelected}
             styles={selectedBlock ? stylesByBlock[selectedBlock.id] : undefined}
+            assets={assets}
             onChange={(key, value) => {
               if (selectedBlock) setProperty(selectedBlock.id, key, value);
             }}

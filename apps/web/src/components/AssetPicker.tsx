@@ -1,31 +1,13 @@
-import { useEffect, useState } from "react";
 import { Button } from "./ui/button.js";
 
 interface AssetPickerProps {
   projectId: string;
+  assets: string[];
   current: string;
   onPick: (path: string) => void;
 }
 
-export function AssetPicker({ projectId, current, onPick }: AssetPickerProps) {
-  const [assets, setAssets] = useState<string[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(`/api/projects/${projectId}/assets`);
-        const data = (await res.json()) as { assets: string[] };
-        if (!cancelled) setAssets(data.assets);
-      } catch {
-        if (!cancelled) setAssets([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId]);
-
+export function AssetPicker({ projectId, assets, current, onPick }: AssetPickerProps) {
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-2">

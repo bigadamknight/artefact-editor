@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Film, ImageIcon, Layout } from "lucide-react";
-
-interface ProjectSummary {
-  id: string;
-  name: string;
-  artefact: "html-app" | "hyperframes" | "image-template";
-  entry: string;
-}
+import { useProjects, type ProjectSummary } from "../hooks/useProjects.js";
 
 interface HomePageProps {
   onOpen: (id: string) => void;
@@ -82,15 +76,7 @@ function PreviewThumb({ project }: { project: ProjectSummary }) {
 }
 
 export default function HomePage({ onOpen }: HomePageProps) {
-  const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/projects")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data) => setProjects(data.projects ?? []))
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-  }, []);
+  const { projects, error } = useProjects();
 
   return (
     <div className="min-h-full bg-background">

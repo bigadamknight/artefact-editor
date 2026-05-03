@@ -9,6 +9,7 @@ interface InspectorProps {
   block: Block | null;
   values: Record<string, string | number>;
   styles?: Record<string, string>;
+  assets: string[];
   onChange: (key: string, value: string | number) => void;
 }
 
@@ -74,7 +75,7 @@ function rgbToHex(rgb: string): string {
   return "#" + hex(+m[1]!) + hex(+m[2]!) + hex(+m[3]!);
 }
 
-export function Inspector({ projectId, block, values, styles, onChange }: InspectorProps) {
+export function Inspector({ projectId, block, values, styles, assets, onChange }: InspectorProps) {
   if (!block) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
@@ -104,6 +105,7 @@ export function Inspector({ projectId, block, values, styles, onChange }: Inspec
               projectId={projectId}
               descriptor={desc}
               value={values[desc.key] ?? ""}
+              assets={assets}
               onChange={(v) => onChange(desc.key, v)}
             />
           ))}
@@ -165,10 +167,11 @@ interface DescriptorFieldProps {
   projectId: string;
   descriptor: PropertyDescriptor;
   value: string | number;
+  assets: string[];
   onChange: (value: string | number) => void;
 }
 
-function DescriptorField({ projectId, descriptor, value, onChange }: DescriptorFieldProps) {
+function DescriptorField({ projectId, descriptor, value, assets, onChange }: DescriptorFieldProps) {
   if (descriptor.type === "string") {
     if (descriptor.multiline) {
       return (
@@ -221,7 +224,7 @@ function DescriptorField({ projectId, descriptor, value, onChange }: DescriptorF
     return (
       <div className="space-y-1.5">
         <Label>{descriptor.key}</Label>
-        <AssetPicker projectId={projectId} current={String(value)} onPick={onChange} />
+        <AssetPicker projectId={projectId} assets={assets} current={String(value)} onPick={onChange} />
       </div>
     );
   }
