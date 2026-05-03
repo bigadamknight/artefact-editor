@@ -52,6 +52,15 @@ export class FsProjectFiles implements ProjectFiles {
     }
   }
 
+  async isDirectory(path: string): Promise<boolean> {
+    try {
+      const s = await stat(this.resolve(path));
+      return s.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
   rootPath(): string {
     return this.resolvedRoot;
   }

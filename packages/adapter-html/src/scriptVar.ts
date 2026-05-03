@@ -8,9 +8,7 @@
  * (deferred to a future adapter that imports recast/babel).
  */
 
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+import { escapeRegex } from "./regex.js";
 
 function declarationRegex(varName: string): RegExp {
   return new RegExp(
