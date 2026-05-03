@@ -86,14 +86,32 @@ to `duration / 2` so the editor doesn't open on a literal blank frame.
   excluded. Drop it into another machine's `artefact-editor` to pick up
   exactly where you left off.
 
+## Embed in another app
+
+The editor UI is published as a React component, decoupled from the CLI server. Mount it inside any host app and point it at a backend that implements the wire contract:
+
+```tsx
+import { ArtefactEditor } from "@artefact-editor/editor";
+
+<ArtefactEditor
+  projectId="hero-landing"
+  apiUrl="/artefacts/api"     // optional, default /api
+  previewUrl="/artefacts/preview" // optional, default /preview
+/>;
+```
+
+Host backends implement the API contract (typed Zod schemas) from `@artefact-editor/contract` against whatever storage they use — local filesystem, R2, Postgres, etc. See [`packages/editor/README.md`](packages/editor/README.md) for full integration steps including the Tailwind preset.
+
 ## Layout
 
 ```
 apps/
   cli/             # Hono server + bin. CLI: artefact-editor <project-dir>...
-  web/             # Vite + React + TS + shadcn/ui + Tailwind
+  web/             # Vite + React shell. Hosts <ArtefactEditor>.
 packages/
   core/            # Format-agnostic. Block, descriptors, Doc, commands.
+  contract/        # Typed HTTP API contract (Zod request schemas + TS responses).
+  editor/          # <ArtefactEditor> React component. Embeddable.
   adapter-html/    # parse5-based mutations + preview bridge.
   adapter-image-template/  # PIL spec.json adapter, shells to python3.
 spec/
