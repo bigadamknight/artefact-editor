@@ -9,3 +9,7 @@ coverage
 examples/*/output.png
 examples/*/output.png.layout.json
 examples/*/renders/editor-render.mp4
+.gitnexus
+.claude/
+.code-audit-cache.json
+code-audit-report.md
