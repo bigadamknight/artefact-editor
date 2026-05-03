@@ -7,6 +7,7 @@ export interface ProjectFiles {
   write(file: string, contents: string): Promise<void>;
   list(dir: string): Promise<string[]>;
   exists(file: string): Promise<boolean>;
+  isDirectory(path: string): Promise<boolean>;
 }
 
 export interface Adapter {

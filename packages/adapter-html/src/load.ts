@@ -8,6 +8,8 @@ import {
 } from "@artefact-editor/core";
 import { findOneMatching } from "./selector.js";
 import { findScriptVar } from "./scriptVar.js";
+import { escapeRegex } from "./regex.js";
+import { STYLE_PROPS } from "./styleProps.js";
 
 const TEXT_NODE = "#text";
 
@@ -38,10 +40,6 @@ function findCssVar(css: string, varName: string): string {
   const m = re.exec(css);
   if (!m) throw new Error(`CSS variable not found: ${varName}`);
   return m[2]!.trim();
-}
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function readSelectorBlock(
@@ -153,32 +151,6 @@ export async function loadProject(files: ProjectFiles): Promise<{
       // Live values are read from the iframe; pending edits flow through normal
       // setProperty commands and the adapter upserts them into the element's
       // inline style attribute on save.
-      const STYLE_PROPS = [
-        "color",
-        "font-size",
-        "font-weight",
-        "font-family",
-        "text-align",
-        "letter-spacing",
-        "line-height",
-        "top",
-        "left",
-        "right",
-        "bottom",
-        "width",
-        "height",
-        "margin-top",
-        "margin-right",
-        "margin-bottom",
-        "margin-left",
-        "padding-top",
-        "padding-right",
-        "padding-bottom",
-        "padding-left",
-        "transform",
-        "opacity",
-        "z-index",
-      ];
       for (const p of STYLE_PROPS) {
         descriptors.push({ key: `style.${p}`, type: "string" });
       }

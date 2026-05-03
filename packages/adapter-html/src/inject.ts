@@ -1,3 +1,5 @@
+import { STYLE_PROPS } from "./styleProps.js";
+
 /**
  * Script injected into the preview iframe to bridge with the editor.
  *
@@ -26,14 +28,7 @@ export const previewBridgeScript = `
   document.head.appendChild(aeStyle);
 
   var selectedEl = null;
-  var STYLE_KEYS = [
-    'color', 'font-size', 'font-weight', 'font-family', 'text-align', 'letter-spacing', 'line-height',
-    'top', 'left', 'right', 'bottom',
-    'width', 'height',
-    'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
-    'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
-    'transform', 'opacity', 'z-index'
-  ];
+  var STYLE_KEYS = ${JSON.stringify(STYLE_PROPS)};
   function postSelectedStyles() {
     if (!selectedEl) return;
     var cs = window.getComputedStyle(selectedEl);

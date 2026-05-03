@@ -5,6 +5,7 @@ import {
   getElementSourceLocation,
 } from "./selector.js";
 import { locateScriptVarValue } from "./scriptVar.js";
+import { escapeRegex } from "./regex.js";
 
 interface PendingEdit {
   start: number;
@@ -28,10 +29,6 @@ function decodeHtmlEntities(s: string): string {
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-}
-
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function applyEdits(source: string, edits: PendingEdit[]): string {
@@ -257,9 +254,9 @@ async function listFilesRecursive(
       acc.push(path);
       continue;
     }
-    // Probe as directory: list() returns [] for non-dirs, so cheap to recurse.
-    const sub = await files.list(path);
-    if (sub.length > 0) await listFilesRecursive(files, path, acc);
+    if (await files.isDirectory(path)) {
+      await listFilesRecursive(files, path, acc);
+    }
   }
 }
 
