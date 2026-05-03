@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
 import { useElementStyles } from "../hooks/useElementStyles.js";
 import { useSelection } from "../hooks/useSelection.js";
@@ -21,12 +21,6 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
   const stylesByBlock = useElementStyles();
-  const setIframeRef = useCallback(
-    (el: HTMLIFrameElement | null) => {
-      transport.registerIframe(el);
-    },
-    [transport.registerIframe],
-  );
 
   const selectedBlock = useMemo(
     () => state.blocks.find((b) => b.id === selectedBlockId) ?? null,
@@ -62,29 +56,32 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
 
   useEffect(() => {
     if (!transport.state.ready) return;
-    const iframe = document.querySelector<HTMLIFrameElement>('iframe[title="preview"]');
-    iframe?.contentWindow?.postMessage(
-      { type: "ae:set-selected", blockId: selectedBlockId },
-      "*",
-    );
-  }, [selectedBlockId, transport.state.ready, state.bumpKey]);
+    transport.postToIframe({ type: "ae:set-selected", blockId: selectedBlockId });
+  }, [selectedBlockId, transport.state.ready, state.bumpKey, transport.postToIframe]);
+
+  // Stash transport + save handlers in a ref so the keydown listener mounts
+  // once. Without this, every transport tick (each rAF during playback) tears
+  // the listener down and re-attaches it.
+  const keyHandlersRef = useRef({ save, transport, isDirty: state.isDirty, saving: state.saving });
+  keyHandlersRef.current = { save, transport, isDirty: state.isDirty, saving: state.saving };
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      const h = keyHandlersRef.current;
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (state.isDirty && !state.saving) void save();
-      } else if (e.code === "Space" && transport.state.ready) {
+        if (h.isDirty && !h.saving) void h.save();
+      } else if (e.code === "Space" && h.transport.state.ready) {
         const tag = (e.target as HTMLElement | null)?.tagName;
         if (tag !== "INPUT" && tag !== "TEXTAREA") {
           e.preventDefault();
-          transport.toggle();
+          h.transport.toggle();
         }
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.isDirty, state.saving, save, transport]);
+  }, []);
 
   const valuesForSelected = useMemo(() => {
     if (!selectedBlock) return {};
@@ -189,7 +186,7 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
           ) : null}
           <div className="min-h-0 flex-1">
             <PreviewFrame
-              ref={setIframeRef}
+              ref={transport.registerIframe}
               projectId={projectId}
               entry={state.entry}
               bumpKey={state.bumpKey}

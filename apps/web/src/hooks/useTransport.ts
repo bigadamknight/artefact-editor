@@ -14,6 +14,7 @@ export interface UseTransportApi {
   toggle: () => void;
   seek: (time: number) => void;
   registerIframe: (iframe: HTMLIFrameElement | null) => void;
+  postToIframe: (msg: unknown) => void;
 }
 
 interface IncomingReady {
@@ -107,5 +108,5 @@ export function useTransport(): UseTransportApi {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  return { state, play, pause, toggle, seek, registerIframe };
+  return { state, play, pause, toggle, seek, registerIframe, postToIframe: post };
 }
