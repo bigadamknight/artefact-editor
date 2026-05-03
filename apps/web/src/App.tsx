@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import EditorPage from "./pages/EditorPage.js";
 import HomePage from "./pages/HomePage.js";
+import { UpdateBanner } from "./components/UpdateBanner.js";
 
 // Hash-based routing keeps the SPA lightweight: no history API plumbing on
 // the static-file server. Routes:
@@ -27,21 +28,27 @@ export default function App() {
     // when navigating between projects via the home picker — otherwise the
     // inspector shows a stale selection that no longer maps to any block.
     return (
-      <EditorPage
-        key={hash.projectId}
-        projectId={hash.projectId}
-        onBack={() => {
-          window.location.hash = "#/";
-        }}
-      />
+      <>
+        <UpdateBanner />
+        <EditorPage
+          key={hash.projectId}
+          projectId={hash.projectId}
+          onBack={() => {
+            window.location.hash = "#/";
+          }}
+        />
+      </>
     );
   }
 
   return (
-    <HomePage
-      onOpen={(id) => {
-        window.location.hash = `#/p/${id}`;
-      }}
-    />
+    <>
+      <UpdateBanner />
+      <HomePage
+        onOpen={(id) => {
+          window.location.hash = `#/p/${id}`;
+        }}
+      />
+    </>
   );
 }
