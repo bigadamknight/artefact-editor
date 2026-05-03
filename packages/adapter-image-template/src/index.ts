@@ -8,7 +8,7 @@ import {
   type PropertyValue,
 } from "@artefact-editor/core";
 
-const SPEC_FILE_DEFAULT = "spec.json";
+export const SPEC_FILE_DEFAULT = "spec.json";
 
 async function readSpec(files: ProjectFiles, specFile: string): Promise<Record<string, PropertyValue>> {
   if (!(await files.exists(specFile))) return {};

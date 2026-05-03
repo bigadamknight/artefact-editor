@@ -7,9 +7,12 @@ import { basename, extname, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/core";
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
-import { imageTemplateAdapter } from "@artefact-editor/adapter-image-template";
+import { imageTemplateAdapter, SPEC_FILE_DEFAULT } from "@artefact-editor/adapter-image-template";
 import { FsProjectFiles } from "./projectFiles.js";
 import { isInside } from "./paths.js";
+import { runChild } from "./runChild.js";
+
+const PYTHON_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 
 interface ManifestMeta {
   name?: string;
@@ -67,16 +70,10 @@ async function discoverDefaultProjects(): Promise<string[]> {
   try {
     const entries = await readdir(examplesDir, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => resolve(examplesDir, e.name));
-    const withManifest: string[] = [];
-    for (const d of dirs) {
-      try {
-        await stat(resolve(d, "manifest.json"));
-        withManifest.push(d);
-      } catch {
-        // skip dirs without manifest.json
-      }
-    }
-    return withManifest;
+    const checks = await Promise.allSettled(
+      dirs.map((d) => stat(resolve(d, "manifest.json"))),
+    );
+    return dirs.filter((_, i) => checks[i]!.status === "fulfilled");
   } catch {
     return [];
   }
@@ -95,10 +92,12 @@ if (projectPaths.length === 0) {
 }
 
 const projects = new Map<string, ProjectState>();
-for (const p of projectPaths) {
-  const state = await loadProject(p);
+const loaded = await Promise.all(projectPaths.map((p) => loadProject(p).catch(() => null)));
+for (let i = 0; i < projectPaths.length; i++) {
+  const p = projectPaths[i]!;
+  const state = loaded[i];
   if (!state) {
-    console.warn(`[artefact-editor] skipped (no manifest.json): ${p}`);
+    console.warn(`[artefact-editor] skipped (no manifest.json or load error): ${p}`);
     continue;
   }
   if (projects.has(state.id)) {
@@ -145,7 +144,7 @@ app.get("/api/projects/:id", async (c) => {
 
   let previewStale = false;
   if (p.manifest?.artefact === "image-template") {
-    const specFile = p.manifest.specFile ?? "spec.json";
+    const specFile = p.manifest.specFile ?? SPEC_FILE_DEFAULT;
     try {
       const [specStat, outStat] = await Promise.all([
         stat(resolve(p.root, specFile)),
@@ -184,15 +183,32 @@ app.post("/api/projects/:id/save", async (c) => {
   const doc = new Doc(p.blocks.map((b) => ({ ...b, values: { ...b.values } })));
   for (const cmd of body.commands) doc.apply(cmd);
 
-  const dirtyIds = new Set(doc.dirtyIds());
-  const dirtyBlocks = doc.getBlocks().filter((b) => dirtyIds.has(b.id));
-  const settledCommands: Command[] = dirtyBlocks.flatMap((b) =>
-    Object.entries(b.values).map(([key, value]) => {
-      const original = p.blocks.find((x) => x.id === b.id);
-      if (original && original.values[key] === value) return null;
-      return { type: "setProperty" as const, blockId: b.id, key, value };
-    }).filter((x): x is Command => x !== null),
-  );
+  // Net commands = touched (block, key) pairs whose final value differs from
+  // the original. Tracking touched keys (rather than scanning every dirty
+  // block's full value map) avoids O(N*M) work on large blocks.
+  const touchedByBlock = new Map<string, Set<string>>();
+  for (const cmd of body.commands) {
+    if (cmd.type !== "setProperty") continue;
+    let keys = touchedByBlock.get(cmd.blockId);
+    if (!keys) {
+      keys = new Set();
+      touchedByBlock.set(cmd.blockId, keys);
+    }
+    keys.add(cmd.key);
+  }
+  const originalById = new Map(p.blocks.map((b) => [b.id, b]));
+  const settledCommands: Command[] = [];
+  for (const [blockId, keys] of touchedByBlock) {
+    const final = doc.getBlock(blockId);
+    const original = originalById.get(blockId);
+    if (!final || !original) continue;
+    for (const key of keys) {
+      const value = final.values[key];
+      if (value !== undefined && original.values[key] !== value) {
+        settledCommands.push({ type: "setProperty", blockId, key, value });
+      }
+    }
+  }
 
   if (settledCommands.length === 0) {
     return c.json({ ok: true, changed: 0 });
@@ -222,13 +238,20 @@ async function renderImageTemplate(c: Context, p: ProjectState) {
   if (!template) {
     return c.json({ ok: false, error: "manifest.template is required for render" }, 400);
   }
-  const specFile = p.manifest!.specFile ?? "spec.json";
+  const specFile = p.manifest!.specFile ?? SPEC_FILE_DEFAULT;
   const out = p.entry;
 
   const lastDot = template.lastIndexOf(".");
   if (lastDot < 0) return c.json({ ok: false, error: `template must be 'module.Class', got: ${template}` }, 400);
   const modulePath = template.slice(0, lastDot);
   const className = template.slice(lastDot + 1);
+  // modulePath/className are interpolated into a python -c script; even though
+  // the manifest is author-controlled, validate to keep the contract narrow
+  // (no shell metacharacters, no unicode confusables, no dotted paths starting
+  // with a digit).
+  if (!PYTHON_IDENTIFIER.test(modulePath) || !PYTHON_IDENTIFIER.test(className)) {
+    return c.json({ ok: false, error: `invalid template '${template}': module/class must match ${PYTHON_IDENTIFIER}` }, 400);
+  }
 
   const py = `
 import os, sys, json
@@ -244,22 +267,17 @@ ${className}(data).save(${JSON.stringify(out)})
 print("rendered", ${JSON.stringify(out)})
 `;
 
-  return new Promise<Response>((resolveRes) => {
-    const child = spawn("python3", ["-c", py], { cwd: p.root });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (d) => (stdout += d.toString()));
-    child.stderr.on("data", (d) => (stderr += d.toString()));
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolveRes(c.json({ ok: true, stdout: stdout.trim() }));
-      } else {
-        resolveRes(
-          c.json({ ok: false, error: stderr.trim() || `python exited ${code}`, stdout: stdout.trim() }, 500),
-        );
-      }
-    });
-  });
+  try {
+    const r = await runChild("python3", ["-c", py], { cwd: p.root });
+    if (r.code === 0) return c.json({ ok: true, stdout: r.stdout.trim() });
+    return c.json(
+      { ok: false, error: r.stderr.trim() || `python exited ${r.code}`, stdout: r.stdout.trim() },
+      500,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ ok: false, error: `failed to spawn python3: ${message}` }, 500);
+  }
 }
 
 async function renderHyperframes(c: Context, p: ProjectState) {
@@ -268,39 +286,30 @@ async function renderHyperframes(c: Context, p: ProjectState) {
   // predictable URL. For final delivery users still have the timestamped
   // versions in renders/ from CLI use.
   const outRel = "renders/editor-render.mp4";
-  const args = [
-    "hyperframes",
-    "render",
-    "--quality", "draft",
-    "--output", outRel,
-  ];
+  const args = ["hyperframes", "render", "--quality", "draft", "--output", outRel];
 
-  return new Promise<Response>((resolveRes) => {
-    const child = spawn("npx", args, { cwd: p.root, env: process.env });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (d) => (stdout += d.toString()));
-    child.stderr.on("data", (d) => (stderr += d.toString()));
-    child.on("error", (err) => {
-      resolveRes(c.json({ ok: false, error: `failed to spawn npx: ${err.message}` }, 500));
-    });
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolveRes(c.json({
-          ok: true,
-          output: outRel,
-          previewUrl: `/preview/${p.id}/${outRel}`,
-          stdout: stdout.trim().slice(-2000),
-        }));
-      } else {
-        resolveRes(c.json({
-          ok: false,
-          error: stderr.trim().slice(-2000) || `npx hyperframes render exited ${code}`,
-          stdout: stdout.trim().slice(-2000),
-        }, 500));
-      }
-    });
-  });
+  try {
+    const r = await runChild("npx", args, { cwd: p.root, env: process.env });
+    if (r.code === 0) {
+      return c.json({
+        ok: true,
+        output: outRel,
+        previewUrl: `/preview/${p.id}/${outRel}`,
+        stdout: r.stdout.trim().slice(-2000),
+      });
+    }
+    return c.json(
+      {
+        ok: false,
+        error: r.stderr.trim().slice(-2000) || `npx hyperframes render exited ${r.code}`,
+        stdout: r.stdout.trim().slice(-2000),
+      },
+      500,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ ok: false, error: `failed to spawn npx: ${message}` }, 500);
+  }
 }
 
 // Stream a zip archive of the project (manifest + source + assets, minus
@@ -402,10 +411,12 @@ app.get("/preview/:id/*", async (c) => {
   const buf = await readFile(abs);
   if (ext === ".html" && p.manifest?.artefact !== "image-template") {
     const html = buf.toString("utf8");
-    const injected = html.replace(
-      /<\/body>/i,
-      `<script>${previewBridgeScript}</script></body>`,
-    );
+    const tag = `<script>${previewBridgeScript}</script>`;
+    // Most authored pages have </body>; some fragments / minified bundles
+    // don't. Fall back to appending so the bridge always loads.
+    const injected = /<\/body>/i.test(html)
+      ? html.replace(/<\/body>/i, `${tag}</body>`)
+      : html + tag;
     return c.body(injected, 200, { "content-type": mime });
   }
   return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": mime });
@@ -452,7 +463,16 @@ if (webDistExists) {
   );
 }
 
-const port = Number(process.env.PORT ?? 7411);
+function parsePort(env: string | undefined, fallback: number): number {
+  if (env == null) return fallback;
+  const n = Number(env);
+  if (!Number.isInteger(n) || n < 1 || n > 65535) {
+    console.warn(`[artefact-editor] PORT='${env}' is not a valid port; falling back to ${fallback}`);
+    return fallback;
+  }
+  return n;
+}
+const port = parsePort(process.env.PORT, 7411);
 serve({ fetch: app.fetch, port }, ({ port: p }) => {
   const url = `http://localhost:${p}`;
   if (webDistExists) {
