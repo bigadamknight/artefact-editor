@@ -24,11 +24,25 @@ async function writeSpec(
   specFile: string,
   spec: Record<string, PropertyValue>,
 ): Promise<void> {
-  // Stable key order: insertion order is preserved by JSON.stringify in modern
-  // engines, so we sort keys to keep diffs reviewable.
-  const ordered: Record<string, PropertyValue> = {};
-  for (const k of Object.keys(spec).sort()) ordered[k] = spec[k]!;
-  await files.write(specFile, JSON.stringify(ordered, null, 2) + "\n");
+  await files.write(specFile, JSON.stringify(spec, Object.keys(spec).sort(), 2) + "\n");
+}
+
+/**
+ * Each spec-key block maps to exactly one spec key. When a block has multiple
+ * descriptors, one must be marked `canonical: true` to disambiguate which
+ * value gets written to the spec. Single-descriptor blocks default to that
+ * sole descriptor.
+ */
+function canonicalDescriptor(blockId: string, descriptors: PropertyDescriptor[]): PropertyDescriptor {
+  const marked = descriptors.filter((d) => d.canonical);
+  if (marked.length > 1) {
+    throw new Error(`block ${blockId} has multiple descriptors marked canonical`);
+  }
+  if (marked.length === 1) return marked[0]!;
+  if (descriptors.length === 1) return descriptors[0]!;
+  throw new Error(
+    `block ${blockId} has ${descriptors.length} descriptors; one must set canonical: true`,
+  );
 }
 
 export const imageTemplateAdapter: Adapter = {
@@ -50,13 +64,11 @@ export const imageTemplateAdapter: Adapter = {
         );
       }
       const descriptors: PropertyDescriptor[] = [...mb.properties];
+      const canonical = canonicalDescriptor(mb.id, descriptors);
       const values: Record<string, PropertyValue> = {};
       const current = spec[mb.source.specKey];
-      // Each block has one canonical property whose key is "value" by convention,
-      // OR matches the existing prop key. We initialise the first prop with the
-      // current spec value; additional props (rare) start empty.
-      for (const desc of mb.properties) {
-        if (desc.key === mb.properties[0]!.key && current !== undefined) {
+      for (const desc of descriptors) {
+        if (desc.key === canonical.key && current !== undefined) {
           values[desc.key] = current;
         } else {
           values[desc.key] = "";
@@ -77,8 +89,6 @@ export const imageTemplateAdapter: Adapter = {
 
   async apply(files: ProjectFiles, blocks: Block[], commands: Command[]): Promise<void> {
     if (commands.length === 0) return;
-    // Group writes per file (different blocks may target different specs in
-    // theory, though typically all share spec.json).
     const byFile = new Map<string, Map<string, PropertyValue>>();
     const blocksById = new Map(blocks.map((b) => [b.id, b]));
 
@@ -89,10 +99,8 @@ export const imageTemplateAdapter: Adapter = {
       if (block.source.tag !== "specKey") {
         throw new Error(`block ${block.id} is not a specKey block; adapter-image-template can't apply`);
       }
-      // Only apply the canonical (first) property of the block to the spec.
-      // Each block maps to exactly one spec key.
-      const canonicalKey = block.descriptors[0]!.key;
-      if (cmd.key !== canonicalKey) continue;
+      const canonical = canonicalDescriptor(block.id, block.descriptors);
+      if (cmd.key !== canonical.key) continue;
 
       let edits = byFile.get(block.source.file);
       if (!edits) {

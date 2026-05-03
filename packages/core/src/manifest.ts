@@ -8,17 +8,33 @@ const sourceSchema = z.union([
 ]);
 
 const descriptorSchema = z.discriminatedUnion("type", [
-  z.object({ key: z.string(), type: z.literal("string"), multiline: z.boolean().optional() }),
-  z.object({ key: z.string(), type: z.literal("asset"), mime: z.array(z.string()).optional() }),
-  z.object({ key: z.string(), type: z.literal("color") }),
+  z.object({
+    key: z.string(),
+    type: z.literal("string"),
+    multiline: z.boolean().optional(),
+    canonical: z.boolean().optional(),
+  }),
+  z.object({
+    key: z.string(),
+    type: z.literal("asset"),
+    mime: z.array(z.string()).optional(),
+    canonical: z.boolean().optional(),
+  }),
+  z.object({ key: z.string(), type: z.literal("color"), canonical: z.boolean().optional() }),
   z.object({
     key: z.string(),
     type: z.literal("number"),
     min: z.number().optional(),
     max: z.number().optional(),
     step: z.number().optional(),
+    canonical: z.boolean().optional(),
   }),
-  z.object({ key: z.string(), type: z.literal("enum"), options: z.array(z.string()) }),
+  z.object({
+    key: z.string(),
+    type: z.literal("enum"),
+    options: z.array(z.string()),
+    canonical: z.boolean().optional(),
+  }),
 ]);
 
 const blockSchema = z.object({
