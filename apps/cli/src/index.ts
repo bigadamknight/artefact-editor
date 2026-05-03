@@ -9,6 +9,7 @@ import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/co
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
 import { imageTemplateAdapter } from "@artefact-editor/adapter-image-template";
 import { FsProjectFiles } from "./projectFiles.js";
+import { isInside } from "./paths.js";
 
 interface ManifestMeta {
   name?: string;
@@ -387,7 +388,7 @@ app.get("/preview/:id/*", async (c) => {
   let rel = url.pathname.replace(new RegExp(`^/preview/${id}/?`), "");
   if (!rel) rel = p.entry;
   const abs = resolve(p.root, rel);
-  if (!abs.startsWith(resolve(p.root))) {
+  if (!isInside(resolve(p.root), abs)) {
     return c.text("Forbidden", 403);
   }
   try {
@@ -429,7 +430,7 @@ if (webDistExists) {
     let rel = url.pathname.replace(/^\//, "");
     if (!rel) rel = "index.html";
     const abs = resolve(webDist, rel);
-    if (!abs.startsWith(resolve(webDist))) return c.text("Forbidden", 403);
+    if (!isInside(resolve(webDist), abs)) return c.text("Forbidden", 403);
     let buf: Buffer;
     try {
       buf = await readFile(abs);
