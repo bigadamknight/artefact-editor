@@ -38,17 +38,24 @@ function tIndexFromVarName(name: string): number | null {
   return m ? parseInt(m[1]!, 10) : null;
 }
 
-interface Row {
-  kind: "audio" | "timing" | "visibility";
-  block: Block;
-  // audio
-  start?: number;
-  duration?: number;
-  // timing
-  value?: number;
-  // visibility
-  visStart?: number;
-  visEnd?: number;
+type Row =
+  | { kind: "audio"; block: Block; start: number; duration: number }
+  | { kind: "timing"; block: Block; value: number }
+  | { kind: "visibility"; block: Block; visStart: number; visEnd: number };
+
+type RowVariant = "aud" | "timing" | "img" | "txt";
+
+const BADGE: Record<RowVariant, { label: string; className: string }> = {
+  aud: { label: "AUD", className: "bg-sky-100 text-sky-700" },
+  timing: { label: "T", className: "bg-amber-100 text-amber-700" },
+  img: { label: "IMG", className: "bg-purple-100 text-purple-700" },
+  txt: { label: "TXT", className: "bg-slate-100 text-slate-700" },
+};
+
+function rowVariant(row: Row): RowVariant {
+  if (row.kind === "audio") return "aud";
+  if (row.kind === "timing") return "timing";
+  return row.block.kind === "image" ? "img" : "txt";
 }
 
 export function Timeline({
@@ -206,15 +213,7 @@ function TrackRow({
   onSetProperty,
 }: TrackRowProps) {
   const top = RULER_HEIGHT + rowIndex * LANE_HEIGHT;
-  const kindBadge = row.kind === "audio" ? "AUD" : row.kind === "timing" ? "T" : row.block.kind === "image" ? "IMG" : "TXT";
-  const badgeColor =
-    row.kind === "audio"
-      ? "bg-sky-100 text-sky-700"
-      : row.kind === "timing"
-        ? "bg-amber-100 text-amber-700"
-        : row.block.kind === "image"
-          ? "bg-purple-100 text-purple-700"
-          : "bg-slate-100 text-slate-700";
+  const badge = BADGE[rowVariant(row)];
 
   return (
     <>
@@ -228,9 +227,9 @@ function TrackRow({
         style={{ top, height: LANE_HEIGHT, width: TRACK_HEADER_W }}
       >
         <span
-          className={`shrink-0 rounded px-1 py-[1px] text-[9px] font-bold uppercase ${badgeColor}`}
+          className={`shrink-0 rounded px-1 py-[1px] text-[9px] font-bold uppercase ${badge.className}`}
         >
-          {kindBadge}
+          {badge.label}
         </span>
         <span className="truncate" title={row.block.label}>
           {row.block.label}
@@ -251,8 +250,8 @@ function TrackRow({
       {row.kind === "audio" ? (
         <AudioBar
           top={top}
-          start={row.start!}
-          duration={row.duration!}
+          start={row.start}
+          duration={row.duration}
           pxPerSec={pxPerSec}
           selected={selected}
           onSelect={onSelect}
@@ -266,7 +265,7 @@ function TrackRow({
       {row.kind === "timing" ? (
         <TimingMark
           top={top}
-          value={row.value!}
+          value={row.value}
           pxPerSec={pxPerSec}
           selected={selected}
           label={row.block.label}
@@ -277,8 +276,8 @@ function TrackRow({
       {row.kind === "visibility" ? (
         <VisibilityBar
           top={top}
-          start={row.visStart!}
-          end={Math.min(row.visEnd!, compositionDuration)}
+          start={row.visStart}
+          end={Math.min(row.visEnd, compositionDuration)}
           pxPerSec={pxPerSec}
           selected={selected}
           onSelect={onSelect}

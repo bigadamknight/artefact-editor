@@ -1,8 +1,7 @@
 import type { Block, PropertyDescriptor } from "@artefact-editor/core";
-import { Input } from "./ui/input.js";
-import { Textarea } from "./ui/textarea.js";
 import { Label } from "./ui/label.js";
 import { AssetPicker } from "./AssetPicker.js";
+import { FieldRow } from "./FieldRow.js";
 
 interface InspectorProps {
   projectId: string;
@@ -13,7 +12,33 @@ interface InspectorProps {
   onChange: (key: string, value: string | number) => void;
 }
 
-type StyleField = { key: string; label: string; type: "color" | "text" };
+type StyleKey =
+  | "color"
+  | "font-size"
+  | "font-weight"
+  | "font-family"
+  | "text-align"
+  | "letter-spacing"
+  | "line-height"
+  | "top"
+  | "left"
+  | "right"
+  | "bottom"
+  | "z-index"
+  | "width"
+  | "height"
+  | "margin-top"
+  | "margin-right"
+  | "margin-bottom"
+  | "margin-left"
+  | "padding-top"
+  | "padding-right"
+  | "padding-bottom"
+  | "padding-left"
+  | "transform"
+  | "opacity";
+
+type StyleField = { key: StyleKey; label: string; type: "color" | "text" };
 type StyleGroup = { title: string; fields: StyleField[] };
 
 const STYLE_GROUPS: StyleGroup[] = [
@@ -129,30 +154,14 @@ export function Inspector({ projectId, block, values, styles, assets, onChange }
                   const live = f.type === "color" ? rgbToHex(liveRaw) : liveRaw;
                   const current = pending !== undefined ? String(pending) : live;
                   return (
-                    <div key={f.key} className="space-y-1.5">
-                      <Label htmlFor={overrideKey}>{f.label}</Label>
-                      {f.type === "color" ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={/^#[0-9a-fA-F]{6,8}$/.test(current) ? current : "#000000"}
-                            onChange={(e) => onChange(overrideKey, e.target.value)}
-                            className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
-                          />
-                          <Input
-                            id={overrideKey}
-                            value={current}
-                            onChange={(e) => onChange(overrideKey, e.target.value)}
-                          />
-                        </div>
-                      ) : (
-                        <Input
-                          id={overrideKey}
-                          value={current}
-                          onChange={(e) => onChange(overrideKey, e.target.value)}
-                        />
-                      )}
-                    </div>
+                    <FieldRow
+                      key={f.key}
+                      kind={f.type}
+                      htmlId={overrideKey}
+                      label={f.label}
+                      value={current}
+                      onChange={(v) => onChange(overrideKey, v)}
+                    />
                   );
                 })}
               </div>
@@ -172,54 +181,6 @@ interface DescriptorFieldProps {
 }
 
 function DescriptorField({ projectId, descriptor, value, assets, onChange }: DescriptorFieldProps) {
-  if (descriptor.type === "string") {
-    if (descriptor.multiline) {
-      return (
-        <div className="space-y-1.5">
-          <Label htmlFor={descriptor.key}>{descriptor.key}</Label>
-          <Textarea
-            id={descriptor.key}
-            value={String(value)}
-            onChange={(e) => onChange(e.target.value)}
-          />
-        </div>
-      );
-    }
-    return (
-      <div className="space-y-1.5">
-        <Label htmlFor={descriptor.key}>{descriptor.key}</Label>
-        <Input
-          id={descriptor.key}
-          value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      </div>
-    );
-  }
-
-  if (descriptor.type === "color") {
-    const colorVal = String(value).trim() || "#000000";
-    const isHex = /^#[0-9a-fA-F]{3,8}$/.test(colorVal);
-    return (
-      <div className="space-y-1.5">
-        <Label htmlFor={descriptor.key}>{descriptor.key}</Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={isHex ? colorVal : "#000000"}
-            onChange={(e) => onChange(e.target.value)}
-            className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
-          />
-          <Input
-            id={descriptor.key}
-            value={String(value)}
-            onChange={(e) => onChange(e.target.value)}
-          />
-        </div>
-      </div>
-    );
-  }
-
   if (descriptor.type === "asset") {
     return (
       <div className="space-y-1.5">
@@ -229,40 +190,55 @@ function DescriptorField({ projectId, descriptor, value, assets, onChange }: Des
     );
   }
 
+  if (descriptor.type === "string") {
+    return (
+      <FieldRow
+        kind={descriptor.multiline ? "textarea" : "text"}
+        htmlId={descriptor.key}
+        label={descriptor.key}
+        value={String(value)}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (descriptor.type === "color") {
+    return (
+      <FieldRow
+        kind="color"
+        htmlId={descriptor.key}
+        label={descriptor.key}
+        value={String(value).trim() || "#000000"}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (descriptor.type === "number") {
     return (
-      <div className="space-y-1.5">
-        <Label htmlFor={descriptor.key}>{descriptor.key}</Label>
-        <Input
-          id={descriptor.key}
-          type="number"
-          min={descriptor.min}
-          max={descriptor.max}
-          step={descriptor.step}
-          value={String(value)}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-      </div>
+      <FieldRow
+        kind="number"
+        htmlId={descriptor.key}
+        label={descriptor.key}
+        value={String(value)}
+        onChange={(v) => onChange(Number(v))}
+        min={descriptor.min}
+        max={descriptor.max}
+        step={descriptor.step}
+      />
     );
   }
 
   if (descriptor.type === "enum") {
     return (
-      <div className="space-y-1.5">
-        <Label htmlFor={descriptor.key}>{descriptor.key}</Label>
-        <select
-          id={descriptor.key}
-          value={String(value)}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-        >
-          {descriptor.options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
+      <FieldRow
+        kind="enum"
+        htmlId={descriptor.key}
+        label={descriptor.key}
+        value={String(value)}
+        onChange={onChange}
+        options={descriptor.options}
+      />
     );
   }
 
