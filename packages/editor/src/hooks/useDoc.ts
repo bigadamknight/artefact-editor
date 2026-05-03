@@ -1,22 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Block, Command } from "@artefact-editor/core";
-
-type ArtefactKind = "html-app" | "hyperframes" | "image-template";
-
-interface ProjectResponse {
-  name: string;
-  root: string;
-  entry: string;
-  blocks: Block[];
-  artefact?: ArtefactKind;
-  previewStale?: boolean;
-}
-
-interface SaveResponse {
-  ok: boolean;
-  changed?: number;
-  error?: string;
-}
+import type {
+  ArtefactKind,
+  GetProjectResponse,
+  RenderResponse,
+  SaveResponse,
+} from "@artefact-editor/contract";
+import { apiPath, useEditorConfig } from "../config.js";
 
 export interface DocState {
   loading: boolean;
@@ -46,6 +36,7 @@ export interface UseDocApi {
 }
 
 export function useDoc(projectId: string): UseDocApi {
+  const config = useEditorConfig();
   const [state, setState] = useState<DocState>({
     loading: true,
     error: null,
@@ -67,9 +58,9 @@ export function useDoc(projectId: string): UseDocApi {
   const fetchProject = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const res = await fetch(`/api/projects/${projectId}`);
+      const res = await fetch(apiPath(config, `/projects/${projectId}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as ProjectResponse;
+      const data = (await res.json()) as GetProjectResponse;
       setState((s) => ({
         ...s,
         loading: false,
@@ -89,7 +80,7 @@ export function useDoc(projectId: string): UseDocApi {
         error: err instanceof Error ? err.message : String(err),
       }));
     }
-  }, [projectId]);
+  }, [projectId, config]);
 
   useEffect(() => {
     void fetchProject();
@@ -131,7 +122,7 @@ export function useDoc(projectId: string): UseDocApi {
 
     const wasImageTemplate = stateRef.current.artefact === "image-template";
     try {
-      const res = await fetch(`/api/projects/${projectId}/save`, {
+      const res = await fetch(apiPath(config, `/projects/${projectId}/save`), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ commands }),
@@ -151,17 +142,15 @@ export function useDoc(projectId: string): UseDocApi {
     // For image-template artefacts the rendered output.png is now stale
     // relative to the just-saved spec. Flag it so the UI can prompt for render.
     setState((s) => ({ ...s, saving: false, previewStale: wasImageTemplate }));
-  }, [fetchProject, projectId]);
+  }, [fetchProject, projectId, config]);
 
   const render = useCallback(async () => {
     setState((s) => ({ ...s, rendering: true }));
     try {
-      const res = await fetch(`/api/projects/${projectId}/render`, { method: "POST" });
-      const data = (await res.json()) as {
-        ok: boolean;
-        error?: string;
-        previewUrl?: string;
-      };
+      const res = await fetch(apiPath(config, `/projects/${projectId}/render`), {
+        method: "POST",
+      });
+      const data = (await res.json()) as RenderResponse;
       if (!data.ok) throw new Error(data.error ?? "Render failed");
       // Bump bumpKey so any <img>/iframe pointing at the entry reloads.
       setState((s) => ({ ...s, rendering: false, previewStale: false, bumpKey: s.bumpKey + 1 }));
@@ -177,7 +166,7 @@ export function useDoc(projectId: string): UseDocApi {
         error: err instanceof Error ? err.message : String(err),
       }));
     }
-  }, [projectId]);
+  }, [projectId, config]);
 
   return { state, setProperty, save, render, reload: fetchProject };
 }

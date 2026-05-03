@@ -1,18 +1,8 @@
 import { useEffect, useState } from "react";
+import type { ImageLayout } from "@artefact-editor/contract";
+import { previewPath, useEditorConfig } from "../config.js";
 
-export interface ImageRegion {
-  key: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface ImageLayout {
-  width: number;
-  height: number;
-  regions: ImageRegion[];
-}
+export type { ImageLayout, ImageRegion } from "@artefact-editor/contract";
 
 export function useImageLayout(
   projectId: string,
@@ -20,6 +10,7 @@ export function useImageLayout(
   bumpKey: number,
   enabled: boolean,
 ): { layout: ImageLayout | null } {
+  const config = useEditorConfig();
   const [layout, setLayout] = useState<ImageLayout | null>(null);
 
   useEffect(() => {
@@ -28,7 +19,7 @@ export function useImageLayout(
       return;
     }
     let cancelled = false;
-    fetch(`/preview/${projectId}/${entry}.layout.json?v=${bumpKey}`)
+    fetch(previewPath(config, `${projectId}/${entry}.layout.json?v=${bumpKey}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -40,7 +31,7 @@ export function useImageLayout(
     return () => {
       cancelled = true;
     };
-  }, [projectId, entry, bumpKey, enabled]);
+  }, [projectId, entry, bumpKey, enabled, config]);
 
   return { layout };
 }

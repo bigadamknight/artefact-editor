@@ -1,4 +1,5 @@
 import { Button } from "./ui/button.js";
+import { previewPath, useEditorConfig } from "../config.js";
 
 interface AssetPickerProps {
   projectId: string;
@@ -8,6 +9,7 @@ interface AssetPickerProps {
 }
 
 export function AssetPicker({ projectId, assets, current, onPick }: AssetPickerProps) {
+  const config = useEditorConfig();
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-2">
@@ -24,7 +26,7 @@ export function AssetPicker({ projectId, assets, current, onPick }: AssetPickerP
               ].join(" ")}
               title={a}
             >
-              <img src={`/preview/${projectId}/${a}`} alt="" className="h-full w-full object-cover" />
+              <img src={previewPath(config, `${projectId}/${a}`)} alt="" className="h-full w-full object-cover" />
             </button>
           );
         })}

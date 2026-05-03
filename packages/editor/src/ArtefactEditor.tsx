@@ -1,22 +1,51 @@
 import { useEffect, useMemo, useRef } from "react";
-import { useDoc, getEffectiveValue } from "../hooks/useDoc.js";
-import { useElementStyles } from "../hooks/useElementStyles.js";
-import { useSelection } from "../hooks/useSelection.js";
-import { useTransport } from "../hooks/useTransport.js";
-import { useProjectAssets } from "../hooks/useProjectAssets.js";
-import { useImageLayout } from "../hooks/useImageLayout.js";
-import { Inspector } from "../components/Inspector.js";
-import { PreviewFrame } from "../components/PreviewFrame.js";
-import { Timeline } from "../components/Timeline.js";
-import { TopBar } from "../components/TopBar.js";
-import { TransportBar } from "../components/TransportBar.js";
+import { useDoc, getEffectiveValue } from "./hooks/useDoc.js";
+import { useElementStyles } from "./hooks/useElementStyles.js";
+import { useSelection } from "./hooks/useSelection.js";
+import { useTransport } from "./hooks/useTransport.js";
+import { useProjectAssets } from "./hooks/useProjectAssets.js";
+import { useImageLayout } from "./hooks/useImageLayout.js";
+import { Inspector } from "./components/Inspector.js";
+import { PreviewFrame } from "./components/PreviewFrame.js";
+import { Timeline } from "./components/Timeline.js";
+import { TopBar } from "./components/TopBar.js";
+import { TransportBar } from "./components/TransportBar.js";
+import {
+  EditorConfigContext,
+  apiPath,
+  useEditorConfig,
+  type EditorConfig,
+} from "./config.js";
 
-interface EditorPageProps {
+export interface ArtefactEditorProps {
+  projectId: string;
+  /** Override the JSON API base URL (default `/api`). */
+  apiUrl?: string;
+  /** Override the preview base URL (default `/preview`). */
+  previewUrl?: string;
+  /** Optional back-navigation handler — when provided, TopBar shows a back button. */
+  onBack?: () => void;
+}
+
+export function ArtefactEditor({ projectId, apiUrl, previewUrl, onBack }: ArtefactEditorProps) {
+  const config = useMemo<EditorConfig>(
+    () => ({ apiUrl: apiUrl ?? "/api", previewUrl: previewUrl ?? "/preview" }),
+    [apiUrl, previewUrl],
+  );
+  return (
+    <EditorConfigContext.Provider value={config}>
+      <ArtefactEditorInner projectId={projectId} onBack={onBack} />
+    </EditorConfigContext.Provider>
+  );
+}
+
+interface ArtefactEditorInnerProps {
   projectId: string;
   onBack?: () => void;
 }
 
-export default function EditorPage({ projectId, onBack }: EditorPageProps) {
+function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
+  const config = useEditorConfig();
   const { state, setProperty, save, render } = useDoc(projectId);
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
@@ -133,7 +162,7 @@ export default function EditorPage({ projectId, onBack }: EditorPageProps) {
         renderKind={isVideo ? "video" : "image"}
         onDownload={() => {
           // Browser handles the download via content-disposition header.
-          window.location.assign(`/api/projects/${projectId}/archive`);
+          window.location.assign(apiPath(config, `/projects/${projectId}/archive`));
         }}
         onBack={onBack}
       />
