@@ -14,6 +14,8 @@ interface UndoEntry {
   prevValue: PropertyValue;
 }
 
+const UNDO_LIMIT = 200;
+
 export class Doc {
   private blocks: Map<BlockId, Block>;
   private order: BlockId[];
@@ -28,7 +30,7 @@ export class Doc {
   }
 
   getBlocks(): Block[] {
-    return this.order.map((id) => this.blocks.get(id)!).filter(Boolean);
+    return this.order.map((id) => this.blocks.get(id)!);
   }
 
   getBlock(id: BlockId): Block | undefined {
@@ -59,9 +61,8 @@ export class Doc {
     if (prev === command.value) return;
 
     block.values = { ...block.values, [command.key]: command.value };
-    this.blocks.set(block.id, block);
     this.dirty.add(block.id);
-    this.undoStack.push({ command, prevValue: prev as PropertyValue });
+    this.pushUndo({ command, prevValue: prev as PropertyValue });
     this.redoStack = [];
     this.emit();
   }
@@ -73,7 +74,6 @@ export class Doc {
     if (!block) return;
     const cur = block.values[entry.command.key] as PropertyValue;
     block.values = { ...block.values, [entry.command.key]: entry.prevValue };
-    this.blocks.set(block.id, block);
     this.dirty.add(block.id);
     this.redoStack.push({ command: entry.command, prevValue: cur });
     this.emit();
@@ -82,7 +82,18 @@ export class Doc {
   redo(): void {
     const entry = this.redoStack.pop();
     if (!entry) return;
-    this.apply(entry.command);
+    const block = this.blocks.get(entry.command.blockId);
+    if (!block) return;
+    const cur = block.values[entry.command.key] as PropertyValue;
+    block.values = { ...block.values, [entry.command.key]: entry.prevValue };
+    this.dirty.add(block.id);
+    this.pushUndo({ command: entry.command, prevValue: cur });
+    this.emit();
+  }
+
+  private pushUndo(entry: UndoEntry): void {
+    this.undoStack.push(entry);
+    if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
   }
 
   markClean(): void {
@@ -97,6 +108,7 @@ export class Doc {
   }
 
   private emit(): void {
+    if (this.listeners.size === 0) return;
     const snap = this.snapshot();
     for (const listener of this.listeners) listener(snap);
   }
