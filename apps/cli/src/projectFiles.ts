@@ -1,13 +1,19 @@
 import { readFile, writeFile, readdir, stat, rename, mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import type { ProjectFiles } from "@artefact-editor/core";
+import { isInside } from "./paths.js";
 
 export class FsProjectFiles implements ProjectFiles {
-  constructor(private readonly root: string) {}
+  private readonly resolvedRoot: string;
+
+  constructor(private readonly root: string) {
+    this.resolvedRoot = resolve(root);
+  }
 
   private resolve(file: string): string {
-    const abs = resolve(this.root, file);
-    if (!abs.startsWith(resolve(this.root))) {
+    const abs = resolve(this.resolvedRoot, file);
+    if (!isInside(this.resolvedRoot, abs)) {
       throw new Error(`Path escapes project root: ${file}`);
     }
     return abs;
@@ -24,7 +30,7 @@ export class FsProjectFiles implements ProjectFiles {
   async write(file: string, contents: string): Promise<void> {
     const abs = this.resolve(file);
     await mkdir(dirname(abs), { recursive: true });
-    const tmp = abs + ".tmp";
+    const tmp = `${abs}.${randomUUID()}.tmp`;
     await writeFile(tmp, contents, "utf8");
     await rename(tmp, abs);
   }
@@ -47,7 +53,7 @@ export class FsProjectFiles implements ProjectFiles {
   }
 
   rootPath(): string {
-    return resolve(this.root);
+    return this.resolvedRoot;
   }
 
   abs(file: string): string {
