@@ -146,7 +146,7 @@ export async function loadProject(files: ProjectFiles): Promise<{
       );
     }
     const descriptors: PropertyDescriptor[] = [...mb.properties];
-    if (mb.kind === "text" && "selector" in mb.source) {
+    if ((mb.kind === "text" || mb.kind === "image") && "selector" in mb.source) {
       // Synthetic style.* descriptors so the editor can show a Style section.
       // Live values are read from the iframe; pending edits flow through normal
       // setProperty commands and the adapter upserts them into the element's

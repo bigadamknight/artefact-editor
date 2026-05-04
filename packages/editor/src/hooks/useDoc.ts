@@ -127,6 +127,10 @@ export function useDoc(projectId: string): UseDocApi {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ commands }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Save failed (${res.status}): ${text.slice(0, 200)}`);
+      }
       const data = (await res.json()) as SaveResponse;
       if (!data.ok) throw new Error(data.error ?? "Save failed");
     } catch (err) {

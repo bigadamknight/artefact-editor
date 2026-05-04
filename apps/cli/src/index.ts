@@ -189,7 +189,12 @@ app.post("/api/projects/:id/save", async (c) => {
   }
 
   const doc = new Doc(p.blocks.map((b) => ({ ...b, values: { ...b.values } })));
-  for (const cmd of body.commands) doc.apply(cmd);
+  try {
+    for (const cmd of body.commands) doc.apply(cmd);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ ok: false, error: message }, 400);
+  }
 
   // Net commands = touched (block, key) pairs whose final value differs from
   // the original. Tracking touched keys (rather than scanning every dirty
@@ -222,8 +227,13 @@ app.post("/api/projects/:id/save", async (c) => {
     return c.json({ ok: true, changed: 0 });
   }
 
-  await p.adapter.apply(p.files, p.blocks, settledCommands);
-  await reloadProject(id);
+  try {
+    await p.adapter.apply(p.files, p.blocks, settledCommands);
+    await reloadProject(id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ ok: false, error: message }, 500);
+  }
   return c.json({ ok: true, changed: settledCommands.length });
 });
 
