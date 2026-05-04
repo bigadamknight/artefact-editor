@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ApplyCommentsResponse } from "@artefact-editor/contract";
 import { useDoc, getEffectiveValue } from "./hooks/useDoc.js";
 import { useElementStyles } from "./hooks/useElementStyles.js";
 import { useSelection } from "./hooks/useSelection.js";
 import { useTransport } from "./hooks/useTransport.js";
 import { useProjectAssets } from "./hooks/useProjectAssets.js";
 import { useImageLayout } from "./hooks/useImageLayout.js";
+import { useComments } from "./hooks/useComments.js";
 import { Inspector } from "./components/Inspector.js";
 import { PreviewFrame } from "./components/PreviewFrame.js";
 import { Timeline } from "./components/Timeline.js";
 import { TopBar } from "./components/TopBar.js";
 import { TransportBar } from "./components/TransportBar.js";
+import { CommentsPanel } from "./components/CommentsPanel.js";
+import { CommentComposer } from "./components/CommentComposer.js";
+import { ApplyCommentsModal } from "./components/ApplyCommentsModal.js";
 import {
   EditorConfigContext,
   apiPath,
@@ -61,6 +66,19 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   const isWebApp = state.artefact === "html-app";
   const { assets } = useProjectAssets(projectId);
   const { layout } = useImageLayout(projectId, state.entry, state.bumpKey, isImageTemplate);
+  const comments = useComments(projectId);
+  const [commentMode, setCommentMode] = useState(false);
+  const [applyResult, setApplyResult] = useState<ApplyCommentsResponse | null>(null);
+  const [applying, setApplying] = useState(false);
+  const pendingComments = useMemo(
+    () => comments.comments.filter((c) => c.status === "pending"),
+    [comments.comments],
+  );
+  const pendingByBlock = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of pendingComments) m.set(c.blockId, (m.get(c.blockId) ?? 0) + 1);
+    return m;
+  }, [pendingComments]);
   // hyperframes → scaled iframe + transport + timeline (even if a particular
   // composition has no audio/timing blocks, it's still a fixed-size video).
   // html-app → fill the pane, no transport.
@@ -106,11 +124,26 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
           e.preventDefault();
           h.transport.toggle();
         }
+      } else if (e.key === "c" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag !== "INPUT" && tag !== "TEXTAREA") {
+          setCommentMode((m) => !m);
+        }
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  const onApplyComments = async () => {
+    setApplying(true);
+    try {
+      const r = await comments.apply();
+      if (r && r.ok) setApplyResult(r);
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const valuesForSelected = useMemo(() => {
     if (!selectedBlock) return {};
@@ -165,6 +198,9 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
           window.location.assign(apiPath(config, `/projects/${projectId}/archive`));
         }}
         onBack={onBack}
+        commentMode={commentMode}
+        onToggleCommentMode={() => setCommentMode((m) => !m)}
+        pendingCommentCount={pendingComments.length}
       />
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-72 flex-col border-r border-border">
@@ -175,6 +211,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
             {state.blocks.map((b) => {
               const isPending = state.pendingValues.has(b.id);
               const isSelected = b.id === selectedBlockId;
+              const commentCount = pendingByBlock.get(b.id) ?? 0;
               return (
                 <button
                   type="button"
@@ -191,12 +228,32 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
                     </span>
                     <span className="ml-2">{b.label}</span>
                   </span>
-                  {isPending ? (
-                    <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  ) : null}
+                  <span className="ml-2 flex items-center gap-1.5">
+                    {commentCount > 0 ? (
+                      <span className="rounded bg-primary/10 px-1.5 text-[10px] font-medium text-primary">
+                        {commentCount}
+                      </span>
+                    ) : null}
+                    {isPending ? (
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    ) : null}
+                  </span>
                 </button>
               );
             })}
+          </div>
+          <div className="border-t border-border px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Comments
+          </div>
+          <div className="max-h-72 overflow-auto">
+            <CommentsPanel
+              comments={comments.comments}
+              blocks={state.blocks}
+              onSelectBlock={setSelectedBlockId}
+              onDelete={(id) => void comments.remove(id)}
+              onApply={() => void onApplyComments()}
+              applying={applying}
+            />
           </div>
         </aside>
         <main className="relative flex min-w-0 flex-1 flex-col bg-muted">
@@ -252,6 +309,18 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
           )}
         </main>
         <aside className="w-80 overflow-auto border-l border-border">
+          {commentMode && selectedBlock ? (
+            <div className="p-4">
+              <CommentComposer
+                blockLabel={selectedBlock.label}
+                blockId={selectedBlock.id}
+                onSubmit={async (text) => {
+                  await comments.add(selectedBlock.id, text);
+                }}
+                onCancel={() => setCommentMode(false)}
+              />
+            </div>
+          ) : null}
           <Inspector
             projectId={projectId}
             block={selectedBlock}
@@ -264,6 +333,9 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
           />
         </aside>
       </div>
+      {applyResult ? (
+        <ApplyCommentsModal result={applyResult} onClose={() => setApplyResult(null)} />
+      ) : null}
     </div>
   );
 }

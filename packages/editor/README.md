@@ -67,15 +67,19 @@ The `content` glob pointing at the editor's compiled JS is required — without 
 
 The editor expects these endpoints under `apiUrl` / `previewUrl`. Schemas are exported from `@artefact-editor/contract`.
 
-| Method | Path                              | Request body         | Response                  |
-| ------ | --------------------------------- | -------------------- | ------------------------- |
-| GET    | `{apiUrl}/projects`               | —                    | `ListProjectsResponse`    |
-| GET    | `{apiUrl}/projects/:id`           | —                    | `GetProjectResponse`      |
-| POST   | `{apiUrl}/projects/:id/save`      | `SaveRequest`        | `SaveResponse`            |
-| POST   | `{apiUrl}/projects/:id/render`    | —                    | `RenderResponse`          |
-| GET    | `{apiUrl}/projects/:id/assets`    | —                    | `ListAssetsResponse`      |
-| GET    | `{apiUrl}/projects/:id/archive`   | —                    | `application/zip` stream  |
-| GET    | `{previewUrl}/:id/<path>`         | —                    | static file (entry, rendered output, assets, layout sidecar) |
+| Method | Path                                              | Request body            | Response                  |
+| ------ | ------------------------------------------------- | ----------------------- | ------------------------- |
+| GET    | `{apiUrl}/projects`                               | —                       | `ListProjectsResponse`    |
+| GET    | `{apiUrl}/projects/:id`                           | —                       | `GetProjectResponse`      |
+| POST   | `{apiUrl}/projects/:id/save`                      | `SaveRequest`           | `SaveResponse`            |
+| POST   | `{apiUrl}/projects/:id/render`                    | —                       | `RenderResponse`          |
+| GET    | `{apiUrl}/projects/:id/assets`                    | —                       | `ListAssetsResponse`      |
+| GET    | `{apiUrl}/projects/:id/archive`                   | —                       | `application/zip` stream  |
+| GET    | `{apiUrl}/projects/:id/comments`                  | —                       | `ListCommentsResponse`    |
+| POST   | `{apiUrl}/projects/:id/comments`                  | `CreateCommentRequest`  | `CreateCommentResponse`   |
+| DELETE | `{apiUrl}/projects/:id/comments/:commentId`       | —                       | `DeleteCommentResponse`   |
+| POST   | `{apiUrl}/projects/:id/comments/apply`            | —                       | `ApplyCommentsResponse`   |
+| GET    | `{previewUrl}/:id/<path>`                         | —                       | static file (entry, rendered output, assets, layout sidecar) |
 
 A minimal Hono handler validating saves against the contract:
 
@@ -96,6 +100,12 @@ app.post("/api/projects/:id/save", async (c) => {
 ```
 
 The reference implementation lives in [`apps/cli/src/index.ts`](../../apps/cli/src/index.ts) — it backs the contract with the local filesystem and the bundled adapters (`@artefact-editor/adapter-html`, `@artefact-editor/adapter-image-template`). Reuse those adapters if your storage exposes a `ProjectFiles`-shaped interface; implement the contract directly otherwise.
+
+## Comment-and-apply loop
+
+The editor has a comment mode (toggle via the **Comment** button in the top bar or the `c` key) that lets users leave plain-English notes on individual blocks instead of editing them directly. Comments queue up in a side panel; clicking **Apply** calls `POST /comments/apply`, which returns a generated prompt describing the edits the agent should make.
+
+For now `apply` is a **dry run** — it returns the prompt but does not invoke an agent. The intended host integration is to forward the prompt (plus the listed source files) to the Claude Agent SDK or equivalent and surface the agent's edits back to the user. Comment status (`pending` → `applied` / `dismissed`) is in the schema for that future flow.
 
 ## What's not in this package
 

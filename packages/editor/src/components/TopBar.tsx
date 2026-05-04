@@ -1,4 +1,4 @@
-import { Download, Film, ImageIcon, Save } from "lucide-react";
+import { Download, Film, ImageIcon, MessageSquare, Save } from "lucide-react";
 import { Button } from "./ui/button.js";
 
 interface TopBarProps {
@@ -12,6 +12,9 @@ interface TopBarProps {
   renderKind?: "image" | "video";
   onDownload?: () => void;
   onBack?: () => void;
+  commentMode?: boolean;
+  onToggleCommentMode?: () => void;
+  pendingCommentCount?: number;
 }
 
 export function TopBar({
@@ -25,6 +28,9 @@ export function TopBar({
   renderKind = "image",
   onDownload,
   onBack,
+  commentMode,
+  onToggleCommentMode,
+  pendingCommentCount,
 }: TopBarProps) {
   const RenderIcon = renderKind === "video" ? Film : ImageIcon;
   const renderLabel = renderKind === "video" ? "Render MP4" : "Render";
@@ -51,6 +57,17 @@ export function TopBar({
         ) : null}
       </div>
       <div className="flex items-center gap-2">
+        {onToggleCommentMode ? (
+          <Button
+            onClick={onToggleCommentMode}
+            size="sm"
+            variant={commentMode ? "default" : "ghost"}
+            title={commentMode ? "Exit comment mode (c)" : "Enter comment mode (c)"}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Comment{pendingCommentCount ? ` (${pendingCommentCount})` : ""}
+          </Button>
+        ) : null}
         {onDownload ? (
           <Button onClick={onDownload} size="sm" variant="ghost" title="Download .artefact archive">
             <Download className="h-3.5 w-3.5" />

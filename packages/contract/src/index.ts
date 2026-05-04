@@ -1,5 +1,7 @@
 import { z } from "zod";
-import type { Block } from "@artefact-editor/core";
+import type { Block, Comment } from "@artefact-editor/core";
+
+export type { Comment, CommentStatus } from "@artefact-editor/core";
 
 /**
  * Wire schemas for the artefact-editor HTTP API.
@@ -90,4 +92,32 @@ export interface ImageLayout {
   width: number;
   height: number;
   regions: ImageRegion[];
+}
+
+export const createCommentRequestSchema = z.object({
+  blockId: z.string(),
+  text: z.string().min(1).max(2000),
+});
+export type CreateCommentRequest = z.infer<typeof createCommentRequestSchema>;
+
+export interface ListCommentsResponse {
+  comments: Comment[];
+}
+
+export interface CreateCommentResponse {
+  comment: Comment;
+}
+
+export interface DeleteCommentResponse {
+  ok: boolean;
+}
+
+export interface ApplyCommentsResponse {
+  ok: boolean;
+  /** Generated prompt that would be sent to an agent. Dry-run for now. */
+  prompt: string;
+  comments: Comment[];
+  /** Source files the agent would have access to. Project-root-relative. */
+  sourceFiles: string[];
+  error?: string;
 }
