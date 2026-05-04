@@ -11,6 +11,14 @@ import { imageTemplateAdapter, SPEC_FILE_DEFAULT } from "@artefact-editor/adapte
 import { FsProjectFiles } from "./projectFiles.js";
 import { isInside } from "./paths.js";
 import { runChild } from "./runChild.js";
+import {
+  addComment,
+  buildApplyPrompt,
+  deleteComment,
+  listSourceFiles,
+  readComments,
+} from "./comments.js";
+import { createCommentRequestSchema } from "@artefact-editor/contract";
 
 const PYTHON_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 
@@ -366,6 +374,63 @@ app.get("/api/projects/:id/assets", async (c) => {
   const list = await p.files.list("assets");
   const allowed = list.filter((f) => /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(f));
   return c.json({ assets: allowed.map((f) => `assets/${f}`) });
+});
+
+app.get("/api/projects/:id/comments", async (c) => {
+  const id = c.req.param("id");
+  const p = projects.get(id);
+  if (!p) return c.json({ comments: [] }, 404);
+  const comments = await readComments(p.files);
+  return c.json({ comments });
+});
+
+app.post("/api/projects/:id/comments", async (c) => {
+  const id = c.req.param("id");
+  const p = projects.get(id);
+  if (!p) return c.json({ error: "not found" }, 404);
+  const parse = createCommentRequestSchema.safeParse(await c.req.json());
+  if (!parse.success) return c.json({ error: parse.error.message }, 400);
+  const knownIds = new Set(p.blocks.map((b) => b.id));
+  if (!knownIds.has(parse.data.blockId)) {
+    return c.json({ error: `unknown blockId: ${parse.data.blockId}` }, 400);
+  }
+  const comment = await addComment(p.files, parse.data.blockId, parse.data.text);
+  return c.json({ comment });
+});
+
+app.delete("/api/projects/:id/comments/:commentId", async (c) => {
+  const id = c.req.param("id");
+  const commentId = c.req.param("commentId");
+  const p = projects.get(id);
+  if (!p) return c.json({ ok: false, error: "not found" }, 404);
+  const ok = await deleteComment(p.files, commentId);
+  if (!ok) return c.json({ ok: false, error: "comment not found" }, 404);
+  return c.json({ ok: true });
+});
+
+app.post("/api/projects/:id/comments/apply", async (c) => {
+  const id = c.req.param("id");
+  const p = projects.get(id);
+  if (!p) return c.json({ ok: false, error: "not found" }, 404);
+  const all = await readComments(p.files);
+  const pending = all.filter((cm) => cm.status === "pending");
+  if (pending.length === 0) {
+    return c.json({ ok: false, error: "no pending comments", prompt: "", comments: [], sourceFiles: [] });
+  }
+  const sourceFiles = await listSourceFiles(p.files, {
+    entry: p.entry,
+    specFile: p.manifest?.specFile,
+    artefact: p.manifest?.artefact ?? "html-app",
+    blocks: p.blocks,
+  });
+  const prompt = buildApplyPrompt({
+    projectName: p.name,
+    artefact: p.manifest?.artefact ?? "html-app",
+    blocks: p.blocks,
+    comments: pending,
+    sourceFiles,
+  });
+  return c.json({ ok: true, prompt, comments: pending, sourceFiles });
 });
 
 const MIME: Record<string, string> = {

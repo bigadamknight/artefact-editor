@@ -9,6 +9,7 @@ coverage
 examples/*/output.png
 examples/*/output.png.layout.json
 examples/*/renders/editor-render.mp4
+examples/*/comments.json
 .gitnexus
 .claude/
 .code-audit-cache.json
