@@ -2,101 +2,1633 @@
   "version": 1,
   "artefact": "html-app",
   "entry": "index.html",
-  "name": "Sky uc14ai (Platinum)",
+  "name": "Sky UC14 AI (Platinum)",
   "blocks": [
     {
       "id": "blk_hero_logo",
       "kind": "image",
-      "label": "Hero logo",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_logo]" },
+      "label": "Hero Logo",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_hero_logo]"
+      },
       "properties": [
-        { "key": "src", "type": "asset", "mime": ["image/*"] },
-        { "key": "alt", "type": "string" }
+        {
+          "key": "src",
+          "type": "asset",
+          "mime": [
+            "image/*"
+          ]
+        },
+        {
+          "key": "alt",
+          "type": "string"
+        }
       ]
     },
     {
       "id": "blk_hero_title",
       "kind": "text",
-      "label": "Hero title",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_title]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Hero Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_hero_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_hero_subtitle",
       "kind": "text",
-      "label": "Hero subtitle",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_hero_subtitle]" },
-      "properties": [{ "key": "text", "type": "string", "multiline": true }]
+      "label": "Hero Subtitle",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_hero_subtitle]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_hero_scroll",
+      "kind": "text",
+      "label": "Hero Scroll",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_hero_scroll]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_challenge_h_1",
+      "kind": "text",
+      "label": "Challenge H 1",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_challenge_h_1]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_challenge_h_2",
+      "kind": "text",
+      "label": "Challenge H 2",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_challenge_h_2]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_challenge_h_3",
+      "kind": "text",
+      "label": "Challenge H 3",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_challenge_h_3]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_challenge_subtitle",
+      "kind": "text",
+      "label": "Challenge Subtitle",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_challenge_subtitle]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pain_1_title",
       "kind": "text",
-      "label": "Pain card 1 title",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_1_title]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pain 1 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_1_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pain_1_desc",
+      "kind": "text",
+      "label": "Pain 1 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_1_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pain_2_title",
       "kind": "text",
-      "label": "Pain card 2 title",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_2_title]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pain 2 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_2_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pain_2_desc",
+      "kind": "text",
+      "label": "Pain 2 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_2_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pain_3_title",
       "kind": "text",
-      "label": "Pain card 3 title",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_3_title]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pain 3 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_3_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pain_3_desc",
+      "kind": "text",
+      "label": "Pain 3 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_3_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pain_4_title",
       "kind": "text",
-      "label": "Pain card 4 title",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pain_4_title]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pain 4 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_4_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pain_4_desc",
+      "kind": "text",
+      "label": "Pain 4 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pain_4_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_solution_h_1",
+      "kind": "text",
+      "label": "Solution H 1",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_solution_h_1]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_solution_h_2",
+      "kind": "text",
+      "label": "Solution H 2",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_solution_h_2]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_solution_subtitle",
+      "kind": "text",
+      "label": "Solution Subtitle",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_solution_subtitle]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pillar_collect",
       "kind": "text",
-      "label": "Pillar: Collect",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_collect]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pillar Collect",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_collect]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pillar_collect_desc",
+      "kind": "text",
+      "label": "Pillar Collect Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_collect_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pillar_analyse",
       "kind": "text",
-      "label": "Pillar: Analyse",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_analyse]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pillar Analyse",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_analyse]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_pillar_analyse_desc",
+      "kind": "text",
+      "label": "Pillar Analyse Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_analyse_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
       "id": "blk_pillar_act",
       "kind": "text",
-      "label": "Pillar: Act",
-      "source": { "file": "index.html", "selector": "[data-edit-id=blk_pillar_act]" },
-      "properties": [{ "key": "text", "type": "string" }]
+      "label": "Pillar Act",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_act]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
     },
     {
-      "id": "blk_brand_orange",
+      "id": "blk_pillar_act_desc",
+      "kind": "text",
+      "label": "Pillar Act Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_pillar_act_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_journey_h_1",
+      "kind": "text",
+      "label": "Journey H 1",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_journey_h_1]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_journey_h_2",
+      "kind": "text",
+      "label": "Journey H 2",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_journey_h_2]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_journey_subtitle",
+      "kind": "text",
+      "label": "Journey Subtitle",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_journey_subtitle]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_1_label",
+      "kind": "text",
+      "label": "Stage 1 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_1_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_2_label",
+      "kind": "text",
+      "label": "Stage 2 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_2_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_3_label",
+      "kind": "text",
+      "label": "Stage 3 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_3_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_4_label",
+      "kind": "text",
+      "label": "Stage 4 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_4_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_5_label",
+      "kind": "text",
+      "label": "Stage 5 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_5_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_6_label",
+      "kind": "text",
+      "label": "Stage 6 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_6_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_7_label",
+      "kind": "text",
+      "label": "Stage 7 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_7_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_8_label",
+      "kind": "text",
+      "label": "Stage 8 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_8_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_1_title",
+      "kind": "text",
+      "label": "Stage 1 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_1_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_1_amount",
+      "kind": "text",
+      "label": "Stage 1 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_1_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_2_title",
+      "kind": "text",
+      "label": "Stage 2 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_2_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_2_amount",
+      "kind": "text",
+      "label": "Stage 2 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_2_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_3_title",
+      "kind": "text",
+      "label": "Stage 3 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_3_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_3_amount",
+      "kind": "text",
+      "label": "Stage 3 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_3_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_4_title",
+      "kind": "text",
+      "label": "Stage 4 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_4_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_4_amount",
+      "kind": "text",
+      "label": "Stage 4 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_4_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_5_title",
+      "kind": "text",
+      "label": "Stage 5 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_5_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_5_amount",
+      "kind": "text",
+      "label": "Stage 5 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_5_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_6_title",
+      "kind": "text",
+      "label": "Stage 6 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_6_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_6_amount",
+      "kind": "text",
+      "label": "Stage 6 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_6_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_7_title",
+      "kind": "text",
+      "label": "Stage 7 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_7_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_7_amount",
+      "kind": "text",
+      "label": "Stage 7 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_7_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_8_title",
+      "kind": "text",
+      "label": "Stage 8 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_8_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_stage_8_amount",
+      "kind": "text",
+      "label": "Stage 8 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_stage_8_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_running_total_label",
+      "kind": "text",
+      "label": "Running Total Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_running_total_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_platinum_h_1",
+      "kind": "text",
+      "label": "Platinum H 1",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_platinum_h_1]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_platinum_h_2",
+      "kind": "text",
+      "label": "Platinum H 2",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_platinum_h_2]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_platinum_subtitle",
+      "kind": "text",
+      "label": "Platinum Subtitle",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_platinum_subtitle]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_1_title",
+      "kind": "text",
+      "label": "Node 1 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_1_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_1_desc",
+      "kind": "text",
+      "label": "Node 1 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_1_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_2_title",
+      "kind": "text",
+      "label": "Node 2 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_2_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_2_desc",
+      "kind": "text",
+      "label": "Node 2 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_2_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_3_title",
+      "kind": "text",
+      "label": "Node 3 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_3_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_3_desc",
+      "kind": "text",
+      "label": "Node 3 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_3_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_4_title",
+      "kind": "text",
+      "label": "Node 4 Title",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_4_title]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_node_4_desc",
+      "kind": "text",
+      "label": "Node 4 Desc",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_node_4_desc]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_evolution_message",
+      "kind": "text",
+      "label": "Evolution Message",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_evolution_message]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_investment_heading",
+      "kind": "text",
+      "label": "Investment Heading",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_investment_heading]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_investment_amount",
+      "kind": "text",
+      "label": "Investment Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_investment_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_investment_savings",
+      "kind": "text",
+      "label": "Investment Savings",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_investment_savings]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_1_label",
+      "kind": "text",
+      "label": "Breakdown 1 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_1_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_1_amount",
+      "kind": "text",
+      "label": "Breakdown 1 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_1_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_1_note",
+      "kind": "text",
+      "label": "Breakdown 1 Note",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_1_note]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_2_label",
+      "kind": "text",
+      "label": "Breakdown 2 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_2_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_2_amount",
+      "kind": "text",
+      "label": "Breakdown 2 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_2_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_2_note",
+      "kind": "text",
+      "label": "Breakdown 2 Note",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_2_note]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_3_label",
+      "kind": "text",
+      "label": "Breakdown 3 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_3_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_3_amount",
+      "kind": "text",
+      "label": "Breakdown 3 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_3_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_3_note",
+      "kind": "text",
+      "label": "Breakdown 3 Note",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_3_note]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_4_label",
+      "kind": "text",
+      "label": "Breakdown 4 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_4_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_4_amount",
+      "kind": "text",
+      "label": "Breakdown 4 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_4_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_4_note",
+      "kind": "text",
+      "label": "Breakdown 4 Note",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_4_note]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_5_label",
+      "kind": "text",
+      "label": "Breakdown 5 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_5_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_5_amount",
+      "kind": "text",
+      "label": "Breakdown 5 Amount",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_5_amount]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_breakdown_5_note",
+      "kind": "text",
+      "label": "Breakdown 5 Note",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_breakdown_5_note]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_timeline_weeks",
+      "kind": "text",
+      "label": "Timeline Weeks",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_timeline_weeks]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_timeline_label",
+      "kind": "text",
+      "label": "Timeline Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_timeline_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_northstar_heading",
+      "kind": "text",
+      "label": "Northstar Heading",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_northstar_heading]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_vision_quote_open",
+      "kind": "text",
+      "label": "Vision Quote Open",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_vision_quote_open]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_vision_quote_em",
+      "kind": "text",
+      "label": "Vision Quote Em",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_vision_quote_em]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_vision_quote_body",
+      "kind": "text",
+      "label": "Vision Quote Body",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_vision_quote_body]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_h_1",
+      "kind": "text",
+      "label": "Cta H 1",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_h_1]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_h_2",
+      "kind": "text",
+      "label": "Cta H 2",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_h_2]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_1_value",
+      "kind": "text",
+      "label": "Cta Stat 1 Value",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_1_value]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_1_label",
+      "kind": "text",
+      "label": "Cta Stat 1 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_1_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_2_value",
+      "kind": "text",
+      "label": "Cta Stat 2 Value",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_2_value]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_2_label",
+      "kind": "text",
+      "label": "Cta Stat 2 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_2_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_3_value",
+      "kind": "text",
+      "label": "Cta Stat 3 Value",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_3_value]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_stat_3_label",
+      "kind": "text",
+      "label": "Cta Stat 3 Label",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_stat_3_label]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_message",
+      "kind": "text",
+      "label": "Cta Message",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_message]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_cta_detail",
+      "kind": "text",
+      "label": "Cta Detail",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_cta_detail]"
+      },
+      "properties": [
+        {
+          "key": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_partner_logo_left",
+      "kind": "image",
+      "label": "Partner Logo Left",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_partner_logo_left]"
+      },
+      "properties": [
+        {
+          "key": "src",
+          "type": "asset",
+          "mime": [
+            "image/*"
+          ]
+        },
+        {
+          "key": "alt",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_partner_logo_right",
+      "kind": "image",
+      "label": "Partner Logo Right",
+      "source": {
+        "file": "index.html",
+        "selector": "[data-edit-id=blk_partner_logo_right]"
+      },
+      "properties": [
+        {
+          "key": "src",
+          "type": "asset",
+          "mime": [
+            "image/*"
+          ]
+        },
+        {
+          "key": "alt",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "id": "blk_sky_orange",
       "kind": "color",
       "label": "Brand: Sky orange",
-      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-orange" },
-      "properties": [{ "key": "value", "type": "color" }]
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-orange"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
     },
     {
-      "id": "blk_brand_pink",
+      "id": "blk_sky_coral",
+      "kind": "color",
+      "label": "Brand: Sky coral",
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-coral"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
+    },
+    {
+      "id": "blk_sky_pink",
       "kind": "color",
       "label": "Brand: Sky pink",
-      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-pink" },
-      "properties": [{ "key": "value", "type": "color" }]
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-pink"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
     },
     {
-      "id": "blk_brand_blue",
+      "id": "blk_sky_magenta",
+      "kind": "color",
+      "label": "Brand: Sky magenta",
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-magenta"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
+    },
+    {
+      "id": "blk_sky_purple",
+      "kind": "color",
+      "label": "Brand: Sky purple",
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-purple"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
+    },
+    {
+      "id": "blk_sky_blue",
       "kind": "color",
       "label": "Brand: Sky blue",
-      "source": { "file": "index-Bieqvx-n.css", "cssVar": "--sky-blue" },
-      "properties": [{ "key": "value", "type": "color" }]
+      "source": {
+        "file": "index-Bieqvx-n.css",
+        "cssVar": "--sky-blue"
+      },
+      "properties": [
+        {
+          "key": "value",
+          "type": "color"
+        }
+      ]
     }
   ]
 }
