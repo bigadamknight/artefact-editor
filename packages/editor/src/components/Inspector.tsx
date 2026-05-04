@@ -109,7 +109,19 @@ export function Inspector({ projectId, block, values, styles, assets, onChange }
     );
   }
 
-  const showStyles = block.kind === "text" && styles;
+  const showStyles = (block.kind === "text" || block.kind === "image") && styles;
+  const visibleGroups = block.kind === "image"
+    ? STYLE_GROUPS.filter((g) => g.title !== "Typography")
+    : STYLE_GROUPS;
+  const defaultOpenGroup = block.kind === "image" ? "Position" : "Typography";
+
+  // Image content is owned by the agent — surface position/spacing instead of
+  // an asset picker so a comment can drive the swap.
+  const visibleDescriptors = block.descriptors.filter((desc) => {
+    if (desc.key.startsWith("style.")) return false;
+    if (block.kind === "image" && desc.type === "asset") return false;
+    return true;
+  });
 
   return (
     <div className="space-y-5 p-4">
@@ -122,25 +134,23 @@ export function Inspector({ projectId, block, values, styles, assets, onChange }
       </header>
 
       <div className="space-y-4">
-        {block.descriptors
-          .filter((desc) => !desc.key.startsWith("style."))
-          .map((desc) => (
-            <DescriptorField
-              key={desc.key}
-              projectId={projectId}
-              descriptor={desc}
-              value={values[desc.key] ?? ""}
-              assets={assets}
-              onChange={(v) => onChange(desc.key, v)}
-            />
-          ))}
+        {visibleDescriptors.map((desc) => (
+          <DescriptorField
+            key={desc.key}
+            projectId={projectId}
+            descriptor={desc}
+            value={values[desc.key] ?? ""}
+            assets={assets}
+            onChange={(v) => onChange(desc.key, v)}
+          />
+        ))}
       </div>
 
       {showStyles
-        ? STYLE_GROUPS.map((group) => (
+        ? visibleGroups.map((group) => (
             <details
               key={group.title}
-              open={group.title === "Typography"}
+              open={group.title === defaultOpenGroup}
               className="space-y-3 border-t border-border pt-4"
             >
               <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wider text-muted-foreground">
