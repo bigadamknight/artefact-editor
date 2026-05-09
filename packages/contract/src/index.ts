@@ -17,7 +17,13 @@ export type { Comment, CommentStatus } from "@artefact-editor/core";
  * not worth the maintenance cost here.
  */
 
-export const ARTEFACT_KINDS = ["html-app", "hyperframes", "image-template"] as const;
+export const ARTEFACT_KINDS = [
+  "html-app",
+  "hyperframes",
+  "image-template",
+  "editframe",
+  "image-inpaint",
+] as const;
 export type ArtefactKind = (typeof ARTEFACT_KINDS)[number];
 
 const propertyValueSchema = z.union([z.string(), z.number()]);
@@ -29,7 +35,26 @@ export const setPropertyCommandSchema = z.object({
   value: propertyValueSchema,
 });
 
-export const commandSchema = z.discriminatedUnion("type", [setPropertyCommandSchema]);
+export const applyImageRegionCommandSchema = z.object({
+  type: z.literal("applyImageRegion"),
+  blockId: z.string(),
+  prompt: z.string().min(1),
+  /** Base64-encoded grayscale PNG. White = repaint, black = preserve. */
+  maskPng: z.string().min(1),
+  refImagePaths: z.array(z.string()).optional(),
+});
+
+export const promoteImageVersionCommandSchema = z.object({
+  type: z.literal("promoteImageVersion"),
+  blockId: z.string(),
+  versionId: z.string().min(1),
+});
+
+export const commandSchema = z.discriminatedUnion("type", [
+  setPropertyCommandSchema,
+  applyImageRegionCommandSchema,
+  promoteImageVersionCommandSchema,
+]);
 
 export const saveRequestSchema = z.object({
   commands: z.array(commandSchema),
@@ -47,6 +72,16 @@ export interface ListProjectsResponse {
   projects: ProjectSummary[];
 }
 
+export interface ImageInpaintVersionView {
+  id: string;
+  ts: string;
+  prompt: string;
+  /** Project-relative path to the snapshot PNG. */
+  file: string;
+  /** Project-relative path to the mask PNG used for that edit. */
+  maskFile: string;
+}
+
 export interface GetProjectResponse {
   id: string;
   name: string;
@@ -55,6 +90,10 @@ export interface GetProjectResponse {
   blocks: Block[];
   artefact: ArtefactKind;
   previewStale: boolean;
+  /** Populated for image-inpaint artefacts; ordered oldest → newest. */
+  versions?: ImageInpaintVersionView[];
+  /** Project-relative reference image paths (image-inpaint artefacts). */
+  referenceImages?: string[];
 }
 
 export interface SaveResponse {

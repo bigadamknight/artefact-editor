@@ -45,9 +45,18 @@ const blockSchema = z.object({
   properties: z.array(descriptorSchema).min(1),
 });
 
+const imageInpaintVersionSchema = z.object({
+  id: z.string(),
+  ts: z.string(),
+  prompt: z.string(),
+  file: z.string(),
+  maskFile: z.string(),
+  refImagePaths: z.array(z.string()).optional(),
+});
+
 export const manifestSchema = z.object({
   version: z.literal(1),
-  artefact: z.enum(["html-app", "hyperframes", "image-template"]),
+  artefact: z.enum(["html-app", "hyperframes", "image-template", "editframe", "image-inpaint"]),
   entry: z.string(),
   name: z.string().optional(),
   /**
@@ -57,8 +66,20 @@ export const manifestSchema = z.object({
   template: z.string().optional(),
   /** For image-template artefacts: path to the spec.json with the kwargs. */
   specFile: z.string().optional(),
-  blocks: z.array(blockSchema),
+  /**
+   * For image-inpaint artefacts: ordered history of masked-region edits.
+   * Adapter appends on each apply; promote/revert mutate this list.
+   */
+  versions: z.array(imageInpaintVersionSchema).optional(),
+  /**
+   * For image-inpaint artefacts: project-relative paths the editor offers as
+   * optional reference images alongside any prompt (e.g. character canons).
+   */
+  referenceImages: z.array(z.string()).optional(),
+  blocks: z.array(blockSchema).default([]),
 });
+
+export type ImageInpaintVersion = z.infer<typeof imageInpaintVersionSchema>;
 
 export type Manifest = z.infer<typeof manifestSchema>;
 export type ManifestBlock = z.infer<typeof blockSchema>;

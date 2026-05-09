@@ -2,13 +2,14 @@ import type { PropertyDescriptor, PropertyValue } from "./descriptor.js";
 
 export type BlockId = string;
 
-export type BlockKind = "text" | "image" | "color" | "audio" | "timing";
+export type BlockKind = "text" | "image" | "color" | "audio" | "timing" | "image-region";
 
 export type SourceRef =
   | { tag: "selector"; file: string; selector: string }
   | { tag: "cssVar"; file: string; cssVar: string }
   | { tag: "astVar"; file: string; varName: string }
-  | { tag: "specKey"; file: string; specKey: string };
+  | { tag: "specKey"; file: string; specKey: string }
+  | { tag: "entry"; file: string };
 
 export interface Block {
   id: BlockId;

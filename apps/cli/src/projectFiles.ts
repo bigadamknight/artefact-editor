@@ -35,6 +35,14 @@ export class FsProjectFiles implements ProjectFiles {
     await rename(tmp, abs);
   }
 
+  async writeBinary(file: string, contents: Uint8Array): Promise<void> {
+    const abs = this.resolve(file);
+    await mkdir(dirname(abs), { recursive: true });
+    const tmp = `${abs}.${randomUUID()}.tmp`;
+    await writeFile(tmp, contents);
+    await rename(tmp, abs);
+  }
+
   async list(dir: string): Promise<string[]> {
     try {
       return await readdir(this.resolve(dir));

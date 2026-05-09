@@ -9,6 +9,11 @@ import { useImageLayout } from "./hooks/useImageLayout.js";
 import { useComments } from "./hooks/useComments.js";
 import { Inspector } from "./components/Inspector.js";
 import { PreviewFrame } from "./components/PreviewFrame.js";
+import {
+  ImageRegionCanvas,
+  type ImageRegionCanvasHandle,
+} from "./components/ImageRegionCanvas.js";
+import { ImageRegionPanel } from "./components/ImageRegionPanel.js";
 import { Timeline } from "./components/Timeline.js";
 import { TopBar } from "./components/TopBar.js";
 import { TransportBar } from "./components/TransportBar.js";
@@ -51,7 +56,8 @@ interface ArtefactEditorInnerProps {
 
 function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   const config = useEditorConfig();
-  const { state, setProperty, save, render } = useDoc(projectId);
+  const { state, setProperty, save, render, runCommand } = useDoc(projectId);
+  const [maskPainted, setMaskPainted] = useState(false);
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
   const stylesByBlock = useElementStyles();
@@ -62,8 +68,10 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   );
 
   const isImageTemplate = state.artefact === "image-template";
-  const isVideo = state.artefact === "hyperframes";
+  const isImageInpaint = state.artefact === "image-inpaint";
+  const isVideo = state.artefact === "hyperframes" || state.artefact === "editframe";
   const isWebApp = state.artefact === "html-app";
+  const imageRegionCanvasRef = useRef<ImageRegionCanvasHandle | null>(null);
   const { assets } = useProjectAssets(projectId);
   const { layout } = useImageLayout(projectId, state.entry, state.bumpKey, isImageTemplate);
   const comments = useComments(projectId);
@@ -271,18 +279,28 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
             </div>
           ) : null}
           <div className="min-h-0 flex-1">
-            <PreviewFrame
-              ref={transport.registerIframe}
-              projectId={projectId}
-              entry={state.entry}
-              bumpKey={state.bumpKey}
-              fit={previewFit}
-              stale={state.previewStale}
-              specKeyToBlockId={specKeyToBlockId}
-              selectedBlockId={selectedBlockId}
-              onSelectBlock={setSelectedBlockId}
-              layout={layout}
-            />
+            {isImageInpaint ? (
+              <ImageRegionCanvas
+                ref={imageRegionCanvasRef}
+                projectId={projectId}
+                entry={state.entry}
+                bumpKey={state.bumpKey}
+                onMaskChange={setMaskPainted}
+              />
+            ) : (
+              <PreviewFrame
+                ref={transport.registerIframe}
+                projectId={projectId}
+                entry={state.entry}
+                bumpKey={state.bumpKey}
+                fit={previewFit}
+                stale={state.previewStale}
+                specKeyToBlockId={specKeyToBlockId}
+                selectedBlockId={selectedBlockId}
+                onSelectBlock={setSelectedBlockId}
+                layout={layout}
+              />
+            )}
           </div>
           {!showTimeline ? null : (
             <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
@@ -321,6 +339,29 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
               />
             </div>
           ) : null}
+          {isImageInpaint ? (
+            <ImageRegionPanel
+              projectId={projectId}
+              blockId={state.blocks[0]?.id ?? "blk_image_region"}
+              hasMask={maskPainted}
+              saving={state.saving}
+              versions={state.versions}
+              referenceImages={state.referenceImages}
+              onApply={async (prompt, refImagePaths) => {
+                const maskPng = await imageRegionCanvasRef.current?.getMaskBase64();
+                if (!maskPng) return;
+                await runCommand({
+                  type: "applyImageRegion",
+                  blockId: state.blocks[0]?.id ?? "blk_image_region",
+                  prompt,
+                  maskPng,
+                  refImagePaths: refImagePaths.length > 0 ? refImagePaths : undefined,
+                });
+                imageRegionCanvasRef.current?.clearMask();
+              }}
+              onPromote={(cmd) => runCommand(cmd)}
+            />
+          ) : (
           <Inspector
             projectId={projectId}
             block={selectedBlock}
@@ -331,6 +372,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
               if (selectedBlock) setProperty(selectedBlock.id, key, value);
             }}
           />
+          )}
         </aside>
       </div>
       {applyResult ? (

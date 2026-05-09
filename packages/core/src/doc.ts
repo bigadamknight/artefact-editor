@@ -9,8 +9,10 @@ export interface DocSnapshot {
 
 type Listener = (snapshot: DocSnapshot) => void;
 
+type SetPropertyCommand = Extract<Command, { type: "setProperty" }>;
+
 interface UndoEntry {
-  command: Command;
+  command: SetPropertyCommand;
   prevValue: PropertyValue;
 }
 

@@ -4,4 +4,10 @@ export type { Command } from "./commands.js";
 export type { Comment, CommentStatus } from "./comment.js";
 export type { Adapter, ProjectFiles } from "./adapter.js";
 export { Doc, type DocSnapshot } from "./doc.js";
-export { manifestSchema, parseManifest, type Manifest, type ManifestBlock } from "./manifest.js";
+export {
+  manifestSchema,
+  parseManifest,
+  type Manifest,
+  type ManifestBlock,
+  type ImageInpaintVersion,
+} from "./manifest.js";

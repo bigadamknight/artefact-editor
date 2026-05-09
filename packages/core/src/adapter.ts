@@ -5,6 +5,7 @@ export interface ProjectFiles {
   read(file: string): Promise<string>;
   readBinary(file: string): Promise<Uint8Array>;
   write(file: string, contents: string): Promise<void>;
+  writeBinary(file: string, contents: Uint8Array): Promise<void>;
   list(dir: string): Promise<string[]>;
   exists(file: string): Promise<boolean>;
   isDirectory(path: string): Promise<boolean>;

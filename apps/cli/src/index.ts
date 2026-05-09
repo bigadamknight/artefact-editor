@@ -7,7 +7,9 @@ import { basename, extname, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/core";
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
+import { editframeAdapter, editframePreviewBridgeScript } from "@artefact-editor/adapter-editframe";
 import { imageTemplateAdapter, SPEC_FILE_DEFAULT } from "@artefact-editor/adapter-image-template";
+import { imageInpaintAdapter } from "@artefact-editor/adapter-image-inpaint";
 import { FsProjectFiles } from "./projectFiles.js";
 import { isInside } from "./paths.js";
 import { runChild } from "./runChild.js";
@@ -18,13 +20,16 @@ import {
   listSourceFiles,
   readComments,
 } from "./comments.js";
-import { createCommentRequestSchema } from "@artefact-editor/contract";
+import {
+  createCommentRequestSchema,
+  type GetProjectResponse,
+} from "@artefact-editor/contract";
 
 const PYTHON_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 
 interface ManifestMeta {
   name?: string;
-  artefact: "html-app" | "hyperframes" | "image-template";
+  artefact: "html-app" | "hyperframes" | "image-template" | "editframe" | "image-inpaint";
   template?: string;
   specFile?: string;
 }
@@ -46,6 +51,8 @@ const repoRoot = resolve(here, "..", "..", "..");
 
 function pickAdapter(artefact: ManifestMeta["artefact"] | undefined): Adapter {
   if (artefact === "image-template") return imageTemplateAdapter;
+  if (artefact === "editframe") return editframeAdapter;
+  if (artefact === "image-inpaint") return imageInpaintAdapter;
   return htmlAdapter;
 }
 
@@ -163,6 +170,24 @@ app.get("/api/projects/:id", async (c) => {
       previewStale = true;
     }
   }
+  // image-inpaint artefacts surface their version history + reference image
+  // suggestions so the editor can render the sidebar without re-reading the
+  // manifest from the client.
+  let versions: GetProjectResponse["versions"];
+  let referenceImages: GetProjectResponse["referenceImages"];
+  if (p.manifest?.artefact === "image-inpaint") {
+    try {
+      const raw = JSON.parse(await p.files.read("manifest.json")) as {
+        versions?: GetProjectResponse["versions"];
+        referenceImages?: string[];
+      };
+      versions = raw.versions ?? [];
+      referenceImages = raw.referenceImages;
+    } catch {
+      versions = [];
+    }
+  }
+
   return c.json({
     id: p.id,
     name: p.name,
@@ -171,7 +196,9 @@ app.get("/api/projects/:id", async (c) => {
     blocks: p.blocks,
     artefact: p.manifest?.artefact ?? "html-app",
     previewStale,
-  });
+    versions,
+    referenceImages,
+  } satisfies GetProjectResponse);
 });
 
 interface SaveBody {
@@ -223,6 +250,13 @@ app.post("/api/projects/:id/save", async (c) => {
     }
   }
 
+  // Non-setProperty commands (image-inpaint apply/promote) bypass the Doc
+  // settle pass and are forwarded verbatim — they're stateful operations on
+  // source files, not value diffs.
+  for (const cmd of body.commands) {
+    if (cmd.type !== "setProperty") settledCommands.push(cmd);
+  }
+
   if (settledCommands.length === 0) {
     return c.json({ ok: true, changed: 0 });
   }
@@ -247,6 +281,9 @@ app.post("/api/projects/:id/render", async (c) => {
   }
   if (p.manifest?.artefact === "hyperframes") {
     return renderHyperframes(c, p);
+  }
+  if (p.manifest?.artefact === "editframe") {
+    return renderEditframe(c, p);
   }
   return c.json({ ok: false, error: "render not supported for this artefact type" }, 400);
 });
@@ -295,6 +332,38 @@ print("rendered", ${JSON.stringify(out)})
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return c.json({ ok: false, error: `failed to spawn python3: ${message}` }, 500);
+  }
+}
+
+async function renderEditframe(c: Context, p: ProjectState) {
+  // Editframe's CLI renders the composition referenced by the project's
+  // editframe config (typically `editframe.config.{js,ts}`) — running from
+  // the project root with no extra args is the supported path. We pin the
+  // output to a stable filename inside renders/ so the editor can refresh
+  // the preview without enumerating timestamps.
+  const outRel = "renders/editor-render.mp4";
+  const args = ["editframe", "render", "-o", outRel];
+  try {
+    const r = await runChild("npx", args, { cwd: p.root, env: process.env });
+    if (r.code === 0) {
+      return c.json({
+        ok: true,
+        output: outRel,
+        previewUrl: `/preview/${p.id}/${outRel}`,
+        stdout: r.stdout.trim().slice(-2000),
+      });
+    }
+    return c.json(
+      {
+        ok: false,
+        error: r.stderr.trim().slice(-2000) || `npx editframe render exited ${r.code}`,
+        stdout: r.stdout.trim().slice(-2000),
+      },
+      500,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ ok: false, error: `failed to spawn npx: ${message}` }, 500);
   }
 }
 
@@ -384,6 +453,37 @@ app.get("/api/projects/:id/assets", async (c) => {
   const list = await p.files.list("assets");
   const allowed = list.filter((f) => /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(f));
   return c.json({ assets: allowed.map((f) => `assets/${f}`) });
+});
+
+/**
+ * Serve any project-relative file as binary. Used by the image-inpaint editor
+ * to load the entry PNG, version snapshots, and reference images. Path
+ * traversal is blocked by FsProjectFiles.resolve(); the bytes come back via
+ * fs read so file:// permission models stay intact.
+ */
+app.get("/api/projects/:id/file", async (c) => {
+  const id = c.req.param("id");
+  const p = projects.get(id);
+  if (!p) return c.json({ error: "not found" }, 404);
+  const path = c.req.query("path");
+  if (!path) return c.json({ error: "path query param required" }, 400);
+  try {
+    const bytes = await p.files.readBinary(path);
+    const ext = path.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] ?? "bin";
+    const mime =
+      ext === "png" ? "image/png" :
+      ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+      ext === "webp" ? "image/webp" :
+      ext === "svg" ? "image/svg+xml" :
+      "application/octet-stream";
+    // Cache-bust version-overwriteable files: entry/file PNGs change on apply.
+    return new Response(bytes, {
+      headers: { "content-type": mime, "cache-control": "no-store" },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ error: message }, 404);
+  }
 });
 
 app.get("/api/projects/:id/comments", async (c) => {
@@ -486,7 +586,9 @@ app.get("/preview/:id/*", async (c) => {
   const buf = await readFile(abs);
   if (ext === ".html" && p.manifest?.artefact !== "image-template") {
     const html = buf.toString("utf8");
-    const tag = `<script>${previewBridgeScript}</script>`;
+    const bridge =
+      p.manifest?.artefact === "editframe" ? editframePreviewBridgeScript : previewBridgeScript;
+    const tag = `<script>${bridge}</script>`;
     // Most authored pages have </body>; some fragments / minified bundles
     // don't. Fall back to appending so the bridge always loads.
     const injected = /<\/body>/i.test(html)

@@ -25,6 +25,9 @@ export interface DocState {
    */
   previewStale: boolean;
   bumpKey: number; // increments after save → use as iframe key to force reload
+  /** Populated for image-inpaint artefacts; ordered oldest → newest. */
+  versions?: GetProjectResponse["versions"];
+  referenceImages?: GetProjectResponse["referenceImages"];
 }
 
 export interface UseDocApi {
@@ -33,6 +36,8 @@ export interface UseDocApi {
   save: () => Promise<void>;
   render: () => Promise<void>;
   reload: () => Promise<void>;
+  /** Sends a single non-setProperty command (e.g. applyImageRegion). */
+  runCommand: (command: Command) => Promise<void>;
 }
 
 export function useDoc(projectId: string): UseDocApi {
@@ -72,6 +77,8 @@ export function useDoc(projectId: string): UseDocApi {
         pendingValues: new Map(),
         isDirty: false,
         bumpKey: s.bumpKey + 1,
+        versions: data.versions,
+        referenceImages: data.referenceImages,
       }));
     } catch (err) {
       setState((s) => ({
@@ -172,7 +179,36 @@ export function useDoc(projectId: string): UseDocApi {
     }
   }, [projectId, config]);
 
-  return { state, setProperty, save, render, reload: fetchProject };
+  const runCommand = useCallback(
+    async (command: Command) => {
+      setState((s) => ({ ...s, saving: true, error: null }));
+      try {
+        const res = await fetch(apiPath(config, `/projects/${projectId}/save`), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ commands: [command] }),
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Apply failed (${res.status}): ${text.slice(0, 300)}`);
+        }
+        const data = (await res.json()) as SaveResponse;
+        if (!data.ok) throw new Error(data.error ?? "Apply failed");
+      } catch (err) {
+        setState((s) => ({
+          ...s,
+          saving: false,
+          error: err instanceof Error ? err.message : String(err),
+        }));
+        return;
+      }
+      await fetchProject();
+      setState((s) => ({ ...s, saving: false }));
+    },
+    [projectId, config, fetchProject],
+  );
+
+  return { state, setProperty, save, render, reload: fetchProject, runCommand };
 }
 
 export function getEffectiveValue(
