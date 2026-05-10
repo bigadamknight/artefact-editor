@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ApplyCommentsResponse } from "@artefact-editor/contract";
+import type { SpeechBubble } from "@artefact-editor/core";
 import { useDoc, getEffectiveValue } from "./hooks/useDoc.js";
 import { useElementStyles } from "./hooks/useElementStyles.js";
 import { useSelection } from "./hooks/useSelection.js";
@@ -14,6 +15,8 @@ import {
   type ImageRegionCanvasHandle,
 } from "./components/ImageRegionCanvas.js";
 import { ImageRegionPanel } from "./components/ImageRegionPanel.js";
+import { SpeechBubbleCanvas } from "./components/SpeechBubbleCanvas.js";
+import { SpeechBubblePanel } from "./components/SpeechBubblePanel.js";
 import { Timeline } from "./components/Timeline.js";
 import { TopBar } from "./components/TopBar.js";
 import { TransportBar } from "./components/TransportBar.js";
@@ -69,6 +72,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
 
   const isImageTemplate = state.artefact === "image-template";
   const isImageInpaint = state.artefact === "image-inpaint";
+  const isSpeechBubbles = state.artefact === "speech-bubbles";
   const isVideo = state.artefact === "hyperframes" || state.artefact === "editframe";
   const isWebApp = state.artefact === "html-app";
   const imageRegionCanvasRef = useRef<ImageRegionCanvasHandle | null>(null);
@@ -152,6 +156,72 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
       setApplying(false);
     }
   };
+
+  // Speech-bubbles artefact: keep a local working copy of the bubbles array so
+  // dragging is responsive (no per-move POSTs). Save bundles the whole array
+  // into a single setSpeechBubbles command. Reset whenever the canonical
+  // bubbles array from useDoc changes (e.g. after a save reload, or switching
+  // projects).
+  const [workingBubbles, setWorkingBubbles] = useState<SpeechBubble[]>(state.bubbles ?? []);
+  const [bubbleDirty, setBubbleDirty] = useState(false);
+  const [selectedBubbleId, setSelectedBubbleId] = useState<string | null>(null);
+  useEffect(() => {
+    setWorkingBubbles(state.bubbles ?? []);
+    setBubbleDirty(false);
+  }, [state.bubbles, projectId]);
+
+  const handleBubblePatch = useCallback((id: string, patch: Partial<SpeechBubble>) => {
+    setWorkingBubbles((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+    setBubbleDirty(true);
+  }, []);
+
+  const handleBubbleDelete = useCallback((id: string) => {
+    setWorkingBubbles((prev) => prev.filter((b) => b.id !== id));
+    setSelectedBubbleId(null);
+    setBubbleDirty(true);
+  }, []);
+
+  const handleBubbleRestore = useCallback((bubble: SpeechBubble, index: number) => {
+    setWorkingBubbles((prev) => {
+      const next = [...prev];
+      next.splice(Math.min(index, next.length), 0, bubble);
+      return next;
+    });
+    setSelectedBubbleId(bubble.id);
+    setBubbleDirty(true);
+  }, []);
+
+  const handleBubbleAdd = useCallback(() => {
+    setWorkingBubbles((prev) => {
+      const used = new Set(prev.map((b) => b.id));
+      let i = 1;
+      while (used.has(`b${i}`)) i++;
+      const fresh: SpeechBubble = {
+        id: `b${i}`,
+        character: "",
+        text: "New bubble",
+        anchor: { x: 0.3, y: 0.1 },
+        tail: { x: 0.4, y: 0.25 },
+        style: "say",
+        width: 0.2,
+        fontSize: 0.024,
+        tailSweep: 0.7,
+      };
+      setSelectedBubbleId(fresh.id);
+      return [...prev, fresh];
+    });
+    setBubbleDirty(true);
+  }, []);
+
+  const bubblesBlockId = state.blocks[0]?.id ?? "blk_speech_bubbles";
+  const handleBubbleSave = useCallback(async () => {
+    await runCommand({
+      type: "setSpeechBubbles",
+      blockId: bubblesBlockId,
+      bubbles: workingBubbles,
+    });
+    setBubbleDirty(false);
+  }, [runCommand, workingBubbles, bubblesBlockId]);
 
   const valuesForSelected = useMemo(() => {
     if (!selectedBlock) return {};
@@ -287,6 +357,16 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
                 bumpKey={state.bumpKey}
                 onMaskChange={setMaskPainted}
               />
+            ) : isSpeechBubbles ? (
+              <SpeechBubbleCanvas
+                projectId={projectId}
+                entry={state.entry}
+                bumpKey={state.bumpKey}
+                bubbles={workingBubbles}
+                selectedId={selectedBubbleId}
+                onSelect={setSelectedBubbleId}
+                onBubbleChange={handleBubblePatch}
+              />
             ) : (
               <PreviewFrame
                 ref={transport.registerIframe}
@@ -302,6 +382,20 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
               />
             )}
           </div>
+          {isSpeechBubbles ? (
+            <SpeechBubblePanel
+              bubbles={workingBubbles}
+              selectedId={selectedBubbleId}
+              saving={state.saving}
+              isDirty={bubbleDirty}
+              onAdd={handleBubbleAdd}
+              onSave={() => void handleBubbleSave()}
+              onPatch={handleBubblePatch}
+              onDelete={handleBubbleDelete}
+              onRestore={handleBubbleRestore}
+              onSelect={setSelectedBubbleId}
+            />
+          ) : null}
           {!showTimeline ? null : (
             <div className="flex shrink-0 flex-col border-t border-border" style={{ height: 304 }}>
               <TransportBar
@@ -326,6 +420,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
             </div>
           )}
         </main>
+        {isSpeechBubbles ? null : (
         <aside className="w-80 overflow-auto border-l border-border">
           {commentMode && selectedBlock ? (
             <div className="p-4">
@@ -374,6 +469,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
           />
           )}
         </aside>
+        )}
       </div>
       {applyResult ? (
         <ApplyCommentsModal result={applyResult} onClose={() => setApplyResult(null)} />

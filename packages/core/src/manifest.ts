@@ -45,6 +45,19 @@ const blockSchema = z.object({
   properties: z.array(descriptorSchema).min(1),
 });
 
+export const speechBubbleSchema = z.object({
+  id: z.string(),
+  character: z.string().optional(),
+  text: z.string(),
+  anchor: z.object({ x: z.number(), y: z.number() }),
+  tail: z.object({ x: z.number(), y: z.number() }),
+  style: z.enum(["say", "whisper"]),
+  width: z.number(),
+  fontSize: z.number(),
+  /** Optional for backwards-compat with sidecars from the standalone preview. */
+  tailSweep: z.number().optional(),
+});
+
 const imageInpaintVersionSchema = z.object({
   id: z.string(),
   ts: z.string(),
@@ -56,7 +69,14 @@ const imageInpaintVersionSchema = z.object({
 
 export const manifestSchema = z.object({
   version: z.literal(1),
-  artefact: z.enum(["html-app", "hyperframes", "image-template", "editframe", "image-inpaint"]),
+  artefact: z.enum([
+    "html-app",
+    "hyperframes",
+    "image-template",
+    "editframe",
+    "image-inpaint",
+    "speech-bubbles",
+  ]),
   entry: z.string(),
   name: z.string().optional(),
   /**
@@ -76,10 +96,17 @@ export const manifestSchema = z.object({
    * optional reference images alongside any prompt (e.g. character canons).
    */
   referenceImages: z.array(z.string()).optional(),
+  /**
+   * For speech-bubbles artefacts: declarative bubble overlay (anchor, tail,
+   * text, style). Each bubble's coords are normalized 0..1 against the entry
+   * image's natural dimensions so they survive any future re-render.
+   */
+  bubbles: z.array(speechBubbleSchema).optional(),
   blocks: z.array(blockSchema).default([]),
 });
 
 export type ImageInpaintVersion = z.infer<typeof imageInpaintVersionSchema>;
+export type SpeechBubbleManifest = z.infer<typeof speechBubbleSchema>;
 
 export type Manifest = z.infer<typeof manifestSchema>;
 export type ManifestBlock = z.infer<typeof blockSchema>;

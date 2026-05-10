@@ -10,6 +10,7 @@ import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html"
 import { editframeAdapter, editframePreviewBridgeScript } from "@artefact-editor/adapter-editframe";
 import { imageTemplateAdapter, SPEC_FILE_DEFAULT } from "@artefact-editor/adapter-image-template";
 import { imageInpaintAdapter } from "@artefact-editor/adapter-image-inpaint";
+import { speechBubblesAdapter } from "@artefact-editor/adapter-speech-bubbles";
 import { FsProjectFiles } from "./projectFiles.js";
 import { isInside } from "./paths.js";
 import { runChild } from "./runChild.js";
@@ -29,7 +30,13 @@ const PYTHON_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_.]*$/;
 
 interface ManifestMeta {
   name?: string;
-  artefact: "html-app" | "hyperframes" | "image-template" | "editframe" | "image-inpaint";
+  artefact:
+    | "html-app"
+    | "hyperframes"
+    | "image-template"
+    | "editframe"
+    | "image-inpaint"
+    | "speech-bubbles";
   template?: string;
   specFile?: string;
 }
@@ -53,6 +60,7 @@ function pickAdapter(artefact: ManifestMeta["artefact"] | undefined): Adapter {
   if (artefact === "image-template") return imageTemplateAdapter;
   if (artefact === "editframe") return editframeAdapter;
   if (artefact === "image-inpaint") return imageInpaintAdapter;
+  if (artefact === "speech-bubbles") return speechBubblesAdapter;
   return htmlAdapter;
 }
 
@@ -175,6 +183,7 @@ app.get("/api/projects/:id", async (c) => {
   // manifest from the client.
   let versions: GetProjectResponse["versions"];
   let referenceImages: GetProjectResponse["referenceImages"];
+  let bubbles: GetProjectResponse["bubbles"];
   if (p.manifest?.artefact === "image-inpaint") {
     try {
       const raw = JSON.parse(await p.files.read("manifest.json")) as {
@@ -185,6 +194,16 @@ app.get("/api/projects/:id", async (c) => {
       referenceImages = raw.referenceImages;
     } catch {
       versions = [];
+    }
+  }
+  if (p.manifest?.artefact === "speech-bubbles") {
+    try {
+      const raw = JSON.parse(await p.files.read("manifest.json")) as {
+        bubbles?: GetProjectResponse["bubbles"];
+      };
+      bubbles = raw.bubbles ?? [];
+    } catch {
+      bubbles = [];
     }
   }
 
@@ -198,6 +217,7 @@ app.get("/api/projects/:id", async (c) => {
     previewStale,
     versions,
     referenceImages,
+    bubbles,
   } satisfies GetProjectResponse);
 });
 

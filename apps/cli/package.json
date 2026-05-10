@@ -16,6 +16,7 @@
     "@artefact-editor/adapter-html": "0.1.0",
     "@artefact-editor/adapter-image-inpaint": "0.1.0",
     "@artefact-editor/adapter-image-template": "0.1.0",
+    "@artefact-editor/adapter-speech-bubbles": "0.1.0",
     "@artefact-editor/contract": "0.1.0",
     "@artefact-editor/core": "0.1.0",
     "@hono/node-server": "^1.13.7",

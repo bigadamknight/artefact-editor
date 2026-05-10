@@ -23,6 +23,7 @@ export const ARTEFACT_KINDS = [
   "image-template",
   "editframe",
   "image-inpaint",
+  "speech-bubbles",
 ] as const;
 export type ArtefactKind = (typeof ARTEFACT_KINDS)[number];
 
@@ -50,10 +51,30 @@ export const promoteImageVersionCommandSchema = z.object({
   versionId: z.string().min(1),
 });
 
+export const speechBubbleSchema = z.object({
+  id: z.string(),
+  character: z.string().optional(),
+  text: z.string(),
+  anchor: z.object({ x: z.number(), y: z.number() }),
+  tail: z.object({ x: z.number(), y: z.number() }),
+  style: z.enum(["say", "whisper"]),
+  width: z.number(),
+  fontSize: z.number(),
+  tailSweep: z.number().optional(),
+});
+export type SpeechBubbleView = z.infer<typeof speechBubbleSchema>;
+
+export const setSpeechBubblesCommandSchema = z.object({
+  type: z.literal("setSpeechBubbles"),
+  blockId: z.string(),
+  bubbles: z.array(speechBubbleSchema),
+});
+
 export const commandSchema = z.discriminatedUnion("type", [
   setPropertyCommandSchema,
   applyImageRegionCommandSchema,
   promoteImageVersionCommandSchema,
+  setSpeechBubblesCommandSchema,
 ]);
 
 export const saveRequestSchema = z.object({
@@ -94,6 +115,8 @@ export interface GetProjectResponse {
   versions?: ImageInpaintVersionView[];
   /** Project-relative reference image paths (image-inpaint artefacts). */
   referenceImages?: string[];
+  /** Populated for speech-bubbles artefacts: the current bubble overlay. */
+  bubbles?: SpeechBubbleView[];
 }
 
 export interface SaveResponse {

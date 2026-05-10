@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Film, ImageIcon, Layout } from "lucide-react";
+import { Film, ImageIcon, Layout, Brush, MessageCircle } from "lucide-react";
 import { useProjects, type ProjectSummary } from "../hooks/useProjects.js";
 
 interface HomePageProps {
@@ -10,12 +10,17 @@ const ARTEFACT_LABEL: Record<ProjectSummary["artefact"], string> = {
   "html-app": "Web app",
   "hyperframes": "Video",
   "image-template": "Image template",
+  "editframe": "Video (editframe)",
+  "image-inpaint": "Image inpaint",
+  "speech-bubbles": "Speech bubbles",
 };
 
 function ArtefactIcon({ kind }: { kind: ProjectSummary["artefact"] }) {
   const cls = "h-4 w-4";
-  if (kind === "hyperframes") return <Film className={cls} />;
+  if (kind === "hyperframes" || kind === "editframe") return <Film className={cls} />;
   if (kind === "image-template") return <ImageIcon className={cls} />;
+  if (kind === "image-inpaint") return <Brush className={cls} />;
+  if (kind === "speech-bubbles") return <MessageCircle className={cls} />;
   return <Layout className={cls} />;
 }
 

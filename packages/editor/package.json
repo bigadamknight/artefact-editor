@@ -27,6 +27,7 @@
     "@artefact-editor/core": "0.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
+    "roughjs": "^4.6.6",
     "tailwind-merge": "^2.5.4"
   },
   "peerDependencies": {

@@ -2,7 +2,14 @@ import type { PropertyDescriptor, PropertyValue } from "./descriptor.js";
 
 export type BlockId = string;
 
-export type BlockKind = "text" | "image" | "color" | "audio" | "timing" | "image-region";
+export type BlockKind =
+  | "text"
+  | "image"
+  | "color"
+  | "audio"
+  | "timing"
+  | "image-region"
+  | "speech-bubbles";
 
 export type SourceRef =
   | { tag: "selector"; file: string; selector: string }

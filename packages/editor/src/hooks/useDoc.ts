@@ -28,6 +28,8 @@ export interface DocState {
   /** Populated for image-inpaint artefacts; ordered oldest → newest. */
   versions?: GetProjectResponse["versions"];
   referenceImages?: GetProjectResponse["referenceImages"];
+  /** Populated for speech-bubbles artefacts. */
+  bubbles?: GetProjectResponse["bubbles"];
 }
 
 export interface UseDocApi {
@@ -79,6 +81,7 @@ export function useDoc(projectId: string): UseDocApi {
         bumpKey: s.bumpKey + 1,
         versions: data.versions,
         referenceImages: data.referenceImages,
+        bubbles: data.bubbles,
       }));
     } catch (err) {
       setState((s) => ({
