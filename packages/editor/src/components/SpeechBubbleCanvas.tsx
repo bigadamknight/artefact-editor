@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpeechBubble } from "@artefact-editor/core";
 import { apiPath, useEditorConfig } from "../config.js";
+import { useOverlayFontsLoaded } from "../hooks/useOverlayFonts.js";
 import { drawOverlay } from "./speechBubbleDraw.js";
 
 export interface SpeechBubbleCanvasProps {
@@ -93,6 +94,8 @@ export function SpeechBubbleCanvas({
   // Render the SVG content imperatively whenever bubbles / selection / dims
   // change. We keep this out of React's diff because rough.js generates large
   // DOM subtrees we'd rather rebuild wholesale than reconcile.
+  const fontsLoaded = useOverlayFontsLoaded();
+
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -103,7 +106,8 @@ export function SpeechBubbleCanvas({
         onSelect(b.id);
       });
     }
-  }, [bubbles, dims.W, dims.H, selectedId, onSelect]);
+    // fontsLoaded: redraw once Mali/Gaegu arrive so wraps use their metrics.
+  }, [bubbles, dims.W, dims.H, selectedId, onSelect, fontsLoaded]);
 
   return (
     <div ref={stageRef} className="relative h-full w-full select-none bg-muted">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiPath, useEditorConfig } from "../config.js";
 import { useExportProject } from "../hooks/useExportProject.js";
+import { useOverlayFontsLoaded } from "../hooks/useOverlayFonts.js";
 import { drawOverlay } from "./speechBubbleDraw.js";
 
 export interface SpeechBubbleExportProps {
@@ -23,25 +24,11 @@ export function SpeechBubbleExport({ projectId }: SpeechBubbleExportProps) {
   const { loading, error, entry, bubbles } = useExportProject(projectId);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dims, setDims] = useState<{ W: number; H: number } | null>(null);
-  const [fontsReady, setFontsReady] = useState(false);
+  const fontsReady = useOverlayFontsLoaded();
 
   const imgUrl = entry
     ? apiPath(config, `/projects/${projectId}/file?path=${encodeURIComponent(entry)}`)
     : null;
-
-  useEffect(() => {
-    let cancelled = false;
-    document.fonts.ready
-      .then(() => {
-        if (!cancelled) setFontsReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setFontsReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Load the entry image and wait for it to fully decode before we know the
   // natural pixel size the stage (and the overlay's viewBox) must match.

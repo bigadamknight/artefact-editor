@@ -8,6 +8,21 @@ const BOWING = 2.0;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/** Every font the overlay draws with. Text wrap measures glyph widths, so they
+ * must be loaded before drawing, or lines wrap to the fallback font's metrics. */
+const OVERLAY_FONTS = ['"Mali"', '"Gaegu"'];
+
+/**
+ * Loads the overlay fonts explicitly. `document.fonts.ready` alone is not
+ * enough: it settles as soon as nothing is loading, which is before the first
+ * text node has asked for Mali or Gaegu.
+ */
+export function loadOverlayFonts(): Promise<void> {
+  return Promise.all(OVERLAY_FONTS.map((f) => document.fonts.load(`40px ${f}`)))
+    .then(() => document.fonts.ready)
+    .then(() => undefined);
+}
+
 /**
  * Clears `svg` and draws every bubble/caption in `bubbles` onto it. Shared by
  * the interactive editor canvas (which draws its own drag handles on top
@@ -52,7 +67,7 @@ export function drawBubble(
   const text = document.createElementNS(SVG_NS, "text");
   text.setAttribute("font-size", String(fs));
   text.setAttribute("text-anchor", "middle");
-  text.setAttribute("font-family", '"Patrick Hand", "Caveat", "Comic Sans MS", cursive');
+  text.setAttribute("font-family", '"Gaegu", "Comic Sans MS", cursive');
   text.setAttribute("fill", "#2a1810");
   text.style.pointerEvents = "none";
   svg.appendChild(text);
@@ -150,7 +165,7 @@ function drawCaption(
   text.setAttribute("text-anchor", isTitle ? "middle" : "start");
   text.setAttribute(
     "font-family",
-    isTitle ? '"Patrick Hand", "Caveat", "Comic Sans MS", cursive' : '"Andika", "Segoe UI", sans-serif',
+    isTitle ? '"Gaegu", "Comic Sans MS", cursive' : '"Mali", "Segoe UI", sans-serif',
   );
   const light = b.tone === "light";
   text.setAttribute("fill", light ? PAPER : INK);

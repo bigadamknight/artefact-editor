@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Film, ImageIcon, Layout, Brush, MessageCircle } from "lucide-react";
-import { drawOverlay } from "@artefact-editor/editor";
+import { drawOverlay, useOverlayFontsLoaded } from "@artefact-editor/editor";
 import { useProjects, type ProjectSummary } from "../hooks/useProjects.js";
 
 interface HomePageProps {
@@ -45,12 +45,13 @@ function PageThumb({ project }: { project: ProjectSummary }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [dims, setDims] = useState<{ W: number; H: number } | null>(null);
   const bubbles = project.bubbles ?? [];
+  const fontsLoaded = useOverlayFontsLoaded();
 
   useEffect(() => {
     const svg = svgRef.current;
-    if (!svg || !dims) return;
+    if (!svg || !dims || !fontsLoaded) return;
     drawOverlay(svg, bubbles, dims);
-  }, [bubbles, dims]);
+  }, [bubbles, dims, fontsLoaded]);
 
   return (
     <div className="relative h-full w-full bg-neutral-100">
