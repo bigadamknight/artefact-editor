@@ -89,6 +89,8 @@ export interface ProjectSummary {
   name: string;
   artefact: ArtefactKind;
   entry: string;
+  /** speech-bubbles only: the overlay, so the picker can draw a true page thumbnail. */
+  bubbles?: SpeechBubbleView[];
 }
 
 export interface ListProjectsResponse {
