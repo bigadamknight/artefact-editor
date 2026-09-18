@@ -134,7 +134,7 @@ export function SpeechBubblePanel({
               type="number"
               step={0.01}
               min={0.05}
-              max={0.5}
+              max={0.95}
               value={selected.width}
               onChange={(e) => onPatch(selected.id, { width: parseFloat(e.target.value) })}
               className="w-20 rounded border border-border bg-background px-2 py-1 text-sm"
@@ -145,7 +145,7 @@ export function SpeechBubblePanel({
               type="number"
               step={0.002}
               min={0.01}
-              max={0.08}
+              max={0.15}
               value={selected.fontSize}
               onChange={(e) => onPatch(selected.id, { fontSize: parseFloat(e.target.value) })}
               className="w-20 rounded border border-border bg-background px-2 py-1 text-sm"
