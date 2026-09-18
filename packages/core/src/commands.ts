@@ -49,6 +49,8 @@ export interface SpeechBubble {
    * left-aligned caption block. "title" = borderless centred title text.
    */
   style: "say" | "whisper" | "narration" | "title";
+  /** narration/title only: "light" = cream text with a dark halo, for dark art. Defaults to "dark". */
+  tone?: "dark" | "light";
   /** Bubble width as fraction of image width (0..1). */
   width: number;
   /** Font size as fraction of image height (0..1). */

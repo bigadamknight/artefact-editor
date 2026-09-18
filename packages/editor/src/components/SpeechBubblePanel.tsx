@@ -151,6 +151,18 @@ export function SpeechBubblePanel({
               className="w-20 rounded border border-border bg-background px-2 py-1 text-sm"
             />
           </Field>
+          {selected.style === "narration" || selected.style === "title" ? (
+            <Field label="Tone">
+              <select
+                value={selected.tone ?? "dark"}
+                onChange={(e) => onPatch(selected.id, { tone: e.target.value as "dark" | "light" })}
+                className="rounded border border-border bg-background px-2 py-1 text-sm"
+              >
+                <option value="dark">dark text (light art)</option>
+                <option value="light">light text (dark art)</option>
+              </select>
+            </Field>
+          ) : null}
           {selected.style !== "narration" && selected.style !== "title" ? (
             <Field label={`Tail sweep (${(selected.tailSweep ?? 0.7).toFixed(2)})`}>
               <input

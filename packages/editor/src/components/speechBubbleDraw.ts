@@ -152,12 +152,13 @@ function drawCaption(
     "font-family",
     isTitle ? '"Patrick Hand", "Caveat", "Comic Sans MS", cursive' : '"Andika", "Segoe UI", sans-serif',
   );
-  text.setAttribute("fill", INK);
+  const light = b.tone === "light";
+  text.setAttribute("fill", light ? PAPER : INK);
   text.setAttribute("paint-order", "stroke");
-  text.setAttribute("stroke", PAPER);
-  text.setAttribute("stroke-width", String(fs * 0.35));
+  text.setAttribute("stroke", light ? INK : PAPER);
+  text.setAttribute("stroke-width", String(fs * (light ? 0.28 : 0.35)));
   text.setAttribute("stroke-linejoin", "round");
-  text.setAttribute("stroke-opacity", "0.85");
+  text.setAttribute("stroke-opacity", light ? "0.55" : "0.85");
   text.style.pointerEvents = "all";
   text.style.cursor = "pointer";
   text.addEventListener("pointerdown", (e) => {
@@ -169,7 +170,8 @@ function drawCaption(
   const maxWidth = bw;
   const lines = wrap(text, b.text || "", maxWidth);
   const lineH = fs * 1.35;
-  const offsets = lineOffsets(lines);
+  // Titles break lines on "\n" without the paragraph gap narration uses.
+  const offsets = isTitle ? lines.map((_, i) => i) : lineOffsets(lines);
   const blockH = ((offsets[offsets.length - 1] ?? 0) + 1) * lineH;
 
   const startY = ay - blockH / 2 + fs * 0.85;
