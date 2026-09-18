@@ -57,7 +57,7 @@ export const speechBubbleSchema = z.object({
   text: z.string(),
   anchor: z.object({ x: z.number(), y: z.number() }),
   tail: z.object({ x: z.number(), y: z.number() }),
-  style: z.enum(["say", "whisper"]),
+  style: z.enum(["say", "whisper", "narration", "title"]),
   width: z.number(),
   fontSize: z.number(),
   tailSweep: z.number().optional(),

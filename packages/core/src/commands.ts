@@ -44,8 +44,11 @@ export interface SpeechBubble {
   text: string;
   anchor: { x: number; y: number };
   tail: { x: number; y: number };
-  /** "say" = solid outline, "whisper" = dashed. More variants TBD (think, shout). */
-  style: "say" | "whisper";
+  /**
+   * "say" = solid outline, "whisper" = dashed. "narration" = borderless
+   * left-aligned caption block. "title" = borderless centred title text.
+   */
+  style: "say" | "whisper" | "narration" | "title";
   /** Bubble width as fraction of image width (0..1). */
   width: number;
   /** Font size as fraction of image height (0..1). */

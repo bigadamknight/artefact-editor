@@ -107,7 +107,7 @@ export function SpeechBubblePanel({
         <div className="flex flex-wrap items-end gap-3 px-3 py-2">
           <Field label="Text" wide>
             <textarea
-              rows={2}
+              rows={selected.style === "narration" ? 4 : 2}
               value={selected.text}
               onChange={(e) => onPatch(selected.id, { text: e.target.value })}
               className="w-80 resize-y rounded border border-border bg-background px-2 py-1 text-sm"
@@ -116,11 +116,17 @@ export function SpeechBubblePanel({
           <Field label="Style">
             <select
               value={selected.style}
-              onChange={(e) => onPatch(selected.id, { style: e.target.value as "say" | "whisper" })}
+              onChange={(e) =>
+                onPatch(selected.id, {
+                  style: e.target.value as "say" | "whisper" | "narration" | "title",
+                })
+              }
               className="rounded border border-border bg-background px-2 py-1 text-sm"
             >
               <option value="say">say</option>
               <option value="whisper">whisper</option>
+              <option value="narration">narration</option>
+              <option value="title">title</option>
             </select>
           </Field>
           <Field label="Width">
@@ -145,17 +151,19 @@ export function SpeechBubblePanel({
               className="w-20 rounded border border-border bg-background px-2 py-1 text-sm"
             />
           </Field>
-          <Field label={`Tail sweep (${(selected.tailSweep ?? 0.7).toFixed(2)})`}>
-            <input
-              type="range"
-              min={-1}
-              max={1}
-              step={0.05}
-              value={selected.tailSweep ?? 0.7}
-              onChange={(e) => onPatch(selected.id, { tailSweep: parseFloat(e.target.value) })}
-              className="w-40"
-            />
-          </Field>
+          {selected.style !== "narration" && selected.style !== "title" ? (
+            <Field label={`Tail sweep (${(selected.tailSweep ?? 0.7).toFixed(2)})`}>
+              <input
+                type="range"
+                min={-1}
+                max={1}
+                step={0.05}
+                value={selected.tailSweep ?? 0.7}
+                onChange={(e) => onPatch(selected.id, { tailSweep: parseFloat(e.target.value) })}
+                className="w-40"
+              />
+            </Field>
+          ) : null}
           <Field label="Character">
             <input
               type="text"
