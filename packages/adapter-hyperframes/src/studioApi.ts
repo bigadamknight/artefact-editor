@@ -1,3 +1,10 @@
+/*
+ * bundle() below follows HyperFrames' own CLI studio server:
+ *   packages/cli/src/server/studioServer.ts (lines 477-492, v0.8.81)
+ * https://github.com/heygen-com/hyperframes
+ * Copyright 2026 HeyGen, Inc. Licensed under the Apache License, Version 2.0.
+ * See ../LICENSE.hyperframes.
+ */
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

@@ -14,11 +14,24 @@ The contract is small: tag every visible piece of content with
 ## If you're working *on* artefact-editor itself
 
 - Use yarn, not npm.
-- `yarn dev` runs CLI on port 7411 and Vite on 5173 with the bundled examples.
+- `yarn dev` runs the CLI on port 7411, the web app (Vite) on 5173 and the
+  timeline app (Vite) on 5174, with the bundled examples. Open 5173; it
+  proxies `/api` and `/preview` to 7411 and `/timeline` to 5174.
 - `yarn typecheck` runs the workspace-wide tsc check; it must pass before
   committing.
 - The web app lives in `apps/web` (Vite + React + TS + shadcn/ui). The CLI
-  lives in `apps/cli` (Hono server + bin). Adapters in `packages/adapter-*`
+  lives in `apps/cli` (Hono server + bin). The timeline app for
+  `artefact: "hyperframes"` projects lives in `apps/timeline` (Vite + React
+  19, its own document, framed by the editor at `/timeline/#/p/:id`).
+- `apps/timeline` is on React 19; the rest of the repo is on React 18. Its
+  dependencies are `nohoist` in the root `package.json`, and `apps/web`
+  dedupes React, so the two never mix. Keep it that way.
+- `apps/timeline` mounts only the brand-free parts of `@hyperframes/studio`
+  (Player, Timeline, TimelineEditProvider and the editing hooks). Never
+  import StudioApp, EditorShell, StudioHeader, HyperframesLogo,
+  HyperframesLoader, PlayerControls or ExternalFileConflictBanner, and keep
+  its telemetry flags in `index.html` and `vite.config.ts`. See
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Adapters in `packages/adapter-*`
   must stay format-agnostic — only the adapter for that format knows the
   source layout.
 - Edit existing files; don't scaffold a parallel project.
@@ -28,6 +41,7 @@ The contract is small: tag every visible piece of content with
 | Adapter                  | Artefact kind                                                        | Source mutation                                                                                |
 | ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `adapter-html`           | HTML/CSS web apps, hyperframes videos, Editframe compositions, etc. | parse5 surgical mutations + JS-bundle string mirroring for built apps + GSAP transport bridge  |
+| `adapter-hyperframes`    | HyperFrames compositions (`artefact: "hyperframes"`)                 | blocks via `adapter-html`; the timeline app writes clip timing through the studio-server file API (etag-guarded PUT, undo history) |
 | `adapter-image-template` | PIL marketing graphics                                               | reads/writes `spec.json`, re-runs Python on save, emits a region sidecar for click-to-select   |
 
 The `adapter-html` path covers any HTML composition that uses stable
@@ -38,6 +52,10 @@ adapter.
 ## Render and export
 
 - **Image-template** projects render via the Python template.
+- **Hyperframes** projects open with the timeline app: preview, transport
+  and a multi-track timeline. Dragging, trimming and splitting clips writes
+  `index.html` / `compositions/*.html` directly; Cmd+Z / Shift+Cmd+Z undo
+  and redo. The block sidebar reloads after each timeline write.
 - **Hyperframes** projects render to MP4 via
   `npx hyperframes render --quality draft`.
 - **Any project** can be exported as a `.artefact` zip via the download
