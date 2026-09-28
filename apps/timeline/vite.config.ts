@@ -15,8 +15,8 @@ export default defineConfig({
     "import.meta.env.VITE_HYPERFRAMES_NO_FEEDBACK": JSON.stringify("1"),
   },
   resolve: {
-    // React 19 lives only in this workspace (nohoist); the rest of the repo
-    // is on 18. One copy of each, resolved from here.
+    // This workspace needs React 19; the rest of the repo is on 18. Yarn
+    // still hoists 19 to the root node_modules, so pin one copy of each here.
     dedupe: ["react", "react-dom"],
   },
   server: {

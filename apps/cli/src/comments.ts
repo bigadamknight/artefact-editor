@@ -134,6 +134,8 @@ function describeSource(block: Block): string {
       return `${block.source.file} ${block.source.varName}`;
     case "specKey":
       return `${block.source.file}#${block.source.specKey}`;
+    case "entry":
+      return block.source.file;
   }
 }
 
