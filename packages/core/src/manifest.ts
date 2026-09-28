@@ -51,7 +51,9 @@ export const speechBubbleSchema = z.object({
   text: z.string(),
   anchor: z.object({ x: z.number(), y: z.number() }),
   tail: z.object({ x: z.number(), y: z.number() }),
-  style: z.enum(["say", "whisper"]),
+  style: z.enum(["say", "whisper", "narration", "title"]),
+  /** narration/title only: "light" = cream text for dark art. Default "dark". */
+  tone: z.enum(["dark", "light"]).optional(),
   width: z.number(),
   fontSize: z.number(),
   /** Optional for backwards-compat with sidecars from the standalone preview. */

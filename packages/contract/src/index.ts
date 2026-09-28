@@ -57,7 +57,9 @@ export const speechBubbleSchema = z.object({
   text: z.string(),
   anchor: z.object({ x: z.number(), y: z.number() }),
   tail: z.object({ x: z.number(), y: z.number() }),
-  style: z.enum(["say", "whisper"]),
+  style: z.enum(["say", "whisper", "narration", "title"]),
+  /** narration/title only: "light" = cream text for dark art. Default "dark". */
+  tone: z.enum(["dark", "light"]).optional(),
   width: z.number(),
   fontSize: z.number(),
   tailSweep: z.number().optional(),
@@ -87,6 +89,8 @@ export interface ProjectSummary {
   name: string;
   artefact: ArtefactKind;
   entry: string;
+  /** speech-bubbles only: the overlay, so the picker can draw a true page thumbnail. */
+  bubbles?: SpeechBubbleView[];
 }
 
 export interface ListProjectsResponse {

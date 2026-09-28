@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Film, ImageIcon, Layout, Brush, MessageCircle } from "lucide-react";
+import { drawOverlay, useOverlayFontsLoaded } from "@artefact-editor/editor";
 import { useProjects, type ProjectSummary } from "../hooks/useProjects.js";
 
 interface HomePageProps {
@@ -30,6 +31,48 @@ function ArtefactIcon({ kind }: { kind: ProjectSummary["artefact"] }) {
 // natural width fits the card width; aspect-square card means height matches.
 const THUMB_NATURAL = 1080;
 
+/** Image-based artefacts show the whole entry image, not a crop. */
+function isImagePage(project: ProjectSummary): boolean {
+  return project.artefact === "speech-bubbles" || project.artefact === "image-inpaint";
+}
+
+/**
+ * Whole-page thumbnail for image pages. Speech-bubble projects also get their
+ * overlay drawn by the same code the editor and export use; the SVG viewBox is
+ * the image's natural size, so text wraps exactly as on the full page.
+ */
+function PageThumb({ project }: { project: ProjectSummary }) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [dims, setDims] = useState<{ W: number; H: number } | null>(null);
+  const bubbles = project.bubbles ?? [];
+  const fontsLoaded = useOverlayFontsLoaded();
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || !dims || !fontsLoaded) return;
+    drawOverlay(svg, bubbles, dims);
+  }, [bubbles, dims, fontsLoaded]);
+
+  return (
+    <div className="relative h-full w-full bg-neutral-100">
+      <img
+        src={`/preview/${project.id}/${project.entry}`}
+        alt={project.name}
+        className="block h-full w-full object-contain"
+        onLoad={(e) => setDims({ W: e.currentTarget.naturalWidth, H: e.currentTarget.naturalHeight })}
+      />
+      {dims ? (
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${dims.W} ${dims.H}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function PreviewThumb({ project }: { project: ProjectSummary }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
@@ -43,6 +86,8 @@ function PreviewThumb({ project }: { project: ProjectSummary }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  if (isImagePage(project)) return <PageThumb project={project} />;
 
   // Image-template projects have a real PNG entry we can show directly.
   if (project.artefact === "image-template") {
@@ -123,7 +168,9 @@ export default function HomePage({ onOpen }: HomePageProps) {
                 onClick={() => onOpen(p.id)}
                 className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary hover:shadow-md"
               >
-                <div className="aspect-square w-full overflow-hidden border-b border-border">
+                <div
+                  className={`${isImagePage(p) ? "aspect-[3/2]" : "aspect-square"} w-full overflow-hidden border-b border-border`}
+                >
                   <PreviewThumb project={p} />
                 </div>
                 <div className="flex flex-col gap-1 p-4">

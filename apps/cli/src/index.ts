@@ -151,15 +151,32 @@ const app = new Hono();
 app.use("*", cors());
 
 // List all projects — used by the home page to render the picker.
-app.get("/api/projects", (c) => {
-  return c.json({
-    projects: Array.from(projects.values()).map((p) => ({
-      id: p.id,
-      name: p.name,
-      artefact: p.manifest?.artefact ?? "html-app",
-      entry: p.entry,
-    })),
-  });
+app.get("/api/projects", async (c) => {
+  // Speech-bubble overlays are read fresh from disk (as GET /api/projects/:id
+  // does) so picker thumbnails show the latest saved text.
+  const list = await Promise.all(
+    Array.from(projects.values()).map(async (p) => {
+      let bubbles: GetProjectResponse["bubbles"];
+      if (p.manifest?.artefact === "speech-bubbles") {
+        try {
+          const raw = JSON.parse(await p.files.read("manifest.json")) as {
+            bubbles?: GetProjectResponse["bubbles"];
+          };
+          bubbles = raw.bubbles ?? [];
+        } catch {
+          bubbles = [];
+        }
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        artefact: p.manifest?.artefact ?? "html-app",
+        entry: p.entry,
+        ...(bubbles ? { bubbles } : {}),
+      };
+    }),
+  );
+  return c.json({ projects: list });
 });
 
 app.get("/api/projects/:id", async (c) => {

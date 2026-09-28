@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import rough from "roughjs";
 import type { SpeechBubble } from "@artefact-editor/core";
 import { apiPath, useEditorConfig } from "../config.js";
-
-const INK = "#3a2418";
-const PAPER = "#fdf6e8";
-const ROUGHNESS = 1.4;
-const BOWING = 2.0;
+import { useOverlayFontsLoaded } from "../hooks/useOverlayFonts.js";
+import { drawOverlay } from "./speechBubbleDraw.js";
 
 export interface SpeechBubbleCanvasProps {
   projectId: string;
@@ -98,26 +94,23 @@ export function SpeechBubbleCanvas({
   // Render the SVG content imperatively whenever bubbles / selection / dims
   // change. We keep this out of React's diff because rough.js generates large
   // DOM subtrees we'd rather rebuild wholesale than reconcile.
+  const fontsLoaded = useOverlayFontsLoaded();
+
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
-    const rc = rough.svg(svg as unknown as SVGSVGElement, {
-      options: { roughness: ROUGHNESS, bowing: BOWING, seed: 1 },
-    });
-    for (const b of bubbles) drawBubble(svg, rc, b, dims, onSelect);
+    drawOverlay(svg, bubbles, dims, onSelect);
     for (const b of bubbles) {
       drawHandles(svg, b, dims, b.id === selectedId, (which) => {
         dragRef.current = { bubbleId: b.id, which };
         onSelect(b.id);
       });
     }
-  }, [bubbles, dims.W, dims.H, selectedId, onSelect]);
+    // fontsLoaded: redraw once Mali/Gaegu arrive so wraps use their metrics.
+  }, [bubbles, dims.W, dims.H, selectedId, onSelect, fontsLoaded]);
 
   return (
     <div ref={stageRef} className="relative h-full w-full select-none bg-muted">
-      {/* Patrick Hand for hand-drawn bubble text (matches the SYITM register) */}
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" />
       <div className="relative mx-auto h-full" style={{ aspectRatio: `${dims.W} / ${dims.H}` }}>
         {imgUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -150,99 +143,6 @@ function clamp(v: number, lo: number, hi: number) {
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-function drawBubble(
-  svg: SVGSVGElement,
-  rc: ReturnType<typeof rough.svg>,
-  b: SpeechBubble,
-  dims: { W: number; H: number },
-  onSelect: (id: string | null) => void,
-) {
-  const { W, H } = dims;
-  const ax = b.anchor.x * W;
-  const ay = b.anchor.y * H;
-  const tx = b.tail.x * W;
-  const ty = b.tail.y * H;
-  const bw = (b.width || 0.2) * W;
-  const fs = (b.fontSize || 0.024) * H;
-  const padX = fs * 1.1;
-  const padY = fs * 0.7;
-
-  const text = document.createElementNS(SVG_NS, "text");
-  text.setAttribute("font-size", String(fs));
-  text.setAttribute("text-anchor", "middle");
-  text.setAttribute("font-family", '"Patrick Hand", "Caveat", "Comic Sans MS", cursive');
-  text.setAttribute("fill", "#2a1810");
-  text.style.pointerEvents = "none";
-  svg.appendChild(text);
-  const lines = wrap(text, b.text || "", bw - 2 * padX);
-  const lineH = fs * 1.15;
-  const blockH = Math.max(lines.length, 1) * lineH;
-
-  const rx = bw / 2 + padX * 0.2;
-  const ry = blockH / 2 + padY + fs * 0.15;
-
-  const dx = tx - ax;
-  const dy = ty - ay;
-  const len = Math.hypot(dx, dy) || 1;
-  const ux = dx / len;
-  const uy = dy / len;
-  const dirAngle = Math.atan2(uy, ux);
-  const halfAngle = b.style === "whisper" ? 0.13 : 0.16;
-  const a1 = dirAngle - halfAngle;
-  const a2 = dirAngle + halfAngle;
-  const p1x = ax + rx * Math.cos(a1);
-  const p1y = ay + ry * Math.sin(a1);
-  const p2x = ax + rx * Math.cos(a2);
-  const p2y = ay + ry * Math.sin(a2);
-  const sweep = typeof b.tailSweep === "number" ? b.tailSweep : 0.7;
-  const off = fs * 0.6 * sweep;
-  const c1x = (p1x + tx) / 2 + -uy * off;
-  const c1y = (p1y + ty) / 2 + ux * off;
-  const c2x = (p2x + tx) / 2 + -uy * off;
-  const c2y = (p2y + ty) / 2 + ux * off;
-
-  const closedPath =
-    `M ${p1x} ${p1y} ` +
-    `A ${rx} ${ry} 0 1 0 ${p2x} ${p2y} ` +
-    `Q ${c2x} ${c2y} ${tx} ${ty} ` +
-    `Q ${c1x} ${c1y} ${p1x} ${p1y} Z`;
-
-  const fill = document.createElementNS(SVG_NS, "path");
-  fill.setAttribute("d", closedPath);
-  fill.setAttribute("fill", PAPER);
-  fill.setAttribute("stroke", "none");
-  fill.style.pointerEvents = "all";
-  fill.style.cursor = "pointer";
-  fill.addEventListener("pointerdown", (e) => {
-    e.stopPropagation();
-    onSelect(b.id);
-  });
-  svg.appendChild(fill);
-
-  const dashed = b.style === "whisper";
-  const strokeOpts: Record<string, unknown> = {
-    stroke: INK,
-    strokeWidth: fs * 0.1,
-    fill: "none",
-    strokeLineDash: dashed ? [fs * 0.5, fs * 0.35] : undefined,
-  };
-  const outline = rc.path(closedPath, strokeOpts);
-  outline.style.pointerEvents = "none";
-  svg.appendChild(outline);
-
-  const startY = ay - blockH / 2 + fs * 0.85;
-  while (text.firstChild) text.removeChild(text.firstChild);
-  lines.forEach((ln, i) => {
-    const ts = document.createElementNS(SVG_NS, "tspan");
-    ts.setAttribute("x", String(ax));
-    ts.setAttribute("y", String(startY + i * lineH));
-    ts.textContent = ln;
-    text.appendChild(ts);
-  });
-  // Bring text above outline by re-appending.
-  svg.appendChild(text);
-}
-
 function drawHandles(
   svg: SVGSVGElement,
   b: SpeechBubble,
@@ -258,6 +158,9 @@ function drawHandles(
   const ay = b.anchor.y * H;
   const tx = b.tail.x * W;
   const ty = b.tail.y * H;
+  // narration / title are borderless captions with no tail — only the anchor
+  // (move) handle applies.
+  const hasTail = b.style !== "narration" && b.style !== "title";
 
   function makeHandle(cx: number, cy: number, color: string, which: "anchor" | "tail") {
     const c = document.createElementNS(SVG_NS, "circle");
@@ -279,27 +182,5 @@ function drawHandles(
   }
 
   makeHandle(ax, ay, "#2563eb", "anchor");
-  makeHandle(tx, ty, "#f59e0b", "tail");
-}
-
-function wrap(textEl: SVGTextElement, str: string, maxWidth: number): string[] {
-  const words = String(str).split(/\s+/).filter(Boolean);
-  if (!words.length) return [""];
-  const lines: string[] = [];
-  let cur = "";
-  const probe = document.createElementNS(SVG_NS, "tspan");
-  textEl.appendChild(probe);
-  for (const w of words) {
-    const trial = cur ? cur + " " + w : w;
-    probe.textContent = trial;
-    if (probe.getComputedTextLength() > maxWidth && cur) {
-      lines.push(cur);
-      cur = w;
-    } else {
-      cur = trial;
-    }
-  }
-  if (cur) lines.push(cur);
-  textEl.removeChild(probe);
-  return lines;
+  if (hasTail) makeHandle(tx, ty, "#f59e0b", "tail");
 }

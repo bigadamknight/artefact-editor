@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Local, self-hosted bubble/overlay fonts — no network dependency at render
+   time (the headless export route must not race a webfont CDN request). */
+@font-face {
+  font-family: "Gaegu";
+  src: url("/fonts/Gaegu-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Mali";
+  src: url("/fonts/Mali-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 html,
 body,
 #root {
