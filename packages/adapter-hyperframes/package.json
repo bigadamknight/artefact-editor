@@ -25,7 +25,8 @@
     "@artefact-editor/adapter-html": "0.1.0",
     "@hyperframes/core": "0.8.81",
     "@hyperframes/studio-server": "0.8.81",
-    "hono": "^4.6.10"
+    "hono": "^4.6.10",
+    "parse5": "^7.2.1"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

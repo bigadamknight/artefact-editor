@@ -20,6 +20,7 @@ import {
   type ResolvedProject,
 } from "@hyperframes/studio-server";
 import { bundleToSingleHtml } from "@hyperframes/core/compiler";
+import { videoClipThumbnail } from "./videoThumbnail.js";
 
 /** What the CLI knows about a project — just its directory on disk. */
 export interface HyperframesProjectRef {
@@ -118,6 +119,19 @@ export function createHyperframesStudioApi(projects: Map<string, HyperframesProj
     lint: () => ({ findings: [] }),
 
     runtimeUrl: RUNTIME_URL,
+
+    // Video clips only, via ffmpeg (see videoThumbnail.ts); no headless browser.
+    generateThumbnail: (opts) =>
+      videoClipThumbnail({
+        projectDir: opts.project.dir,
+        compPath: opts.compPath,
+        selector: opts.selector,
+        seekTime: opts.seekTime,
+        outputWidth: opts.outputWidth,
+        outputHeight: opts.outputHeight,
+        format: opts.format,
+        signal: opts.signal,
+      }),
 
     rendersDir: (project) => join(project.dir, "renders"),
 
