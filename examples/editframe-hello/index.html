@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello editframe</title>
+    <script type="module" src="https://esm.sh/@editframe/elements"></script>
+    <style>
+      :root {
+        --s1-bg: #0b1020;
+        --s2-bg: #1a1a2e;
+        --fg: #f5f5f7;
+        --accent: #38bdf8;
+      }
+      html, body { margin: 0; padding: 0; background: #000; color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif; }
+      ef-timegroup#root { display: block; width: 1280px; height: 720px; }
+      .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px; box-sizing: border-box; text-align: center; }
+      .scene.s1 { background: var(--s1-bg); }
+      .scene.s2 { background: var(--s2-bg); }
+      .title { font-size: 84px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 16px; }
+      .subtitle { font-size: 28px; font-weight: 400; opacity: 0.85; margin: 0; max-width: 900px; }
+      .headline { font-size: 64px; font-weight: 700; margin: 0 0 24px; color: var(--accent); }
+      .body { font-size: 24px; line-height: 1.5; margin: 0; max-width: 880px; opacity: 0.9; }
+      @keyframes slide-up {
+        from { transform: translateY(24px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+      }
+      @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+  </head>
+  <body>
+    <ef-timegroup id="root" mode="sequence" overlap="0.5s" width="1280" height="720" data-poster-time="2">
+      <ef-timegroup mode="fixed" duration="4s" class="scene s1" style="animation: 1s fade-out var(--ef-transition-out-start, 3s) both;">
+        <ef-text
+          data-edit-id="blk_s1_title"
+          split="word"
+          class="title"
+          style="animation: 0.6s slide-up both; animation-delay: calc(var(--ef-word-index, 0) * 100ms);"
+        >Hello editframe</ef-text>
+        <ef-text
+          data-edit-id="blk_s1_subtitle"
+          class="subtitle"
+          style="animation: 0.6s fade-in 0.4s both;"
+        >A composition rendered through the artefact-editor.</ef-text>
+      </ef-timegroup>
+
+      <ef-timegroup mode="fixed" duration="4s" class="scene s2" style="animation: 0.5s fade-in both;">
+        <ef-text
+          data-edit-id="blk_s2_headline"
+          class="headline"
+          style="animation: 0.6s slide-up both;"
+        >Edit any block on the right.</ef-text>
+        <ef-text
+          data-edit-id="blk_s2_body"
+          class="body"
+          style="animation: 0.6s fade-in 0.3s both;"
+        >Text, colour, and layout edits write back surgically to this HTML — the file stays byte-identical except for the fields you change.</ef-text>
+      </ef-timegroup>
+    </ef-timegroup>
+  </body>
+</html>

@@ -10,6 +10,7 @@ import { findOneMatching } from "./selector.js";
 import { findScriptVar } from "./scriptVar.js";
 import { escapeRegex } from "./regex.js";
 import { STYLE_PROPS } from "./styleProps.js";
+import { discoverBlocks, mergeBlocks } from "./discover.js";
 
 const TEXT_NODE = "#text";
 
@@ -127,8 +128,19 @@ export async function loadProject(files: ProjectFiles): Promise<{
     throw new Error(`entry file not found: ${manifest.entry}`);
   }
 
+  // Auto-discover [data-edit-id] elements in the entry file. Explicit
+  // manifest blocks win by id (explicit labels and custom property
+  // descriptors are preserved); anything in the DOM that the manifest
+  // doesn't cover gets a synthesised entry. This makes the manifest's
+  // `blocks` array optional in practice — a 4-line manifest is enough for
+  // a vibe-coded composition to be inspectable.
+  const entryHtml = await files.read(manifest.entry);
+  fileCache.set(manifest.entry, entryHtml);
+  const discovered = discoverBlocks(entryHtml, manifest.entry);
+  const effectiveBlocks = mergeBlocks(manifest.blocks, discovered);
+
   const blocks: Block[] = [];
-  for (const mb of manifest.blocks) {
+  for (const mb of effectiveBlocks) {
     if (!(await files.exists(mb.source.file))) {
       throw new Error(`block ${mb.id} references missing file: ${mb.source.file}`);
     }

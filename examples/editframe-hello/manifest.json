@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "artefact": "editframe",
+  "entry": "index.html",
+  "name": "Hello editframe",
+  "blocks": [
+    {
+      "id": "blk_s1_title",
+      "kind": "text",
+      "label": "S1: Title",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_title]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_subtitle",
+      "kind": "text",
+      "label": "S1: Subtitle",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s1_subtitle]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_headline",
+      "kind": "text",
+      "label": "S2: Headline",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_headline]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s2_body",
+      "kind": "text",
+      "label": "S2: Body",
+      "source": { "file": "index.html", "selector": "[data-edit-id=blk_s2_body]" },
+      "properties": [{ "key": "text", "type": "string" }]
+    },
+    {
+      "id": "blk_s1_bg",
+      "kind": "color",
+      "label": "S1: Background",
+      "source": { "file": "index.html", "cssVar": "--s1-bg" },
+      "properties": [{ "key": "value", "type": "color" }]
+    },
+    {
+      "id": "blk_s2_bg",
+      "kind": "color",
+      "label": "S2: Background",
+      "source": { "file": "index.html", "cssVar": "--s2-bg" },
+      "properties": [{ "key": "value", "type": "color" }]
+    }
+  ]
+}
