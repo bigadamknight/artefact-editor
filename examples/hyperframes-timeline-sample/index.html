@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1620, height=1080">
+    <title>SYITM spread 9</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1620px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      #captions {
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Spread 9 of See You in the Morning. Page length 14.52 s:
+      narration 13.12 s + lead 0.5 s + tail 0.9 s (book/narration.json).
+      Shots: wide, Fairy close-up, Lion close-up, wide. Each close-up starts
+      0.3 s before its line and ends where the next shot begins.
+    -->
+    <div data-hf-id="hf-7r7w" id="root" data-composition-id="main" data-start="0" data-duration="14.52" data-width="1620" data-height="1080" data-fps="24">
+      <video data-hf-id="hf-37ws" id="wide-open" src="assets/wide.mp4" data-start="0" data-duration="0.2" data-media-start="0" data-track-index="0" muted playsinline></video>
+      <video data-hf-id="hf-8lga" id="fairy-close" src="assets/closeup_fairy.mp4" data-start="0.2" data-duration="4.04" data-media-start="0" data-track-index="0" muted playsinline></video>
+      <video data-hf-id="hf-tx6s" id="lion-close" src="assets/closeup_lion.mp4" data-start="4.24" data-duration="2.44" data-media-start="0" data-track-index="0" muted playsinline></video>
+      <video data-hf-id="hf-4bhn" id="wide-rest" src="assets/wide.mp4" data-start="6.68" data-duration="7.84" data-media-start="6.68" data-track-index="0" muted playsinline></video>
+
+      <div data-hf-id="hf-d6f2" id="captions" class="clip" data-composition-id="captions" data-composition-src="compositions/captions.html" data-track-kind="captions" data-start="0" data-duration="14.52" data-track-index="1" data-width="1620" data-height="1080"></div>
+
+      <audio data-hf-id="hf-aegf" id="fairy-voice" src="assets/fairy.mp3" data-start="0.5" data-duration="3.44" data-track-index="10"></audio>
+      <audio data-hf-id="hf-r067" id="lion-voice" src="assets/lion.mp3" data-start="4.54" data-duration="1.84" data-track-index="10"></audio>
+      <audio data-hf-id="hf-49wz" id="narrator-voice" src="assets/narrator.mp3" data-start="6.98" data-duration="6.64" data-track-index="11"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

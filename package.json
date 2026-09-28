@@ -15,10 +15,11 @@
     "build:contract": "yarn workspace @artefact-editor/contract build",
     "build:adapter-html": "yarn workspace @artefact-editor/adapter-html build",
     "build:adapter-editframe": "yarn workspace @artefact-editor/adapter-editframe build",
+    "build:adapter-hyperframes": "yarn workspace @artefact-editor/adapter-hyperframes build",
     "build:adapter-image-template": "yarn workspace @artefact-editor/adapter-image-template build",
     "build:adapter-image-inpaint": "yarn workspace @artefact-editor/adapter-image-inpaint build",
     "build:editor": "yarn workspace @artefact-editor/editor build",
-    "build:packages": "yarn build:core && yarn build:contract && yarn build:adapter-html && yarn build:adapter-editframe && yarn build:adapter-image-template && yarn build:adapter-image-inpaint && yarn build:editor",
+    "build:packages": "yarn build:core && yarn build:contract && yarn build:adapter-html && yarn build:adapter-editframe && yarn build:adapter-hyperframes && yarn build:adapter-image-template && yarn build:adapter-image-inpaint && yarn build:editor",
     "build:web": "yarn workspace @artefact-editor/web build",
     "build": "yarn build:packages && yarn build:web",
     "typecheck": "yarn workspaces run typecheck",
@@ -30,6 +31,9 @@
   "devDependencies": {
     "concurrently": "^9.0.1",
     "typescript": "^5.6.3"
+  },
+  "resolutions": {
+    "hono": "^4.12.15"
   },
   "packageManager": "yarn@1.22.22"
 }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <template>
+      <style>
+        @font-face {
+          font-family: "Mali";
+          src: url("assets/fonts/Mali-Regular.ttf") format("truetype");
+        }
+        #root {
+          position: absolute;
+          inset: 0;
+        }
+        #captions-band {
+          position: absolute;
+          left: 162px;
+          right: 162px;
+          bottom: 108px;
+          height: 200px;
+        }
+        .group {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          padding: 22px 40px;
+          border-radius: 28px;
+          background: rgba(18, 22, 46, 0.62);
+          font-family: "Mali", sans-serif;
+          font-size: 50px;
+          line-height: 1.3;
+          text-align: center;
+          color: #fff6e3;
+          opacity: 0;
+        }
+        .w {
+          color: rgba(255, 246, 227, 0.72);
+        }
+      </style>
+
+      <!-- Read-along captions. Word times come from whisper on each recorded
+           line (assets/words_*.json), offset to where the line sits on the page. -->
+      <div data-hf-id="hf-hetr" id="root" data-composition-id="captions" data-width="1620" data-height="1080">
+        <div data-hf-id="hf-fong" id="captions-band">
+        <p data-hf-id="hf-n22k" class="group fairy" id="captions-g0"><span data-hf-id="hf-ki90" class="w" id="captions-g0w0">“Is</span> <span data-hf-id="hf-n0a2" class="w" id="captions-g0w1">he</span> <span data-hf-id="hf-1k0s" class="w" id="captions-g0w2">still</span> <span data-hf-id="hf-lt2j" class="w" id="captions-g0w3">awake?</span> <span data-hf-id="hf-0vvf" class="w" id="captions-g0w4">He</span> <span data-hf-id="hf-oo21" class="w" id="captions-g0w5">NEVER</span> <span data-hf-id="hf-hiab" class="w" id="captions-g0w6">gets</span> <span data-hf-id="hf-zpw2" class="w" id="captions-g0w7">to</span> <span data-hf-id="hf-6ci9" class="w" id="captions-g0w8">sleep!”</span></p>
+        <p data-hf-id="hf-8ca6" class="group lion" id="captions-g1"><span data-hf-id="hf-zivw" class="w" id="captions-g1w0">“Then</span> <span data-hf-id="hf-7ya8" class="w" id="captions-g1w1">I'd</span> <span data-hf-id="hf-007h" class="w" id="captions-g1w2">better</span> <span data-hf-id="hf-snaa" class="w" id="captions-g1w3">come</span> <span data-hf-id="hf-qkji" class="w" id="captions-g1w4">and</span> <span data-hf-id="hf-chw1" class="w" id="captions-g1w5">check.”</span></p>
+        <p data-hf-id="hf-op1u" class="group narrator" id="captions-g2"><span data-hf-id="hf-isz4" class="w" id="captions-g2w0">Lion</span> <span data-hf-id="hf-508l" class="w" id="captions-g2w1">didn't</span> <span data-hf-id="hf-hwtr" class="w" id="captions-g2w2">really</span> <span data-hf-id="hf-24vj" class="w" id="captions-g2w3">want</span> <span data-hf-id="hf-hqsx" class="w" id="captions-g2w4">to,</span> <span data-hf-id="hf-9ghe" class="w" id="captions-g2w5">but</span> <span data-hf-id="hf-uzxr" class="w" id="captions-g2w6">he</span> <span data-hf-id="hf-0cvk" class="w" id="captions-g2w7">felt</span> <span data-hf-id="hf-bwat" class="w" id="captions-g2w8">he</span> <span data-hf-id="hf-f78s" class="w" id="captions-g2w9">ought</span> <span data-hf-id="hf-zyly" class="w" id="captions-g2w10">to.</span></p>
+        <p data-hf-id="hf-sn5v" class="group narrator" id="captions-g3"><span data-hf-id="hf-cv6q" class="w" id="captions-g3w0">Mermaid</span> <span data-hf-id="hf-dhms" class="w" id="captions-g3w1">lost</span> <span data-hf-id="hf-f5xw" class="w" id="captions-g3w2">her</span> <span data-hf-id="hf-dipr" class="w" id="captions-g3w3">place</span> <span data-hf-id="hf-kge0" class="w" id="captions-g3w4">in</span> <span data-hf-id="hf-ath5" class="w" id="captions-g3w5">the</span> <span data-hf-id="hf-ltvu" class="w" id="captions-g3w6">song.</span></p>
+        </div>
+      </div>
+
+      <script>
+        const GROUPS = [{"id": "captions-g0", "show": 0.47, "hide": 4.6, "words": [{"id": "captions-g0w0", "at": 0.57}, {"id": "captions-g0w1", "at": 0.69}, {"id": "captions-g0w2", "at": 0.88}, {"id": "captions-g0w3", "at": 1.37}, {"id": "captions-g0w4", "at": 2.32}, {"id": "captions-g0w5", "at": 2.36}, {"id": "captions-g0w6", "at": 2.82}, {"id": "captions-g0w7", "at": 3.2}, {"id": "captions-g0w8", "at": 3.45}]}, {"id": "captions-g1", "show": 4.6, "hide": 6.91, "words": [{"id": "captions-g1w0", "at": 4.7}, {"id": "captions-g1w1", "at": 4.86}, {"id": "captions-g1w2", "at": 5.09}, {"id": "captions-g1w3", "at": 5.56}, {"id": "captions-g1w4", "at": 5.88}, {"id": "captions-g1w5", "at": 6.12}]}, {"id": "captions-g2", "show": 6.91, "hide": 11.55, "words": [{"id": "captions-g2w0", "at": 7.01}, {"id": "captions-g2w1", "at": 7.37}, {"id": "captions-g2w2", "at": 7.95}, {"id": "captions-g2w3", "at": 8.51}, {"id": "captions-g2w4", "at": 9.14}, {"id": "captions-g2w5", "at": 9.39}, {"id": "captions-g2w6", "at": 9.75}, {"id": "captions-g2w7", "at": 9.97}, {"id": "captions-g2w8", "at": 10.48}, {"id": "captions-g2w9", "at": 10.72}, {"id": "captions-g2w10", "at": 10.87}]}, {"id": "captions-g3", "show": 11.55, "hide": 14.27, "words": [{"id": "captions-g3w0", "at": 11.65}, {"id": "captions-g3w1", "at": 12.1}, {"id": "captions-g3w2", "at": 12.38}, {"id": "captions-g3w3", "at": 12.59}, {"id": "captions-g3w4", "at": 13.02}, {"id": "captions-g3w5", "at": 13.07}, {"id": "captions-g3w6", "at": 13.28}]}];
+        const tl = gsap.timeline({ paused: true });
+        for (const g of GROUPS) {
+          tl.fromTo("#" + g.id, { opacity: 0 }, { opacity: 1, duration: 0.2 }, g.show);
+          tl.to("#" + g.id, { opacity: 0, duration: 0.2 }, g.hide - 0.2);
+          for (const w of g.words) {
+            tl.to("#" + w.id, { color: "#ffd166", duration: 0.08 }, w.at);
+          }
+        }
+        window.__timelines["captions"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
