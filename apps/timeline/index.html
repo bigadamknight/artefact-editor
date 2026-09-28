@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timeline</title>
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <script>
+      // Telemetry off before any module runs: the timeline's components
+      // check these flags before sending analytics or enrolling in canaries.
+      window.__HF_CLI_TELEMETRY_DISABLED = true;
+      try {
+        localStorage.setItem("hyperframes-studio:telemetryDisabled", "1");
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

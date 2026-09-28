@@ -3,10 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "description": "Direct-manipulation editor for AI-generated artefacts — HTML web apps, hyperframes videos, PIL marketing graphics.",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "nohoist": [
+      "@artefact-editor/timeline/**"
+    ]
+  },
   "engines": {
     "node": ">=20"
   },
@@ -22,11 +27,13 @@
     "build:editor": "yarn workspace @artefact-editor/editor build",
     "build:packages": "yarn build:core && yarn build:contract && yarn build:adapter-html && yarn build:adapter-editframe && yarn build:adapter-hyperframes && yarn build:adapter-image-template && yarn build:adapter-image-inpaint && yarn build:adapter-speech-bubbles && yarn build:editor",
     "build:web": "yarn workspace @artefact-editor/web build",
-    "build": "yarn build:packages && yarn build:web",
+    "build:timeline": "yarn workspace @artefact-editor/timeline build",
+    "build": "yarn build:packages && yarn build:web && yarn build:timeline",
     "typecheck": "yarn workspaces run typecheck",
     "dev:cli": "yarn workspace @artefact-editor/cli dev",
     "dev:web": "yarn workspace @artefact-editor/web dev",
-    "dev": "yarn build:packages && concurrently -n cli,web -c blue,magenta \"yarn dev:cli\" \"yarn dev:web\"",
+    "dev:timeline": "yarn workspace @artefact-editor/timeline dev",
+    "dev": "yarn build:packages && concurrently -n cli,web,timeline -c blue,magenta,green \"yarn dev:cli\" \"yarn dev:web\" \"yarn dev:timeline\"",
     "start": "yarn workspace @artefact-editor/cli start"
   },
   "devDependencies": {
