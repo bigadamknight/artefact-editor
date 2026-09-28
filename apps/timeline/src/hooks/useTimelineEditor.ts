@@ -18,6 +18,13 @@ import { useLiveTime } from "./useLiveTime";
  *  sourceFile on each element, so only the root is named here. */
 const ROOT_COMPOSITION = "index.html";
 
+/** Studio's fit zoom never spans less than 60 s of ruler, and adds 20 % headroom
+ *  (MIN_TIMELINE_EXTENT_S and FIT_ZOOM_HEADROOM in its timelineLayout.ts, not
+ *  exported). A 15 s page then fills a quarter of the lane, so shorter
+ *  compositions open zoomed in to fill it instead. */
+const STUDIO_MIN_EXTENT_S = 60;
+const STUDIO_FIT_HEADROOM = 1.2;
+
 export type TimelineStatus = { message: string; tone: "error" | "info" } | null;
 
 /** Messages exchanged with the embedding artefact-editor page. */
@@ -252,6 +259,18 @@ export function useTimelineEditor(projectId: string | null) {
   useEffect(() => {
     if (projectId) usePlayerStore.getState().beginTimelineSession(projectId);
   }, [projectId]);
+
+  // Open each project zoomed to its own length (once; later zooming is the user's).
+  const zoomedProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!projectId || !ready || !(duration > 0) || zoomedProjectRef.current === projectId) return;
+    zoomedProjectRef.current = projectId;
+    const span = duration * STUDIO_FIT_HEADROOM;
+    if (span >= STUDIO_MIN_EXTENT_S) return;
+    const store = usePlayerStore.getState();
+    store.setZoomMode("manual");
+    store.setManualZoomPercent((STUDIO_MIN_EXTENT_S / span) * 100);
+  }, [projectId, ready, duration]);
 
   return {
     player: {
