@@ -14,6 +14,7 @@
   "dependencies": {
     "@artefact-editor/adapter-editframe": "0.1.0",
     "@artefact-editor/adapter-html": "0.1.0",
+    "@artefact-editor/adapter-hyperframes": "0.1.0",
     "@artefact-editor/adapter-image-inpaint": "0.1.0",
     "@artefact-editor/adapter-image-template": "0.1.0",
     "@artefact-editor/adapter-speech-bubbles": "0.1.0",

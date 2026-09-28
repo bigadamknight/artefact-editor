@@ -1,0 +1,30 @@
+{
+  "name": "@artefact-editor/timeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview --port 5174",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hyperframes/studio": "0.8.81",
+    "lucide-react": "^0.460.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@hyperframes/studio-server": "0.8.81",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^4.3.3",
+    "happy-dom": "^15.11.7",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.4"
+  }
+}

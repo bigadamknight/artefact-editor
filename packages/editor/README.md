@@ -39,6 +39,7 @@ export function EditPage({ id }: { id: string }) {
 | `projectId`   | required    | Identifier the backend resolves to a project.                              |
 | `apiUrl`      | `/api`      | Base URL for the JSON API. Can be relative or absolute.                    |
 | `previewUrl`  | `/preview`  | Base URL for static preview content (entry HTML, rendered images, MP4s).   |
+| `timelineUrl` | `/timeline/`| Base URL of the timeline app that edits `artefact: "hyperframes"` projects. The editor frames `{timelineUrl}#/p/:id`. |
 | `onBack`      | `undefined` | When provided, the top bar shows a back button that calls this.            |
 
 The editor reads `apiUrl` / `previewUrl` from a React context internally, so all hooks (load, save, render, asset list, image-template layout sidecar) hit the right backend without any further wiring.

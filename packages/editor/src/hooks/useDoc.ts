@@ -37,6 +37,10 @@ export interface UseDocApi {
   setProperty: (blockId: string, key: string, value: string | number) => void;
   save: () => Promise<void>;
   render: () => Promise<void>;
+  /**
+   * Refetch the project after something else changed its files (the
+   * hyperframes timeline). No loading screen, and unsaved edits are kept.
+   */
   reload: () => Promise<void>;
   /** Sends a single non-setProperty command (e.g. applyImageRegion). */
   runCommand: (command: Command) => Promise<void>;
@@ -62,8 +66,8 @@ export function useDoc(projectId: string): UseDocApi {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const fetchProject = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
+  const fetchProject = useCallback(async (quiet = false) => {
+    if (!quiet) setState((s) => ({ ...s, loading: true, error: null }));
     try {
       const res = await fetch(apiPath(config, `/projects/${projectId}`));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -76,8 +80,8 @@ export function useDoc(projectId: string): UseDocApi {
         blocks: data.blocks,
         artefact: data.artefact ?? "html-app",
         previewStale: data.previewStale ?? false,
-        pendingValues: new Map(),
-        isDirty: false,
+        pendingValues: quiet ? s.pendingValues : new Map(),
+        isDirty: quiet ? s.isDirty : false,
         bumpKey: s.bumpKey + 1,
         versions: data.versions,
         referenceImages: data.referenceImages,
@@ -95,6 +99,8 @@ export function useDoc(projectId: string): UseDocApi {
   useEffect(() => {
     void fetchProject();
   }, [fetchProject]);
+
+  const reload = useCallback(() => fetchProject(true), [fetchProject]);
 
   const setProperty = useCallback(
     (blockId: string, key: string, value: string | number) => {
@@ -211,7 +217,7 @@ export function useDoc(projectId: string): UseDocApi {
     [projectId, config, fetchProject],
   );
 
-  return { state, setProperty, save, render, reload: fetchProject, runCommand };
+  return { state, setProperty, save, render, reload, runCommand };
 }
 
 export function getEffectiveValue(

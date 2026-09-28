@@ -1,0 +1,119 @@
+/*
+ * Loaded after the timeline components' own stylesheet. The dark theme stays;
+ * only the accent changes, to the amber artefact-editor uses for pending
+ * edits (Tailwind amber-500, #f59e0b).
+ */
+:root {
+  --ae-accent: #f59e0b;
+
+  --color-accent: var(--ae-accent);
+  --color-panel-accent: var(--ae-accent);
+  --color-studio-accent: var(--ae-accent);
+
+  --timeline-accent: var(--ae-accent);
+  --timeline-accent-border: #f59e0bb3;
+  --timeline-accent-button-bg: #f59e0b26;
+  --timeline-accent-faint: #f59e0b0e;
+  --timeline-accent-fill: #f59e0b1a;
+  --timeline-accent-glow: #f59e0b80;
+  --timeline-accent-hover: #f59e0b40;
+  --timeline-accent-rail: #f59e0b59;
+  --timeline-accent-soft: #f59e0b2e;
+  --timeline-clip-bg-active: #f59e0b33;
+  --timeline-clip-border-active: #f59e0b8c;
+  --timeline-clip-border-hover: #f59e0bbf;
+  --timeline-playhead-glow: #f59e0b24;
+  --timeline-track-clip-active: #f59e0b29;
+}
+
+/* The asset-loading overlay draws the upstream product mark; keep its text only. */
+.hf-loader-mark-frame {
+  display: none;
+}
+
+.ae-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100dvh;
+  background: var(--color-bg-0);
+}
+
+.ae-preview {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #000;
+}
+
+.ae-timeline {
+  position: relative;
+  /* Ruler plus four 48px tracks without scrolling; more tracks scroll. */
+  flex: 0 0 clamp(240px, 38%, 420px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.ae-timeline > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ae-transport {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 10px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  font-size: 12px;
+}
+
+.ae-transport__time {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-body);
+}
+
+.ae-transport__spacer {
+  flex: 1 1 auto;
+}
+
+.ae-transport__status {
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.ae-transport__status--error {
+  color: #f87171;
+}
+
+.ae-conflict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f59e0b1f;
+  border-bottom: 1px solid #f59e0b59;
+  color: #fde68a;
+  font-size: 12px;
+}
+
+.ae-conflict__text {
+  flex: 1 1 auto;
+}
+
+.ae-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  font-size: 13px;
+  opacity: 0.7;
+}

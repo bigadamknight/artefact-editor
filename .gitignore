@@ -14,3 +14,8 @@ examples/*/comments.json
 .claude/
 .code-audit-cache.json
 code-audit-report.md
+# HyperFrames Studio writes these caches into each project it opens
+examples/*/.hyperframes
+examples/*/.thumbnails
+examples/*/.waveform-cache
+examples/hyperframes-timeline-sample/assets

@@ -30,6 +30,7 @@ contract emitting agents follow.
 yarn install
 yarn dev                                      # → http://localhost:5173
                                               # picker shows the bundled examples
+                                              # CLI on 7411, timeline app on 5174
 ```
 
 Or build once and run as a single process pointed at your own project(s):
@@ -70,6 +71,13 @@ editor uses it to overlay click-to-select hit zones on the rendered image,
 giving image-template artefacts the same direct-selection feel iframe
 artefacts get from the preview bridge.
 
+Hyperframes projects (`artefact: "hyperframes"`) open with a full timeline:
+preview, transport, and one track per `data-track-index` for video, caption
+and audio clips. Drag, trim or split a clip and the change is written to
+`index.html` (or the sub-composition file) straight away; Cmd+Z and
+Shift+Cmd+Z undo and redo. The timeline is a separate app (`apps/timeline`)
+built on HyperFrames Studio's timeline components and framed by the editor.
+
 Hyperframes compositions can pin a representative thumbnail/poster frame
 with `data-poster-time="3.5"` on `#root`. Without it, the bridge auto-seeks
 to `duration / 2` so the editor doesn't open on a literal blank frame.
@@ -97,6 +105,7 @@ import { ArtefactEditor } from "@artefact-editor/editor";
   projectId="hero-landing"
   apiUrl="/artefacts/api"     // optional, default /api
   previewUrl="/artefacts/preview" // optional, default /preview
+  timelineUrl="/artefacts/timeline/" // optional, default /timeline/ (hyperframes projects)
 />;
 ```
 
@@ -107,12 +116,14 @@ Host backends implement the API contract (typed Zod schemas) from `@artefact-edi
 ```
 apps/
   cli/             # Hono server + bin. CLI: artefact-editor <project-dir>...
-  web/             # Vite + React shell. Hosts <ArtefactEditor>.
+  web/             # Vite + React shell. Hosts <ArtefactEditor>. Dev port 5173.
+  timeline/        # Vite + React 19 app: the hyperframes timeline, framed at /timeline/. Dev port 5174.
 packages/
   core/            # Format-agnostic. Block, descriptors, Doc, commands.
   contract/        # Typed HTTP API contract (Zod request schemas + TS responses).
   editor/          # <ArtefactEditor> React component. Embeddable.
   adapter-html/    # parse5-based mutations + preview bridge.
+  adapter-hyperframes/     # HyperFrames: blocks via adapter-html + the timeline's file/preview/history API.
   adapter-image-template/  # PIL spec.json adapter, shells to python3.
 spec/
   emission-spec-v1.md         # Contract agents follow when emitting artefacts.
@@ -134,4 +145,6 @@ likely Remotion and slide decks.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). The hyperframes timeline uses HyperFrames
+(Apache-2.0, HeyGen, Inc.) and mediabunny (MPL-2.0); see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

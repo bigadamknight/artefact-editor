@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Doc, type Adapter, type Block, type Command } from "@artefact-editor/core";
 import { htmlAdapter, previewBridgeScript } from "@artefact-editor/adapter-html";
 import { editframeAdapter, editframePreviewBridgeScript } from "@artefact-editor/adapter-editframe";
+import { hyperframesAdapter, createHyperframesStudioApi } from "@artefact-editor/adapter-hyperframes";
 import { imageTemplateAdapter, SPEC_FILE_DEFAULT } from "@artefact-editor/adapter-image-template";
 import { imageInpaintAdapter } from "@artefact-editor/adapter-image-inpaint";
 import { speechBubblesAdapter } from "@artefact-editor/adapter-speech-bubbles";
@@ -59,6 +60,7 @@ const repoRoot = resolve(here, "..", "..", "..");
 function pickAdapter(artefact: ManifestMeta["artefact"] | undefined): Adapter {
   if (artefact === "image-template") return imageTemplateAdapter;
   if (artefact === "editframe") return editframeAdapter;
+  if (artefact === "hyperframes") return hyperframesAdapter;
   if (artefact === "image-inpaint") return imageInpaintAdapter;
   if (artefact === "speech-bubbles") return speechBubblesAdapter;
   return htmlAdapter;
@@ -563,6 +565,31 @@ app.post("/api/projects/:id/comments/apply", async (c) => {
   return c.json({ ok: true, prompt, comments: pending, sourceFiles });
 });
 
+// HyperFrames Studio timeline API. Studio writes straight to a project's
+// index.html / compositions/*.html via its own PUT — this middleware runs
+// after that write settles so artefact-editor's block cache (and the block
+// sidebar for `artefact: "hyperframes"` projects) doesn't go stale. Only a
+// successful PUT changes bytes; GET/DELETE and any failed write reload
+// nothing.
+app.use("/api/projects/:id/files/*", async (c, next) => {
+  await next();
+  if (c.req.method === "PUT" && c.res.ok) {
+    await reloadProject(c.req.param("id"));
+  }
+});
+
+// Mounted LAST under /api: createStudioApi registers its own
+// `GET /projects/:id` and `POST /projects/:id/render` (among others), which
+// would otherwise collide with artefact-editor's own routes above. Hono runs
+// handlers for a matching path in registration order and stops at the first
+// one that responds, so our routes — registered earlier in this file — keep
+// winning; only paths we don't otherwise handle (files/*, preview, history,
+// waveform, ...) fall through to Studio.
+app.route(
+  "/api",
+  createHyperframesStudioApi(projects),
+);
+
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -618,6 +645,40 @@ app.get("/preview/:id/*", async (c) => {
   }
   return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": mime });
 });
+
+// Serve the built HyperFrames timeline SPA from /timeline/. Mirrors the
+// webDist block below: skipped under `yarn dev` (Vite proxies /timeline to
+// its own dev server there); served directly in standalone mode once
+// apps/timeline has been built. Registered before the webDist catch-all so
+// /timeline/* never falls through to the editor SPA's index.html fallback.
+const timelineDist = resolve(here, "..", "..", "timeline", "dist");
+let timelineDistExists = false;
+try {
+  const s = await stat(timelineDist);
+  timelineDistExists = s.isDirectory();
+} catch {
+  timelineDistExists = false;
+}
+
+if (timelineDistExists) {
+  app.get("/timeline/*", async (c) => {
+    const url = new URL(c.req.url);
+    let rel = url.pathname.replace(/^\/timeline\/?/, "");
+    if (!rel) rel = "index.html";
+    const abs = resolve(timelineDist, rel);
+    if (!isInside(resolve(timelineDist), abs)) return c.text("Forbidden", 403);
+    let buf: Buffer;
+    try {
+      buf = await readFile(abs);
+    } catch {
+      buf = await readFile(resolve(timelineDist, "index.html"));
+      return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": "text/html; charset=utf-8" });
+    }
+    const ext = extname(abs).toLowerCase();
+    const mime = MIME[ext] ?? "application/octet-stream";
+    return c.body(buf as unknown as ArrayBuffer, 200, { "content-type": mime });
+  });
+}
 
 // Serve the built web bundle from /. When running via `yarn dev` this is
 // skipped — Vite owns localhost:5173 and proxies /api + /preview here. When
