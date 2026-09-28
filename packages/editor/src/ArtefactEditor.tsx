@@ -10,6 +10,8 @@ import { useImageLayout } from "./hooks/useImageLayout.js";
 import { useComments } from "./hooks/useComments.js";
 import { Inspector } from "./components/Inspector.js";
 import { PreviewFrame } from "./components/PreviewFrame.js";
+import { HyperframesTimelineFrame } from "./components/HyperframesTimelineFrame.js";
+import { useTimelineFrame } from "./hooks/useTimelineFrame.js";
 import {
   ImageRegionCanvas,
   type ImageRegionCanvasHandle,
@@ -26,6 +28,7 @@ import { ApplyCommentsModal } from "./components/ApplyCommentsModal.js";
 import {
   EditorConfigContext,
   apiPath,
+  timelinePath,
   useEditorConfig,
   type EditorConfig,
 } from "./config.js";
@@ -36,14 +39,26 @@ export interface ArtefactEditorProps {
   apiUrl?: string;
   /** Override the preview base URL (default `/preview`). */
   previewUrl?: string;
+  /** Override the timeline app base URL (default `/timeline/`). */
+  timelineUrl?: string;
   /** Optional back-navigation handler — when provided, TopBar shows a back button. */
   onBack?: () => void;
 }
 
-export function ArtefactEditor({ projectId, apiUrl, previewUrl, onBack }: ArtefactEditorProps) {
+export function ArtefactEditor({
+  projectId,
+  apiUrl,
+  previewUrl,
+  timelineUrl,
+  onBack,
+}: ArtefactEditorProps) {
   const config = useMemo<EditorConfig>(
-    () => ({ apiUrl: apiUrl ?? "/api", previewUrl: previewUrl ?? "/preview" }),
-    [apiUrl, previewUrl],
+    () => ({
+      apiUrl: apiUrl ?? "/api",
+      previewUrl: previewUrl ?? "/preview",
+      timelineUrl: timelineUrl ?? "/timeline/",
+    }),
+    [apiUrl, previewUrl, timelineUrl],
   );
   return (
     <EditorConfigContext.Provider value={config}>
@@ -59,7 +74,7 @@ interface ArtefactEditorInnerProps {
 
 function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   const config = useEditorConfig();
-  const { state, setProperty, save, render, runCommand } = useDoc(projectId);
+  const { state, setProperty, save, render, reload, runCommand } = useDoc(projectId);
   const [maskPainted, setMaskPainted] = useState(false);
   const { selectedBlockId, setSelectedBlockId } = useSelection();
   const transport = useTransport();
@@ -75,6 +90,11 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   const isSpeechBubbles = state.artefact === "speech-bubbles";
   const isVideo = state.artefact === "hyperframes" || state.artefact === "editframe";
   const isWebApp = state.artefact === "html-app";
+  // Hyperframes projects get the full timeline app in a frame; it writes the
+  // project files itself and replaces PreviewFrame + TransportBar + Timeline.
+  const isHyperframes = state.artefact === "hyperframes";
+  const timelineSrc = timelinePath(config, projectId);
+  const timelineFrame = useTimelineFrame({ src: timelineSrc, onChanged: () => void reload() });
   const imageRegionCanvasRef = useRef<ImageRegionCanvasHandle | null>(null);
   const { assets } = useProjectAssets(projectId);
   const { layout } = useImageLayout(projectId, state.entry, state.bumpKey, isImageTemplate);
@@ -96,7 +116,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   // html-app → fill the pane, no transport.
   // image-template → static <img> preview.
   const previewFit = isImageTemplate ? "image" : isWebApp ? "fill" : "scaled";
-  const showTimeline = isVideo;
+  const showTimeline = isVideo && !isHyperframes;
 
   const specKeyToBlockId = useMemo(() => {
     const map: Record<string, string> = {};
@@ -121,8 +141,24 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
   // Stash transport + save handlers in a ref so the keydown listener mounts
   // once. Without this, every transport tick (each rAF during playback) tears
   // the listener down and re-attaches it.
-  const keyHandlersRef = useRef({ save, transport, isDirty: state.isDirty, saving: state.saving });
-  keyHandlersRef.current = { save, transport, isDirty: state.isDirty, saving: state.saving };
+  // After a save the timeline frame's preview is stale: tell it to reload.
+  const handleSave = async () => {
+    await save();
+    if (isHyperframes) timelineFrame.refreshPreview();
+  };
+
+  const keyHandlersRef = useRef({
+    save: handleSave,
+    transport,
+    isDirty: state.isDirty,
+    saving: state.saving,
+  });
+  keyHandlersRef.current = {
+    save: handleSave,
+    transport,
+    isDirty: state.isDirty,
+    saving: state.saving,
+  };
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -242,7 +278,9 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
     return out;
   }, [selectedBlock, state.pendingValues]);
 
-  if (state.loading) {
+  // Full-screen loading only before the first load. A refetch after a save
+  // keeps the editor mounted, so the timeline frame is not torn down.
+  if (state.loading && state.bumpKey === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
         Loading project…
@@ -266,7 +304,7 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
         name={state.name}
         isDirty={state.isDirty}
         saving={state.saving}
-        onSave={() => void save()}
+        onSave={() => void handleSave()}
         showRender={isImageTemplate || isVideo}
         rendering={state.rendering}
         onRender={() => void render()}
@@ -367,6 +405,8 @@ function ArtefactEditorInner({ projectId, onBack }: ArtefactEditorInnerProps) {
                 onSelect={setSelectedBubbleId}
                 onBubbleChange={handleBubblePatch}
               />
+            ) : isHyperframes ? (
+              <HyperframesTimelineFrame src={timelineSrc} frameRef={timelineFrame.frameRef} />
             ) : (
               <PreviewFrame
                 ref={transport.registerIframe}
