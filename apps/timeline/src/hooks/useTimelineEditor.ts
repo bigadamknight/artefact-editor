@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   StudioFileConflictError,
   flushStudioPendingEdits,
@@ -9,9 +9,14 @@ import {
   useRenderClipContent,
   useTimelineEditing,
   useTimelinePlayer,
+  type TimelineClipRenderContext,
   type TimelineElement,
 } from "@hyperframes/studio";
+import { ClipFilmstrip } from "../components/ClipFilmstrip";
+import { compositionPathOf, thumbnailRevisionOf, thumbnailUrl } from "../lib/filmstrip";
+import { createThumbnailCache } from "../lib/thumbnailCache";
 import { buildTimelineEditCallbacks } from "../lib/timelineEditCallbacks";
+import { useCompositionMeta } from "./useCompositionMeta";
 import { useLiveTime } from "./useLiveTime";
 
 /** The composition the timeline edits. Sub-compositions carry their own
@@ -24,6 +29,9 @@ const ROOT_COMPOSITION = "index.html";
  *  compositions open zoomed in to fill it instead. */
 const STUDIO_MIN_EXTENT_S = 60;
 const STUDIO_FIT_HEADROOM = 1.2;
+
+/** Clips Studio draws itself: video frames, waveforms, images. */
+const MEDIA_TAGS = new Set(["video", "audio", "img"]);
 
 export type TimelineStatus = { message: string; tone: "error" | "info" } | null;
 
@@ -55,6 +63,15 @@ async function waitForPendingEdits(): Promise<void> {
 
 async function noUploads(): Promise<string[]> {
   return [];
+}
+
+/**
+ * Tells every thumbnail that project content changed. Studio's own thumbnails
+ * and the filmstrips both read this revision, so their URLs change and they
+ * refetch instead of showing frames from before the edit.
+ */
+function invalidateThumbnails(): void {
+  usePlayerStore.getState().bumpThumbnailRevisions(null);
 }
 
 /** The player names its preview iframe after the upstream product; use a neutral title. */
@@ -101,6 +118,7 @@ export function useTimelineEditor(projectId: string | null) {
         if (error instanceof StudioFileConflictError) setConflict(error);
         throw error;
       }
+      invalidateThumbnails();
       if (projectId) notifyHost(projectId);
     },
     [writer.writeProjectFile, projectId],
@@ -128,6 +146,7 @@ export function useTimelineEditor(projectId: string | null) {
   const handleAfterUndoRedo = useCallback(
     (restore: Parameters<typeof restoreLiveLanes>[0]) => {
       restoreLiveLanes(restore);
+      invalidateThumbnails();
       if (projectId) notifyHost(projectId);
     },
     [restoreLiveLanes, projectId],
@@ -192,7 +211,7 @@ export function useTimelineEditor(projectId: string | null) {
   const projectIdRef = useRef(projectId);
   projectIdRef.current = projectId;
   const [compIdToSrc] = useState(() => new Map<string, string>());
-  const renderClipContent = useRenderClipContent({
+  const renderStudioClipContent = useRenderClipContent({
     projectIdRef,
     compIdToSrc,
     activePreviewUrl: projectId
@@ -201,10 +220,69 @@ export function useTimelineEditor(projectId: string | null) {
     effectiveTimelineDuration: duration,
   });
 
+  const meta = useCompositionMeta(projectId);
+  const thumbnailRevisions = usePlayerStore((s) => s.thumbnailRevisions);
+  const [thumbnailCache] = useState(() => createThumbnailCache());
+  useEffect(() => () => thumbnailCache.dispose(), [thumbnailCache]);
+
+  // Media clips keep Studio's renderer. Every other clip gets a filmstrip of
+  // its own frames: a sub-composition in its own time, an element of the
+  // root composition clipped to its selector.
+  const renderClipContent = useCallback(
+    (
+      element: TimelineElement,
+      style: { clip: string; label: string },
+      context?: TimelineClipRenderContext,
+    ) => {
+      if (MEDIA_TAGS.has(element.tag.toLowerCase())) {
+        return renderStudioClipContent(element, style, context);
+      }
+      if (!projectId || !meta || !(element.duration > 0)) return null;
+      const comp = element.compositionSrc
+        ? compositionPathOf(element.compositionSrc, projectId)
+        : ROOT_COMPOSITION;
+      const isSubComposition = comp !== ROOT_COMPOSITION;
+      const revision = thumbnailRevisionOf(thumbnailRevisions, comp);
+      const selector = isSubComposition ? undefined : element.selector;
+      const selectorIndex = isSubComposition ? undefined : element.selectorIndex;
+      return createElement(ClipFilmstrip, {
+        clipStart: element.start,
+        duration: element.duration,
+        localStart: isSubComposition ? (element.playbackStart ?? 0) : element.start,
+        fps: meta.fps,
+        aspect: meta.width / meta.height,
+        cache: thumbnailCache,
+        urlFor: (t: number) => thumbnailUrl(projectId, comp, { t, selector, selectorIndex, revision }),
+      });
+    },
+    [renderStudioClipContent, projectId, meta, thumbnailRevisions, thumbnailCache],
+  );
+
+  // The timeline pane is memoised; keep this bag stable across playhead ticks.
+  const rootRevision = thumbnailRevisionOf(thumbnailRevisions, ROOT_COMPOSITION);
+  const filmstrip = useMemo(
+    () => ({
+      cache: thumbnailCache,
+      root:
+        projectId && meta
+          ? {
+              fps: meta.fps,
+              aspect: meta.width / meta.height,
+              urlFor: (t: number) =>
+                thumbnailUrl(projectId, ROOT_COMPOSITION, { t, revision: rootRevision }),
+            }
+          : null,
+    }),
+    [thumbnailCache, projectId, meta, rootRevision],
+  );
+
+  // State as well as the player's ref: the onion overlay positions itself on it.
+  const [liveIframe, setLiveIframeNode] = useState<HTMLIFrameElement | null>(null);
   const setLiveIframe = useCallback(
     (node: HTMLIFrameElement | null) => {
       iframeRef.current = node;
       retitlePreview(node);
+      setLiveIframeNode(node);
     },
     [iframeRef],
   );
@@ -239,7 +317,9 @@ export function useTimelineEditor(projectId: string | null) {
     (event: MessageEvent) => {
       if (event.source !== window.parent || event.origin !== window.location.origin) return;
       const data = event.data as { type?: unknown } | null;
-      if (data?.type === HOST_MESSAGES.refresh) refreshPlayer();
+      if (data?.type !== HOST_MESSAGES.refresh) return;
+      refreshPlayer();
+      invalidateThumbnails();
     },
     [refreshPlayer],
   );
@@ -275,6 +355,7 @@ export function useTimelineEditor(projectId: string | null) {
   return {
     player: {
       previewSlots: player.previewSlots,
+      liveIframe,
       setLiveIframe,
       onIframeLoad: player.onIframeLoad,
       setShadowIframe,
@@ -293,6 +374,7 @@ export function useTimelineEditor(projectId: string | null) {
     editCallbacks,
     handleDeleteElement,
     renderClipContent,
+    filmstrip,
     history: {
       undo,
       redo,

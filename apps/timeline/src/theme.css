@@ -117,3 +117,215 @@
   font-size: 13px;
   opacity: 0.7;
 }
+
+/* Filmstrips: frames at distinct times, in clips and in the strip row. */
+.ae-filmstrip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ae-filmstrip__tile {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid rgb(0 0 0 / 0.35);
+  pointer-events: none;
+}
+
+.ae-filmstrip__tile--button {
+  padding: 0;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.ae-filmstrip__tile--button:hover {
+  outline: 1px solid var(--ae-accent);
+  outline-offset: -1px;
+}
+
+.ae-filmstrip__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ae-filmstrip__pending {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgb(255 255 255 / 0.035);
+  animation: ae-pulse 1.4s ease-in-out infinite;
+}
+
+.ae-filmstrip__missing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgb(0 0 0 / 0.4);
+}
+
+.ae-filmstrip__label {
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 0.55);
+  color: var(--color-text-body);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+@keyframes ae-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ae-filmstrip__pending {
+    animation: none;
+  }
+}
+
+/* The root composition's frames, under the lanes. */
+/* Pinned to the bottom of the timeline viewport, so it stays in view however
+   many lanes a script-animated composition produces. */
+.ae-strip-row {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  flex: none;
+  padding-bottom: 8px;
+  box-sizing: content-box;
+  background: var(--color-bg-0);
+}
+
+.ae-strip-row__frames {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.03);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+/* Onion skin: a blended frame stack over the composition. */
+.ae-onion {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ae-onion__image {
+  position: absolute;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.ae-onion__controls {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 6px;
+  background: rgb(10 10 10 / 0.85);
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.ae-onion__controls > :nth-child(2) {
+  width: 56px;
+}
+
+.ae-onion__title {
+  color: var(--color-text-body);
+}
+
+/* Contact sheet panel, over the right of the preview. */
+.ae-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100% - 20px));
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 8px;
+  background: var(--color-bg-0, #0a0a0a);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+  font-size: 12px;
+}
+
+.ae-panel__header,
+.ae-panel__fields,
+.ae-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.ae-panel__header {
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.ae-panel__title {
+  font-weight: 600;
+  color: var(--color-text-body);
+}
+
+.ae-panel__subtitle {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.ae-panel__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+}
+
+.ae-panel__field > :last-child {
+  width: 64px;
+}
+
+.ae-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 10px;
+}
+
+.ae-panel__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: #000;
+}
+
+.ae-panel__actions {
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}

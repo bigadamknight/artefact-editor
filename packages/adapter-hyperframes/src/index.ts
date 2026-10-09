@@ -28,3 +28,6 @@ export const hyperframesAdapter: Adapter = {
 
 export { createHyperframesStudioApi } from "./studioApi.js";
 export type { HyperframesProjectRef } from "./studioApi.js";
+export { closeFrameCapture, ChromeUnavailableError } from "./frameCapture.js";
+export { listScenes } from "./scenes.js";
+export type { Scene, SceneList } from "./scenes.js";

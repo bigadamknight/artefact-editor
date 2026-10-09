@@ -1,10 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, cp, rm, readFile } from "node:fs/promises";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdtemp, cp, rm, readFile, mkdir } from "node:fs/promises";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { serve, type ServerType } from "@hono/node-server";
+import { Hono } from "hono";
 import { DEFAULT_HISTORY_ROOT } from "@hyperframes/studio-server";
 import { createHyperframesStudioApi } from "./studioApi.js";
+import { resolveChromeExecutable } from "./chromeExecutable.js";
+import { closeFrameCapture } from "./frameCapture.js";
+
+// Lets a test pretend no Chrome is installed; otherwise the real lookup runs.
+const chromeLookup = vi.hoisted(() => ({ unavailable: false }));
+vi.mock("./chromeExecutable.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./chromeExecutable.js")>();
+  return {
+    ...actual,
+    resolveChromeExecutable: () =>
+      chromeLookup.unavailable ? Promise.resolve(null) : actual.resolveChromeExecutable(),
+  };
+});
 
 // packages/adapter-hyperframes/src -> packages/adapter-hyperframes -> packages -> repo
 const repoRoot = fileURLToPath(new URL("../../..", import.meta.url));
@@ -167,5 +184,66 @@ describe("createHyperframesStudioApi", () => {
     const after = await api.request(`/projects/${PROJECT_ID}/files/index.html`);
     const afterBody = (await after.json()) as FileResponse;
     expect(afterBody.content).toBe(original);
+  });
+});
+
+const hasChrome = await resolveChromeExecutable().then(Boolean);
+
+describe("thumbnails and review routes over HTTP", () => {
+  let tempDir: string;
+  let server: ServerType;
+  let base: string;
+
+  // Served over a real port: studio-server builds the preview URL Chrome
+  // loads from the request's host header.
+  beforeAll(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "hf-adapter-http-"));
+    await cp(fixtureDir, tempDir, { recursive: true });
+    // The sample's media is not checked in; a short test clip stands in for #lion-close.
+    await mkdir(join(tempDir, "assets"), { recursive: true });
+    execFileSync("ffmpeg", [
+      "-v", "error", "-f", "lavfi", "-i", "testsrc=duration=3:size=162x108:rate=24",
+      "-pix_fmt", "yuv420p", join(tempDir, "assets", "closeup_lion.mp4"),
+    ]);
+    const app = new Hono();
+    app.route("/api", createHyperframesStudioApi(new Map([[PROJECT_ID, { root: tempDir }]])));
+    server = await new Promise<ServerType>((done) => {
+      const s = serve({ fetch: app.fetch, port: 0, hostname: "127.0.0.1" }, () => done(s));
+    });
+    base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/projects/${PROJECT_ID}`;
+  });
+
+  afterAll(async () => {
+    chromeLookup.unavailable = false;
+    await closeFrameCapture();
+    await new Promise<void>((done) => server?.close(() => done()));
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it.skipIf(!hasChrome)("renders an HTML clip thumbnail in headless Chrome", async () => {
+    const res = await fetch(`${base}/thumbnail/index.html?t=1&selector=%23captions&w=1620&h=1080`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.subarray(0, 2).toString("hex")).toBe("ffd8");
+  }, 60_000);
+
+  it("mounts the review routes ahead of studio-server's", async () => {
+    const res = await fetch(`${base}/scenes`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { scenes: Array<{ id: string }> };
+    expect(body.scenes.map((s) => s.id)).toContain("captions");
+  });
+
+  it("serves video clip thumbnails, and answers 503 on review images, without Chrome", async () => {
+    await closeFrameCapture();
+    chromeLookup.unavailable = true;
+    const video = await fetch(`${base}/thumbnail/index.html?t=5&selector=%23lion-close&w=1620&h=1080`);
+    expect(video.status).toBe(200);
+    expect(video.headers.get("content-type")).toBe("image/jpeg");
+
+    const onion = await fetch(`${base}/onion?from=0&to=1&n=3`);
+    expect(onion.status).toBe(503);
+    expect(((await onion.json()) as { hint: string }).hint).toContain("HYPERFRAMES_BROWSER_PATH");
   });
 });

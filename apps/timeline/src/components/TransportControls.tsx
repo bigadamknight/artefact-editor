@@ -1,4 +1,4 @@
-import { Pause, Play, Redo2, SkipBack, Undo2 } from "lucide-react";
+import { Layers, LayoutGrid, Pause, Play, Redo2, SkipBack, Undo2 } from "lucide-react";
 import { IconButton, formatTime } from "@hyperframes/studio";
 import type { TimelineStatus } from "../hooks/useTimelineEditor";
 
@@ -10,10 +10,14 @@ export interface TransportControlsProps {
   canUndo: boolean;
   canRedo: boolean;
   status: TimelineStatus;
+  onionOn: boolean;
+  stripOpen: boolean;
   onToggle: () => void;
   onSeek: (time: number) => void;
   onUndo: () => void;
   onRedo: () => void;
+  onToggleOnion: () => void;
+  onToggleStrip: () => void;
 }
 
 export function TransportControls({
@@ -24,10 +28,14 @@ export function TransportControls({
   canUndo,
   canRedo,
   status,
+  onionOn,
+  stripOpen,
   onToggle,
   onSeek,
   onUndo,
   onRedo,
+  onToggleOnion,
+  onToggleStrip,
 }: TransportControlsProps) {
   return (
     <div className="ae-transport" role="toolbar" aria-label="Playback">
@@ -51,6 +59,26 @@ export function TransportControls({
       <span className="ae-transport__time" aria-live="off">
         {formatTime(time)} / {formatTime(duration)}
       </span>
+      <IconButton
+        size="sm"
+        variant={onionOn ? "secondary" : "ghost"}
+        aria-label="Onion skin"
+        aria-pressed={onionOn}
+        title="Onion skin: blend frames over the preview"
+        icon={<Layers size={14} />}
+        disabled={!ready}
+        onClick={onToggleOnion}
+      />
+      <IconButton
+        size="sm"
+        variant={stripOpen ? "secondary" : "ghost"}
+        aria-label="Contact sheet"
+        aria-pressed={stripOpen}
+        title="Contact sheet: a grid of frames"
+        icon={<LayoutGrid size={14} />}
+        disabled={!ready}
+        onClick={onToggleStrip}
+      />
       <span className="ae-transport__spacer" />
       {status ? (
         <span className={`ae-transport__status ae-transport__status--${status.tone}`} role="status">

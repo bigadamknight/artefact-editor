@@ -94,6 +94,37 @@ to `duration / 2` so the editor doesn't open on a literal blank frame.
   excluded. Drop it into another machine's `artefact-editor` to pick up
   exactly where you left off.
 
+### Review
+
+HyperFrames projects get review images captured from the studio preview in
+a resident headless Chrome, so an agent can see what the video shows
+without rendering it. All routes are `GET` under `/api/projects/:id`, and
+all take `comp=` (default `index.html`), `selector=` and `selectorIndex=`.
+
+| Route | Returns | Parameters |
+|---|---|---|
+| `/scenes` | JSON `{ comp, fps, duration, width, height, scenes }` | — |
+| `/frame` | one PNG or JPEG frame | `t`, `scale` (≤ 1, default 1), `format=png\|jpeg` |
+| `/onion` | the range's frames blended into one PNG, later frames stronger | `from`&`to` or `scene`; `n` 1–24 (default 6); `scale` (default 0.5) |
+| `/strip` | a contact sheet PNG with a `t=` caption under each frame | `from`&`to` or `scene`; `n` 1–64 (default 12); `columns` 1–8; `width` 120–960 per cell (default 480) |
+
+```sh
+curl -s http://localhost:7411/api/projects/showreel/scenes
+curl -s -o onion.png 'http://localhost:7411/api/projects/showreel/onion?from=0.2&to=1.2&n=6'
+curl -s -o strip.png 'http://localhost:7411/api/projects/showreel/strip?n=12&columns=4&width=480'
+```
+
+Images are cached in the project's `.thumbnails/` and carry an `ETag`;
+any source edit changes it. A composition whose scenes are only GSAP-driven
+`.scene` divs (no `data-start`) lists one synthetic `root` scene, and a
+`selector` capture of a scene that is hidden at that time comes out blank.
+The same capture powers timeline thumbnails for HTML clips. Chrome is found
+via `HYPERFRAMES_BROWSER_PATH` / `PUPPETEER_EXECUTABLE_PATH`, then
+`~/.cache/hyperframes/chrome`, then `~/.cache/puppeteer`, then system
+Chrome. With none, these routes answer 503 with an install hint
+(`npx @puppeteer/browsers install chrome-headless-shell`); nothing is
+downloaded automatically.
+
 ## Embed in another app
 
 The editor UI is published as a React component, decoupled from the CLI server. Mount it inside any host app and point it at a backend that implements the wire contract:

@@ -56,6 +56,19 @@ adapter.
   and a multi-track timeline. Dragging, trimming and splitting clips writes
   `index.html` / `compositions/*.html` directly; Cmd+Z / Shift+Cmd+Z undo
   and redo. The block sidebar reloads after each timeline write.
+- **Review frames.** Every clip shows a filmstrip of real frames, and a
+  composition strip is pinned under the lanes (it is what shows
+  script-animated projects with no timed clips). The transport has Onion
+  skin and Contact sheet buttons. Agents get the same images from
+  `GET /api/projects/:id/{scenes,frame,onion,strip}` (see README "Review").
+  All of it comes from one capture primitive,
+  `packages/adapter-hyperframes/src/frameCapture.ts`: a resident headless
+  Chrome that seeks the HyperFrames runtime and screenshots. Chrome is found
+  in this order (`chromeExecutable.ts`): `HYPERFRAMES_BROWSER_PATH` /
+  `PUPPETEER_EXECUTABLE_PATH`, `~/.cache/hyperframes/chrome`,
+  `~/.cache/puppeteer`, system Chrome. With none, review routes answer 503
+  with an install hint and video-clip thumbnails still work through ffmpeg.
+  Nothing auto-installs a browser. Plan: `spec/video-review-pack.md`.
 - **Hyperframes** projects render to MP4 via
   `npx hyperframes render --quality draft`.
 - **Any project** can be exported as a `.artefact` zip via the download

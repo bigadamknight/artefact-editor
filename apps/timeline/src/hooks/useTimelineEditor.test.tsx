@@ -95,6 +95,31 @@ afterEach(async () => {
 });
 
 describe("useTimelineEditor", () => {
+  it("refreshes thumbnails when the host saves the project", async () => {
+    await serveFixture();
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+    const host = { postMessage: vi.fn() };
+    vi.stubGlobal("parent", host);
+    mountEditor(iframe);
+    // Let the composition-meta request settle inside act.
+    await act(async () => {
+      await new Promise((done) => setTimeout(done, 0));
+    });
+
+    const before = usePlayerStore.getState().thumbnailRevisions["*"] ?? 0;
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "ae:refresh-preview" },
+          origin: window.location.origin,
+          source: host as unknown as Window,
+        }),
+      );
+    });
+    expect(usePlayerStore.getState().thumbnailRevisions["*"] ?? 0).toBe(before + 1);
+  });
+
   it("writes a clip move to index.html, tells the host, and undo restores it", async () => {
     const disk = await serveFixture();
     const iframe = document.createElement("iframe");
@@ -106,16 +131,23 @@ describe("useTimelineEditor", () => {
 
     const editor = mountEditor(iframe);
     expect(disk.read()).toMatch(/id="lion-close"[^>]*data-start="4.24"/);
+    const revisions = () => usePlayerStore.getState().thumbnailRevisions;
+    const beforeMove = revisions();
 
     await act(async () => {
       await editor.current.editCallbacks.onMoveElement!(LION_CLOSE, { start: 5, track: 0 });
     });
     expect(disk.read()).toMatch(/id="lion-close"[^>]*data-start="5"/);
+    // The write moved every thumbnail's revision, so stale frames refetch.
+    const afterMove = revisions();
+    expect(afterMove).not.toBe(beforeMove);
+    expect(afterMove["*"] ?? 0).toBeGreaterThan(beforeMove["*"] ?? 0);
 
     await act(async () => {
       await editor.current.history.undo();
     });
     expect(disk.read()).toMatch(/id="lion-close"[^>]*data-start="4.24"/);
+    expect(revisions()["*"] ?? 0).toBeGreaterThan(afterMove["*"] ?? 0);
 
     // One notice for the move and one for the undo, so the host reloads blocks.
     expect(hostPostMessage).toHaveBeenCalledTimes(2);

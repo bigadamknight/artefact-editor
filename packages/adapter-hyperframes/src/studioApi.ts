@@ -16,11 +16,15 @@ import {
   openProjectHistory,
   DEFAULT_HISTORY_ROOT,
   PREVIEW_BUNDLE_OPTIONS,
+  thumbnailDeviceScaleFactor,
   type StudioApiAdapter,
   type ResolvedProject,
 } from "@hyperframes/studio-server";
 import { bundleToSingleHtml } from "@hyperframes/core/compiler";
 import { videoClipThumbnail } from "./videoThumbnail.js";
+import { captureFrames, ChromeUnavailableError } from "./frameCapture.js";
+import { previewUrlFor, registerReviewRoutes } from "./reviewRoutes.js";
+import { listScenes } from "./scenes.js";
 
 /** What the CLI knows about a project — just its directory on disk. */
 export interface HyperframesProjectRef {
@@ -36,6 +40,8 @@ export interface HyperframesProjectRef {
 const RUNTIME_URL = "/api/runtime.js";
 
 const require = createRequire(import.meta.url);
+
+let warnedNoChrome = false;
 
 let runtimeSourcePromise: Promise<string | null> | null = null;
 
@@ -120,9 +126,12 @@ export function createHyperframesStudioApi(projects: Map<string, HyperframesProj
 
     runtimeUrl: RUNTIME_URL,
 
-    // Video clips only, via ffmpeg (see videoThumbnail.ts); no headless browser.
-    generateThumbnail: (opts) =>
-      videoClipThumbnail({
+    // Video clips are cut from their media with ffmpeg (videoThumbnail.ts),
+    // which needs no browser. Everything else (HTML scenes,
+    // sub-compositions, the root composition) is a screenshot of the studio
+    // preview in the resident headless Chrome (frameCapture.ts).
+    async generateThumbnail(opts) {
+      const video = await videoClipThumbnail({
         projectDir: opts.project.dir,
         compPath: opts.compPath,
         selector: opts.selector,
@@ -131,7 +140,36 @@ export function createHyperframesStudioApi(projects: Map<string, HyperframesProj
         outputHeight: opts.outputHeight,
         format: opts.format,
         signal: opts.signal,
-      }),
+      });
+      if (video) return video;
+      try {
+        const scenes = await listScenes(opts.project.dir, opts.compPath);
+        const [frame] = await captureFrames({
+          previewUrl: opts.previewUrl,
+          version: `${createProjectSignature(opts.project.dir)}:${opts.compPath}`,
+          times: [opts.seekTime],
+          fps: scenes?.fps ?? 30,
+          width: opts.width,
+          height: opts.height,
+          deviceScaleFactor: thumbnailDeviceScaleFactor(opts),
+          selector: opts.selector,
+          selectorIndex: opts.selectorIndex,
+          format: opts.format ?? "jpeg",
+          signal: opts.signal,
+        });
+        return frame ?? null;
+      } catch (err) {
+        if (!(err instanceof ChromeUnavailableError)) throw err;
+        if (!warnedNoChrome) {
+          warnedNoChrome = true;
+          console.warn(
+            "[adapter-hyperframes] no headless Chrome found; only video clips get thumbnails. " +
+              "Install one with `npx @puppeteer/browsers install chrome-headless-shell` or set HYPERFRAMES_BROWSER_PATH.",
+          );
+        }
+        return null;
+      }
+    },
 
     rendersDir: (project) => join(project.dir, "renders"),
 
@@ -155,6 +193,9 @@ export function createHyperframesStudioApi(projects: Map<string, HyperframesProj
       "Cache-Control": "no-store",
     });
   });
+
+  // Before createStudioApi: Hono answers with the first matching handler.
+  registerReviewRoutes(api, { resolveProject, capture: captureFrames, previewUrlFor });
 
   api.route("/", createStudioApi(adapter));
 
