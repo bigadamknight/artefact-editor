@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { appendFile, cp, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +14,8 @@ const fixtureDir = join(repoRoot, "examples", "hyperframes-timeline-sample");
 
 let sampleDir: string;
 let plainDir: string;
+let markedDir: string;
+let showreelDir: string;
 let calls: FrameCaptureRequest[];
 let failWith: Error | null;
 let dropFrame: number | null;
@@ -36,7 +38,10 @@ async function fakeCapture(req: FrameCaptureRequest): Promise<(Buffer | null)[]>
 }
 
 function api(): Hono {
-  const projects: Record<string, string> = { sample: sampleDir, plain: plainDir };
+  const projects: Record<string, string> = { sample: sampleDir, plain: plainDir,
+    marked: markedDir,
+    showreel: showreelDir,
+  };
   const app = new Hono();
   registerReviewRoutes(app, {
     resolveProject: (id) => (projects[id] ? { id, dir: projects[id] } : null),
@@ -62,7 +67,43 @@ beforeEach(async () => {
   );
 });
 
+beforeEach(async () => {
+  markedDir = await mkdtemp(join(tmpdir(), "ae-review-marked-"));
+  await mkdir(join(markedDir, "compositions"));
+  await writeFile(
+    join(markedDir, "index.html"),
+    `<div id="stage" data-composition-id="master" data-width="1920" data-height="1080" data-duration="36.5">
+  <audio id="vo" src="vo.mp3" data-start="0" data-duration="4"></audio>
+  <div class="scene" data-scene="s1" data-scene-start="0" data-label="Hook"></div>
+  <div class="scene" data-scene="s2" data-scene-start="T2"></div>
+  <div class="scene" data-scene="s3" data-scene-start="T3" data-scene-end="30"></div>
+  <div class="scene" data-scene="s2" data-scene-start="1"></div>
+  <div class="scene" data-scene="bad" data-scene-start="TX"></div>
+  <div class="scene" data-scene="rev" data-scene-start="35" data-scene-end="34"></div>
+  <div id="intro" data-composition-id="intro" data-composition-src="compositions/intro.html" data-start="30" data-duration="6"></div>
+</div>
+<script>const T2 = 5.25; const T3 = 12.25;</script>`,
+  );
+  await writeFile(
+    join(markedDir, "compositions", "intro.html"),
+    `<template><div id="root" data-composition-id="intro" data-width="1920" data-height="1080"><div data-scene="a" data-scene-start="0" data-scene-end="TA"></div><div data-scene="b" data-scene-start="TA"></div></div><script>const TA = 2;</script></template>`,
+  );
+
+  // The showreel's GSAP scenes carry no marks in the example, so mark them here.
+  showreelDir = await mkdtemp(join(tmpdir(), "ae-review-showreel-"));
+  const source = await readFile(join(repoRoot, "examples", "showreel", "index.html"), "utf-8");
+  await writeFile(
+    join(showreelDir, "index.html"),
+    source.replace(
+      /<div class="scene (s([1-6]))"(?![^>]*data-scene)/g,
+      (_, id: string, n: string) => `<div class="scene ${id}" data-scene="${id}" data-scene-start="T${n}"`,
+    ),
+  );
+});
+
 afterEach(async () => {
+  await rm(markedDir, { recursive: true, force: true });
+  await rm(showreelDir, { recursive: true, force: true });
   await rm(sampleDir, { recursive: true, force: true });
   await rm(plainDir, { recursive: true, force: true });
 });
@@ -91,6 +132,43 @@ describe("GET /projects/:id/scenes", () => {
     expect(body.scenes).toEqual([
       { id: "root", label: "master", start: 0, duration: 36.5, selector: "", kind: "root", comp: "index.html" },
     ]);
+  });
+
+  it("lists data-scene marks after the timed children", async () => {
+    const body = (await (await api().request("/projects/marked/scenes")).json()) as SceneList;
+    expect(body.scenes.map((s) => s.id)).toEqual(["intro", "s1", "s2", "s3"]);
+    expect(body.scenes.find((s) => s.id === "intro")?.kind).toBe("composition");
+    const byId = (id: string) => body.scenes.find((s) => s.id === id);
+    expect(byId("s1")).toEqual({
+      id: "s1",
+      label: "Hook",
+      start: 0,
+      duration: 5.25,
+      selector: '[data-scene="s1"]',
+      kind: "scene",
+      comp: "index.html",
+    });
+    expect(byId("s2")).toMatchObject({ start: 5.25, duration: 7, label: "s2" });
+    expect(byId("s3")).toMatchObject({ start: 12.25, duration: 17.75 });
+  });
+
+  it("lists a sub-composition's marks in its local time", async () => {
+    const body = (await (
+      await api().request("/projects/marked/scenes?comp=compositions/intro.html")
+    ).json()) as SceneList;
+    expect(body.duration).toBe(6);
+    expect(body.scenes).toMatchObject([
+      { id: "a", start: 0, duration: 2, comp: "compositions/intro.html", kind: "scene" },
+      { id: "b", start: 2, duration: 4, comp: "compositions/intro.html", kind: "scene" },
+    ]);
+  });
+
+  it("lists the six showreel scenes from their script constants", async () => {
+    const body = (await (await api().request("/projects/showreel/scenes")).json()) as SceneList;
+    expect(body.scenes.filter((s) => s.kind === "scene").map((s) => s.id)).toEqual(["s1", "s2", "s3", "s4", "s5", "s6"]);
+    const marked = body.scenes.filter((s) => s.kind === "scene");
+    expect(marked.map((s) => s.start)).toEqual([0, 5.25, 12.25, 17.75, 23.5, 29.5]);
+    expect(marked.map((s) => s.duration)).toEqual([5.25, 7, 5.5, 5.75, 6, 7]);
   });
 
   it("gives a sub-composition the duration of the clip that mounts it", async () => {
@@ -191,6 +269,13 @@ describe("GET /projects/:id/onion", () => {
     expect(calls).toHaveLength(2);
   });
 
+  it("captures a marked scene across its span", async () => {
+    expect((await api().request("/projects/marked/onion?scene=s2&n=2")).status).toBe(200);
+    expect(calls[0]?.times).toEqual([5.25, 12.25]);
+    await api().request("/projects/showreel/onion?scene=s3&n=2");
+    expect(calls[1]?.times).toEqual([12.25, 17.75]);
+  });
+
   it("uses a scene's span and passes the selector through", async () => {
     await api().request("/projects/sample/onion?scene=lion-close&n=2&selector=%23captions&selectorIndex=0");
     expect(calls[0]).toMatchObject({ times: [4.24, 6.68], selector: "#captions", selectorIndex: 0, fps: 24 });
@@ -205,6 +290,15 @@ describe("GET /projects/:id/strip", () => {
     expect(meta.width).toBe(4 * 480 + 5 * 8);
     expect(calls[0]?.times).toHaveLength(12);
     expect(calls[0]?.deviceScaleFactor).toBe(0.25);
+  });
+});
+
+describe("GET /projects/:id/strip with marked scenes", () => {
+  it("answers a showreel scene with a PNG", async () => {
+    const res = await api().request("/projects/showreel/strip?scene=s3&n=4");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/png");
+    expect(calls[0]?.times).toHaveLength(4);
   });
 });
 

@@ -72,6 +72,18 @@ are the #1 thing to avoid.
           data-edit-id="blk_narration"></audio>
    ```
 
+6. **Scenes (hyperframes)** — mark every GSAP-driven scene container with
+   `data-scene` and `data-scene-start` (seconds, or the name of a top-level
+   numeric `const`). Optional: `data-scene-end`, `data-label`. The markers are
+   passive. Never add `data-start`, `data-duration` or `class="clip"` to a
+   GSAP-driven scene, and do not add an `id` to the scene div for this. Prefer
+   the const name over a literal. Documents built from `data-start` clips need
+   no markers. See `spec/emission-spec-v1.md` "Scenes (hyperframes)".
+   ```html
+   <script>const T2 = 5.25;</script>
+   <div class="scene s2" data-scene="s2" data-scene-start="T2" data-label="3D cube">
+   ```
+
 ## `data-edit-id` naming
 
 - Format: `blk_<snake_case>`. Stable across regenerations of the same artefact.
@@ -164,6 +176,7 @@ For every visible/audible thing in the artefact, confirm it's reachable:
 - [ ] Every `<audio>` has a `data-edit-id` (or a stable `id` referenced from the
       manifest selector)
 - [ ] Every timing constant in scripts (`T1`, `T2`, …) has an `astVar` block
+- [ ] Every GSAP-driven scene container has `data-scene` + `data-scene-start`
 - [ ] Every theme color in CSS that the user might want to change is a `:root`
       custom property, with a `cssVar` block
 - [ ] Every block in `manifest.json` resolves to exactly one element in the source

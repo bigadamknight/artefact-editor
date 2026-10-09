@@ -112,12 +112,15 @@ all take `comp=` (default `index.html`), `selector=` and `selectorIndex=`.
 curl -s http://localhost:7411/api/projects/showreel/scenes
 curl -s -o onion.png 'http://localhost:7411/api/projects/showreel/onion?from=0.2&to=1.2&n=6'
 curl -s -o strip.png 'http://localhost:7411/api/projects/showreel/strip?n=12&columns=4&width=480'
+curl -s -o strip.png 'http://localhost:7411/api/projects/showreel/strip?scene=s3&n=8'
 ```
 
 Images are cached in the project's `.thumbnails/` and carry an `ETag`;
-any source edit changes it. A composition whose scenes are only GSAP-driven
-`.scene` divs (no `data-start`) lists one synthetic `root` scene, and a
-`selector` capture of a scene that is hidden at that time comes out blank.
+any source edit changes it. Scenes marked with `data-scene` and
+`data-scene-start` (see [`spec/emission-spec-v1.md`](spec/emission-spec-v1.md)
+"Scenes (hyperframes)") are listed with kind `scene`; an unmarked GSAP-only
+composition still gets one synthetic `root` scene. A `selector` capture of a
+scene that is hidden at that time comes out blank.
 The same capture powers timeline thumbnails for HTML clips. Chrome is found
 via `HYPERFRAMES_BROWSER_PATH` / `PUPPETEER_EXECUTABLE_PATH`, then
 `~/.cache/hyperframes/chrome`, then `~/.cache/puppeteer`, then system

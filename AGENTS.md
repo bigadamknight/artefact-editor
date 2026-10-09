@@ -61,6 +61,8 @@ adapter.
   script-animated projects with no timed clips). The transport has Onion
   skin and Contact sheet buttons. Agents get the same images from
   `GET /api/projects/:id/{scenes,frame,onion,strip}` (see README "Review").
+  GSAP-driven scenes are named by passive `data-scene` / `data-scene-start`
+  markers on the scene container; see `spec/emission-spec-v1.md` "Scenes (hyperframes)".
   All of it comes from one capture primitive,
   `packages/adapter-hyperframes/src/frameCapture.ts`: a resident headless
   Chrome that seeks the HyperFrames runtime and screenshots. Chrome is found

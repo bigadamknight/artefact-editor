@@ -104,6 +104,35 @@ v1 ships `string`, `asset`, `color`. The other types are reserved.
 - For `kind: "image"`: the element MUST be an `<img>`.
 - The artefact MUST function correctly when opened directly in a browser (no editor injection required for runtime).
 
+### Scenes (hyperframes)
+
+GSAP-driven HyperFrames videos build their scenes as `<div class="scene s2">`, with the timing kept in the GSAP script. Mark each scene container with passive attributes:
+
+| Attribute | Required | Meaning |
+|---|---|---|
+| `data-scene` | yes | Scene id, unique in the file, matching `[A-Za-z0-9_-]+` |
+| `data-scene-start` | yes | Seconds, or the NAME of a top-level `const` whose value is a numeric literal in the file's `<script>` (e.g. `T2`) |
+| `data-scene-end` | no | Same forms. Defaults to the next marked scene's start in document order; the last scene ends at the root `data-duration`. |
+| `data-label` | no | Display label. Defaults to the id. |
+
+Rules:
+
+- The markers are passive. The HyperFrames runtime ignores them and they change no rendered frame. Only artefact-editor reads them (`GET /api/projects/:id/scenes`, `strip?scene=`, `onion?scene=`).
+- **Never** add `data-start`, `data-duration` or `class="clip"` to a GSAP-driven scene. `data-start` hands visibility to the runtime, which injects `visibility:hidden` and toggles it per seek, cutting GSAP fades.
+- Do not add an `id` to a scene div for this. Studio derives a draggable clip from root children that have ids, and a drag writes `data-start`.
+- Prefer the const name over a literal, so a timing-block edit moves the scene and the GSAP timeline together.
+- The const must be a numeric literal: `const T3 = T2 + 7` does not resolve, and that scene is dropped.
+- Document order must be time order.
+- Scenes inside a sub-composition file are marked in that file, in its local time.
+- Compositions built from `data-start` clips need no markers.
+
+Canonical snippet:
+
+```html
+<script>const T2 = 5.25;</script>
+<div class="scene s2" data-scene="s2" data-scene-start="T2" data-label="3D cube">
+```
+
 ### CSS
 
 - A `cssVar` source MUST resolve to exactly one declaration of that variable in the file. Declare brand tokens in `:root { ... }`.
@@ -118,6 +147,8 @@ The editor runs these checks on open and refuses to load if any fail:
 4. Every block resolves to exactly one source location.
 5. Block IDs are unique.
 6. Property `key`s are unique within a block.
+
+The editor does not validate scene markers when a project opens. The review routes (`/scenes`, `strip?scene=`, `onion?scene=`) read them, and a scene with a missing or unresolvable `data-scene-start` is dropped from the list.
 
 The editor surfaces violations with file + block context. A failed load is a manifest bug, not an editor bug.
 
