@@ -28,10 +28,19 @@ Modified or adapted files carry a header that names the upstream file:
   `packages/studio/src/hooks/timelineMoveAdapter.ts`.
 - `packages/adapter-hyperframes/src/studioApi.ts` — the preview bundle
   step follows `packages/cli/src/server/studioServer.ts`.
+- `packages/adapter-hyperframes/src/frameCapture.ts` — the seek-and-settle
+  sequence follows the HyperFrames CLI's `seekCompositionTimeline`.
 
 The timeline app uses none of the upstream product's names, logos or marks.
 Studio's telemetry is turned off in `apps/timeline/index.html` and
 `apps/timeline/vite.config.ts`.
+
+## fframes — MIT
+
+- Source: https://github.com/dmtrKovalenko/fframes
+- The review tools (onion skin, scene contact sheet, filmstrip timeline)
+  and the timeline's thumbnail LRU policy follow fframes' ideas. No fframes
+  code is copied.
 
 ## Mediabunny — Mozilla Public License 2.0
 
