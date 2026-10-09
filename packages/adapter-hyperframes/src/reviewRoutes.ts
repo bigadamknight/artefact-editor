@@ -138,14 +138,16 @@ function writeAtomically(path: string, data: Buffer): void {
 
 /**
  * Answer from the ETag or the disk cache, or run `produce` and cache what it
- * returns. The cache is written only if the project did not change during capture.
+ * returns. The cache is written only if every frame was captured and the
+ * project did not change during capture: the key ignores `revision`, so a
+ * cached partial image would outlive every refresh.
  */
 async function cached(
   c: Context,
   target: ReviewTarget,
   route: string,
   format: "png" | "jpeg",
-  produce: (signature: string) => Promise<Buffer>,
+  produce: (signature: string) => Promise<{ image: Buffer; complete: boolean }>,
 ): Promise<Response> {
   const signature = createProjectSignature(target.project.dir);
   const key = cacheKey(target, route, new URL(c.req.url, "http://localhost"), signature);
@@ -162,8 +164,8 @@ async function cached(
   const file = join(cacheDir, `review-${key}.${format === "png" ? "png" : "jpg"}`);
   if (existsSync(file)) return new Response(new Uint8Array(readFileSync(file)), { headers });
 
-  const image = await produce(signature);
-  if (createProjectSignature(target.project.dir) === signature) {
+  const { image, complete } = await produce(signature);
+  if (complete && createProjectSignature(target.project.dir) === signature) {
     mkdirSync(cacheDir, { recursive: true });
     writeAtomically(file, image);
   }
@@ -228,7 +230,7 @@ export function registerReviewRoutes(api: Hono, deps: ReviewRouteDeps): void {
       return await cached(c, target, "frame", format, async (signature) => {
         const [frame] = await deps.capture(captureRequest(c, target, signature, [t], scale, format));
         if (!frame) throw new Error(`no frame at t=${t}`);
-        return frame;
+        return { image: frame, complete: true };
       });
     } catch (err) {
       return errorResponse(c, err);
@@ -244,18 +246,18 @@ export function registerReviewRoutes(api: Hono, deps: ReviewRouteDeps): void {
       const scale = numberParam(c, "scale", { fallback: 0.5, min: 0.05, max: 1 });
       const times = Array.from({ length: n }, (_, i) => roundMs(n === 1 ? from : from + (i / (n - 1)) * (to - from)));
       return await cached(c, target, "onion", "png", async (signature) => {
-        const frames = (await deps.capture(captureRequest(c, target, signature, times, scale, "png"))).filter(
-          (f): f is Buffer => f !== null,
-        );
+        const captured = await deps.capture(captureRequest(c, target, signature, times, scale, "png"));
+        const frames = captured.filter((f): f is Buffer => f !== null);
         const first = frames[0];
         if (!first) throw new Error("no frames captured");
         // A selector capture is the element's box, not the full composition.
         const meta = target.selector ? await sharp(first).metadata() : null;
-        return composeOnion(frames, {
+        const image = await composeOnion(frames, {
           width: meta?.width ?? Math.round(target.list.width * scale),
           height: meta?.height ?? Math.round(target.list.height * scale),
-          label: `onion · ${n} frames · t ${seconds(from)}–${seconds(to)}s`,
+          label: `onion · ${frames.length} frames · t ${seconds(from)}–${seconds(to)}s`,
         });
+        return { image, complete: frames.length === times.length };
       });
     } catch (err) {
       return errorResponse(c, err);
@@ -282,10 +284,11 @@ export function registerReviewRoutes(api: Hono, deps: ReviewRouteDeps): void {
         const aspect =
           meta?.width && meta.height ? meta.width / meta.height : target.list.width / target.list.height;
         const range = scene ? scene.label : `t ${seconds(from)}–${seconds(to)}s`;
-        return composeContactSheet(
+        const image = await composeContactSheet(
           frames.map((frame, i) => ({ frame, label: `t=${seconds(quantise(times[i] ?? 0, target.list.fps))}s` })),
           { columns, cellWidth, aspect, title: `${target.project.id} · ${target.comp} · ${range}` },
         );
+        return { image, complete: frames.every((f) => f !== null) };
       });
     } catch (err) {
       return errorResponse(c, err);

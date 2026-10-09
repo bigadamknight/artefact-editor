@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePlayerStore, type TimelineElement } from "@hyperframes/studio";
-import { useReviewTools, type ReviewToolsState } from "./useReviewTools";
+import { PLAYHEAD_SETTLE_MS, useReviewTools, type ReviewToolsState } from "./useReviewTools";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -70,11 +70,38 @@ describe("useReviewTools", () => {
   });
 
   it("clamps the playhead window to the composition", () => {
-    const review = mount();
-    act(() => usePlayerStore.getState().setCurrentTime(14.4));
-    expect(review.current.range).toEqual({ from: 13.9, to: 14.52, source: "playhead" });
-    act(() => usePlayerStore.getState().setCurrentTime(0));
-    expect(review.current.range).toEqual({ from: 0, to: 0.5, source: "playhead" });
+    vi.useFakeTimers();
+    try {
+      const review = mount();
+      act(() => usePlayerStore.getState().setCurrentTime(14.4));
+      act(() => vi.advanceTimersByTime(PLAYHEAD_SETTLE_MS));
+      expect(review.current.range).toEqual({ from: 13.9, to: 14.52, source: "playhead" });
+      act(() => usePlayerStore.getState().setCurrentTime(0));
+      act(() => vi.advanceTimersByTime(PLAYHEAD_SETTLE_MS));
+      expect(review.current.range).toEqual({ from: 0, to: 0.5, source: "playhead" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("follows a scrub only once the playhead rests", () => {
+    vi.useFakeTimers();
+    try {
+      const review = mount();
+      act(() => review.current.handleToggleOnion());
+      const urls = new Set([review.current.onionUrl]);
+      for (const t of [6.2, 6.4, 6.6, 6.8, 7]) {
+        act(() => usePlayerStore.getState().setCurrentTime(t));
+        act(() => vi.advanceTimersByTime(50));
+        urls.add(review.current.onionUrl);
+      }
+      // Mid-scrub the onion still shows the range it started with.
+      expect(urls.size).toBe(1);
+      act(() => vi.advanceTimersByTime(PLAYHEAD_SETTLE_MS));
+      expect(review.current.range).toEqual({ from: 6.5, to: 7.5, source: "playhead" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("builds onion and strip URLs with the count and the content revision", () => {

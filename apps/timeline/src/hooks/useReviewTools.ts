@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { usePlayerStore, type TimelineElement } from "@hyperframes/studio";
 import { thumbnailRevisionOf } from "../lib/filmstrip";
+import { useSettledValue } from "./useSettledValue";
 
 export const ONION_COUNT_MIN = 3;
 export const ONION_COUNT_MAX = 12;
@@ -11,6 +12,8 @@ export const STRIP_COLUMNS_MAX = 8;
 
 /** Half the window reviewed around the playhead when nothing is selected. */
 const PLAYHEAD_HALF_WINDOW = 0.5;
+/** How long the playhead must rest before the review images follow it. */
+export const PLAYHEAD_SETTLE_MS = 150;
 const ROOT_COMPOSITION = "index.html";
 
 export type ReviewRangeSource = "selection" | "range" | "playhead";
@@ -85,8 +88,9 @@ export function useReviewTools(projectId: string | null) {
   const elements = usePlayerStore((s) => s.elements);
   const selectedElementId = usePlayerStore((s) => s.selectedElementId);
   const rangeSelection = usePlayerStore((s) => s.rangeSelection);
-  // The store's playhead moves on seek and pause, not every frame of playback.
-  const time = usePlayerStore((s) => s.currentTime);
+  // The store's playhead moves on seek and pause, not every frame of playback,
+  // but a scrub seeks on every pointer move; each new range is a server capture.
+  const time = useSettledValue(usePlayerStore((s) => s.currentTime), PLAYHEAD_SETTLE_MS);
   const duration = usePlayerStore((s) => s.duration);
   const revision = usePlayerStore((s) => thumbnailRevisionOf(s.thumbnailRevisions, ROOT_COMPOSITION));
 

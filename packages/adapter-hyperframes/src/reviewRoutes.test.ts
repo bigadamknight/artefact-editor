@@ -16,6 +16,7 @@ let sampleDir: string;
 let plainDir: string;
 let calls: FrameCaptureRequest[];
 let failWith: Error | null;
+let dropFrame: number | null;
 
 /** Stands in for headless Chrome: one solid frame per requested time, at the requested scale. */
 async function fakeCapture(req: FrameCaptureRequest): Promise<(Buffer | null)[]> {
@@ -25,9 +26,11 @@ async function fakeCapture(req: FrameCaptureRequest): Promise<(Buffer | null)[]>
   const height = Math.round(req.height * req.deviceScaleFactor);
   return Promise.all(
     req.times.map((_, i) =>
-      sharp({ create: { width, height, channels: 3, background: { r: 40 * i, g: 80, b: 120 } } })
-        .png()
-        .toBuffer(),
+      i === dropFrame
+        ? null
+        : sharp({ create: { width, height, channels: 3, background: { r: 40 * i, g: 80, b: 120 } } })
+            .png()
+            .toBuffer(),
     ),
   );
 }
@@ -46,6 +49,7 @@ function api(): Hono {
 beforeEach(async () => {
   calls = [];
   failWith = null;
+  dropFrame = null;
   sampleDir = await mkdtemp(join(tmpdir(), "ae-review-sample-"));
   await cp(fixtureDir, sampleDir, { recursive: true });
   plainDir = await mkdtemp(join(tmpdir(), "ae-review-plain-"));
@@ -173,6 +177,18 @@ describe("GET /projects/:id/onion", () => {
     expect(plain.status).toBe(200);
     expect(plain.headers.get("etag")).toBe(etag);
     expect(calls).toHaveLength(1);
+  });
+
+  it("does not cache an image that is missing a frame", async () => {
+    const app = api();
+    const url = "/projects/plain/onion?from=0.2&to=1.2&n=6";
+    dropFrame = 2;
+    expect((await app.request(url)).status).toBe(200);
+    dropFrame = null;
+    expect((await app.request(url)).status).toBe(200);
+    expect((await app.request(url)).status).toBe(200);
+    // The partial first image was not cached; the complete second one was.
+    expect(calls).toHaveLength(2);
   });
 
   it("uses a scene's span and passes the selector through", async () => {
