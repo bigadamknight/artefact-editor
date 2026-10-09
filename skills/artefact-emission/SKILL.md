@@ -91,8 +91,8 @@ marker. Missing markers mean dead-ends in the editor and are the #1 thing to avo
    ```
 
 6. **Scenes (hyperframes)** — mark every GSAP-driven scene container with
-   `data-scene` and `data-scene-start` (seconds, or the name of a top-level
-   numeric `const`). Optional: `data-scene-end`, `data-label`. The markers are
+   `data-scene` and `data-scene-start` (seconds, or the name of a `const NAME = <number>;`
+   on its own line). Optional: `data-scene-end`, `data-label`. The markers are
    passive. Never add `data-start`, `data-duration` or `class="clip"` to a
    GSAP-driven scene, and do not add an `id` to the scene div for this. Prefer
    the const name over a literal. Compositions built from `data-start` clips

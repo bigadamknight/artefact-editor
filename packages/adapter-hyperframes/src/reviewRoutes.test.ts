@@ -171,6 +171,24 @@ describe("GET /projects/:id/scenes", () => {
     expect(marked.map((s) => s.duration)).toEqual([5.25, 7, 5.5, 5.75, 6, 7]);
   });
 
+  it("drops a mark whose given end does not resolve, and clamps spans to the composition", async () => {
+    await writeFile(
+      join(plainDir, "index.html"),
+      `<div id="stage" data-composition-id="master" data-width="1920" data-height="1080" data-duration="36.5">
+        <div data-scene="early" data-scene-start="-1" data-scene-end="T1"></div>
+        <div data-scene="broken" data-scene-start="T1" data-scene-end="TX"></div>
+        <div data-scene="late" data-scene-start="T2" data-scene-end="99"></div>
+      </div>
+      <script>const T1 = 4;
+      const T2 = 30;</script>`,
+    );
+    const body = (await (await api().request("/projects/plain/scenes")).json()) as SceneList;
+    expect(body.scenes.map((s) => [s.id, s.start, s.duration])).toEqual([
+      ["early", 0, 4],
+      ["late", 30, 6.5],
+    ]);
+  });
+
   it("gives a sub-composition the duration of the clip that mounts it", async () => {
     const body = (await (await api().request("/projects/sample/scenes?comp=compositions/captions.html")).json()) as SceneList;
     expect(body.duration).toBe(14.52);

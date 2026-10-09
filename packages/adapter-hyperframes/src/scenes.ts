@@ -176,10 +176,16 @@ export async function listScenes(projectDir: string, compPath: string): Promise<
     candidates.push({ el, id, start });
   }
   // Walk backwards so "the next kept mark" is known when a mark has no end.
+  // Spans are clamped to the composition; an end that is given but does not
+  // resolve drops the mark, as an unresolvable start does.
   const kept: Scene[] = [];
   let nextStart: number | undefined;
-  for (const { el, id, start } of candidates.reverse()) {
-    const end = resolveTime(html, attr(el, "data-scene-end")) ?? nextStart ?? duration;
+  for (const { el, id, start: rawStart } of candidates.reverse()) {
+    const rawEnd = attr(el, "data-scene-end");
+    const explicitEnd = resolveTime(html, rawEnd);
+    if (rawEnd !== undefined && explicitEnd === null) continue;
+    const start = Math.max(0, rawStart);
+    const end = Math.min(duration, explicitEnd ?? nextStart ?? duration);
     if (!(end > start)) continue;
     nextStart = start;
     kept.push({
