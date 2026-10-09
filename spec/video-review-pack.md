@@ -40,7 +40,7 @@ Decisions:
 
 - The timeline app keeps the Studio UI kit (`Button`, `IconButton`, `NumberField`, `Popover`) and plain `.ae-*` CSS. No shadcn is added there.
 - A missing Chrome returns 503 with an install hint. The app never auto-installs a browser.
-- Scene marking in the emission spec is a separate follow-up (fleet todo td-22).
+- Scene marking in the emission spec is a separate follow-up (fleet todo td-22). (superseded 2026-10-09: scenes are now marked with `data-scene`, see emission-spec-v1.md)
 
 ## Steps
 
@@ -269,7 +269,7 @@ This app uses React 19 without the React compiler, and Studio UI primitives.
 - **Cache key rounding.** The thumbnail route's cache key uses `seekTime.toFixed(2)`. Filmstrip tile times must use the same two-decimal rounding, or every zoom step misses the cache.
 - **Stale client cache.** Studio's thumbnail scheduler keys its client cache by URL. Without the `revision` bump, a text edit leaves stale frames.
 - **Don't reuse `CompositionThumbnail`** for the filmstrip, because it repeats one poster frame. Keep delegating to Studio's `VideoThumbnail` and `AudioWaveform` for media clips.
-- **GSAP-only examples.** In `showreel`, `promo-*` and `bp-ai-chat-video`, the `.scene` divs have no `data-start`. `/scenes` therefore returns the synthetic root, and the strip row is what shows these projects. Captures of `selector=.s2` are blank at times when the scene is hidden. Document this; don't special-case it.
+- **GSAP-only examples.** In `showreel`, `promo-*` and `bp-ai-chat-video`, the `.scene` divs have no `data-start`. `/scenes` therefore returns the synthetic root, and the strip row is what shows these projects. Captures of `selector=.s2` are blank at times when the scene is hidden. Document this; don't special-case it. (superseded 2026-10-09: scenes are now marked with `data-scene`, see emission-spec-v1.md)
 - **Backward seeks.** GSAP `from()` and `set()` are not reliably reversible. Drop the page on a backward seek, and sort batch times ascending.
 - **Looping timelines.** A looping timeline (`repeat: -1`, which reports 1e10 s) or a timeline built after load needs the `__renderReady` wait. Cap `to` at the root `data-duration`.
 - **CSS animations.** CSS `animation:` keyframes and `@property` transitions are not driven by a GSAP seek, so frames can vary. Accept this, and keep the fps quantisation.
@@ -286,7 +286,7 @@ This app uses React 19 without the React compiler, and Studio UI primitives.
 
 - `GET /api/projects/hyperframes-timeline-sample/thumbnail/index.html?t=1&selector=%23captions&w=1620&h=1080` returns 200 `image/jpeg`. Before this change it returned 500.
 - The same request with `#lion-close` returns 200 without launching Chrome.
-- `GET /api/projects/showreel/scenes` returns `fps`, `duration` 36.5, `width` 1920, `height` 1080 and one synthetic `root` scene.
+- `GET /api/projects/showreel/scenes` returns `fps`, `duration` 36.5, `width` 1920, `height` 1080 and one synthetic `root` scene. (superseded 2026-10-09: scenes are now marked with `data-scene`, see emission-spec-v1.md)
 - `GET /api/projects/hyperframes-timeline-sample/scenes` lists `captions` with `kind: "composition"`, `start` 0 and `duration` 14.52.
 - `GET /api/projects/showreel/onion?from=0.2&to=1.2&n=6` returns a 960x540 PNG with an `ETag`.
 - Repeating it with `If-None-Match` returns 304. Editing `index.html` changes the ETag.
