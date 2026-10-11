@@ -175,9 +175,12 @@ export async function listScenes(projectDir: string, compPath: string): Promise<
     if (start === null) continue;
     candidates.push({ el, id, start });
   }
-  // Walk backwards so "the next kept mark" is known when a mark has no end.
-  // Spans are clamped to the composition; an end that is given but does not
-  // resolve drops the mark, as an unresolvable start does.
+  // "The next mark" is the next by start time, not in document order: marks
+  // nest (a held-read scene wrapping the beats inside it). Walk backwards
+  // through the time-ordered list so the next kept mark is known when a mark
+  // has no end. Spans are clamped to the composition; an end that is given but
+  // does not resolve drops the mark, as an unresolvable start does.
+  candidates.sort((a, b) => a.start - b.start);
   const kept: Scene[] = [];
   let nextStart: number | undefined;
   for (const { el, id, start: rawStart } of candidates.reverse()) {
@@ -192,7 +195,7 @@ export async function listScenes(projectDir: string, compPath: string): Promise<
       id,
       label: attr(el, "data-label") ?? id,
       start,
-      duration: end - start,
+      duration: Math.round((end - start) * 1000) / 1000,
       selector: `[data-scene="${id}"]`,
       kind: "scene",
       comp: compPath,

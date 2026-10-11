@@ -171,6 +171,26 @@ describe("GET /projects/:id/scenes", () => {
     expect(marked.map((s) => s.duration)).toEqual([5.25, 7, 5.5, 5.75, 6, 7]);
   });
 
+  it("ends an open mark at the next mark in time, not in document order", async () => {
+    await writeFile(
+      join(plainDir, "index.html"),
+      `<div id="stage" data-composition-id="master" data-width="1920" data-height="1080" data-duration="6.08">
+        <div data-scene="f07-s1" data-scene-start="0" data-scene-end="1.6"></div>
+        <div data-scene="f07-s4" data-scene-start="4.6">
+          <div data-scene="f07-s2" data-scene-start="1.6" data-scene-end="3.0"></div>
+          <div data-scene="f07-s3" data-scene-start="3.0" data-scene-end="4.6"></div>
+        </div>
+      </div>`,
+    );
+    const body = (await (await api().request("/projects/plain/scenes")).json()) as SceneList;
+    expect(body.scenes.map((s) => [s.id, s.start, s.duration])).toEqual([
+      ["f07-s1", 0, 1.6],
+      ["f07-s2", 1.6, 1.4],
+      ["f07-s3", 3, 1.6],
+      ["f07-s4", 4.6, 1.48],
+    ]);
+  });
+
   it("drops a mark whose given end does not resolve, and clamps spans to the composition", async () => {
     await writeFile(
       join(plainDir, "index.html"),
